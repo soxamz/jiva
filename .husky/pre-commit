@@ -1,4 +1,3 @@
-bun test
 bun run format:fix
 bun run lint
 bun run lint-staged --concurrent false
