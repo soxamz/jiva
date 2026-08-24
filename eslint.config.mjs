@@ -15,6 +15,12 @@ const eslintConfig = defineConfig([
     'build/**',
     'next-env.d.ts',
   ]),
+  // Enforce Prettier formatting with specific options
+  {
+    rules: {
+      'prettier/prettier': ['error', { endOfLine: 'lf' }],
+    },
+  },
 ]);
 
 export default eslintConfig;
