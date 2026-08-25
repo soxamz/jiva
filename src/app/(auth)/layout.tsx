@@ -7,7 +7,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <img
           src="https://i.pinimg.com/1200x/58/2f/50/582f50f37da10956a760473d74f85c48.jpg"
           alt="Image"
-          className="absolute inset-0 h-full w-full object-cover opacity-85 dark:brightness-[0.2] dark:grayscale"
+          className="absolute inset-0 h-full w-full object-cover opacity-85 dark:brightness-[0.2]"
         />
         <Link href="/" className="relative z-20 inline-flex items-center text-2xl">
           JIVA
