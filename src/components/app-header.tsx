@@ -7,9 +7,9 @@ import { AppBreadcrumbs } from '@/components/app-breadcrumbs';
 import { type AppShellUser } from '@/components/app-shared';
 import { CustomSidebarTrigger } from '@/components/custom-sidebar-trigger';
 import { DecorIcon } from '@/components/decor-icon';
-import { NavUser } from '@/components/nav-user';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { ModeToggle } from './mode-toggle';
 
 export function AppHeader({ user }: { user: AppShellUser }) {
   const isPatient = user.role === 'patient';
@@ -55,8 +55,12 @@ export function AppHeader({ user }: { user: AppShellUser }) {
         >
           <BellIcon data-icon="only" />
         </Button>
-        <Separator className="h-4 data-[orientation=vertical]:self-center" orientation="vertical" />
-        <NavUser signOutAction={signOutAction} user={user} />
+        <ModeToggle />
+        <form action={signOutAction}>
+          <Button size="sm" type="submit" variant="destructive">
+            Sign out
+          </Button>
+        </form>
       </div>
     </header>
   );

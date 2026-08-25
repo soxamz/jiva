@@ -4,6 +4,8 @@ import {
   AlertTriangleIcon,
   FileTextIcon,
   HeartPulseIcon,
+  PhoneIcon,
+  PillIcon,
   QrCodeIcon,
   ShieldCheckIcon,
 } from 'lucide-react';
@@ -121,6 +123,10 @@ export default async function DashboardPage() {
     ((data.profile?.currentMedications?.length ?? 0) > 0 ? 25 : 0) +
     ((data.profile?.emergencyContacts?.length ?? 0) > 0 ? 25 : 0);
   const activityRows = buildActivityRows(data.timeline);
+  const medications = data.profile?.currentMedications ?? [];
+  const allergies = data.profile?.allergies ?? [];
+  const emergencyContacts = data.profile?.emergencyContacts ?? [];
+  const latestAudit = data.auditLogs[0];
 
   return (
     <div className="flex flex-col gap-4">
@@ -339,7 +345,7 @@ export default async function DashboardPage() {
           </CardContent>
         </DashboardCard>
 
-        <DashboardCard className="gap-0 xl:col-span-4">
+        <DashboardCard className="gap-0 xl:col-span-3">
           <CardHeader className="border-b">
             <div className="flex flex-wrap items-center gap-2">
               <CardTitle>Recent records</CardTitle>
@@ -380,6 +386,70 @@ export default async function DashboardPage() {
               </TableBody>
             </Table>
           </CardContent>
+        </DashboardCard>
+
+        <DashboardCard className="gap-0 xl:col-span-1">
+          <CardHeader className="border-b">
+            <CardTitle>Care snapshot</CardTitle>
+            <CardDescription>Critical information ready for care decisions.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <PhoneIcon className="text-muted-foreground" aria-hidden />
+                <span className="text-sm">Emergency contacts</span>
+              </div>
+              <strong className="text-2xl tabular-nums">{emergencyContacts.length}</strong>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <PillIcon className="text-muted-foreground" aria-hidden />
+                <span className="text-sm">Current medications</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {medications.length > 0 ? (
+                  medications.slice(0, 3).map((medication) => (
+                    <Badge key={medication} variant="secondary">
+                      {medication}
+                    </Badge>
+                  ))
+                ) : (
+                  <Badge variant="secondary">None listed</Badge>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <span className="text-sm">Known allergies</span>
+              <div className="flex flex-wrap gap-2">
+                {allergies.length > 0 ? (
+                  allergies.map((allergy) => (
+                    <Badge key={allergy} variant="warning">
+                      {allergy}
+                    </Badge>
+                  ))
+                ) : (
+                  <Badge variant="secondary">None listed</Badge>
+                )}
+              </div>
+            </div>
+            {latestAudit && (
+              <div className="border-t pt-4">
+                <p className="text-muted-foreground text-xs">Latest vault activity</p>
+                <p className="mt-1 font-medium">{latestAudit.action.replaceAll('_', ' ')}</p>
+                <p className="text-muted-foreground text-xs">
+                  {formatDateTime(latestAudit.createdAt)}
+                </p>
+              </div>
+            )}
+          </CardContent>
+          <CardFooter className="bg-background rounded-none">
+            <Link
+              href="/emergency-card"
+              className={buttonVariants({ variant: 'outline', size: 'sm' })}
+            >
+              Open emergency card
+            </Link>
+          </CardFooter>
         </DashboardCard>
       </section>
     </div>
