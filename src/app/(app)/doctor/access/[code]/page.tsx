@@ -1,0 +1,154 @@
+import { addDoctorNoteAction } from '@/lib/actions';
+import { DashboardCard } from '@/components/dashboard-card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import { getDoctorAccessData } from '@/lib/dal';
+import { formatDateTime, minutesUntil } from '@/lib/format';
+
+export default async function DoctorAccessPage({ params }: PageProps<'/doctor/access/[code]'>) {
+  const { code } = await params;
+  const data = await getDoctorAccessData(code);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-muted-foreground text-sm">Active consent code {data.consent.code}</p>
+          <h1 className="text-2xl font-semibold tracking-normal">{data.patient.name}</h1>
+        </div>
+        <Badge variant="success">{minutesUntil(data.consent.expiresAt)} min remaining</Badge>
+      </div>
+      <section className="bg-border grid grid-cols-1 gap-px p-px xl:grid-cols-3">
+        <DashboardCard className="gap-0">
+          <CardHeader className="border-b">
+            <CardTitle>Critical profile</CardTitle>
+            <CardDescription>Emergency and safety context.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <div className="flex items-end justify-between">
+              <span className="text-muted-foreground text-sm">Blood type</span>
+              <strong className="text-3xl tabular-nums">{data.profile?.bloodType ?? 'NA'}</strong>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(data.profile?.allergies ?? []).map((allergy) => (
+                <Badge key={allergy} variant="destructive">
+                  {allergy}
+                </Badge>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(data.profile?.currentMedications ?? []).map((medication) => (
+                <Badge key={medication} variant="secondary">
+                  {medication}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </DashboardCard>
+        <DashboardCard className="gap-0 xl:col-span-2">
+          <CardHeader className="border-b">
+            <CardTitle>Physician draft summary</CardTitle>
+            <CardDescription>
+              AI output is source-linked context, not an autonomous diagnosis.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-0">
+            <ul className="divide-border flex flex-col divide-y">
+              {data.intakeSessions.map((intake) => (
+                <li className="flex flex-col gap-2 px-6 py-4" key={intake.id}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-medium">{intake.chiefComplaint}</p>
+                    <Badge variant={intake.redFlag ? 'destructive' : 'success'}>
+                      {intake.redFlag ? 'red flag' : 'routine'}
+                    </Badge>
+                  </div>
+                  <p className="text-muted-foreground text-sm leading-6">{intake.summary}</p>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </DashboardCard>
+        <DashboardCard className="gap-0 xl:col-span-3">
+          <CardHeader className="border-b">
+            <CardTitle>Patient records</CardTitle>
+            <CardDescription>Structured values extracted from uploaded metadata.</CardDescription>
+          </CardHeader>
+          <CardContent className="px-0">
+            <Table>
+              <TableCaption className="sr-only">
+                Patient records accessible under the current consent.
+              </TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="ps-6">Document</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Confidence</TableHead>
+                  <TableHead className="pe-6 text-right">Uploaded</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.documents.map(({ document, structured }) => (
+                  <TableRow className="h-12" key={document.id}>
+                    <TableCell className="max-w-80 ps-6">
+                      <p className="truncate font-medium">{document.title}</p>
+                      <p className="text-muted-foreground truncate text-xs">{document.notes}</p>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{document.docType}</Badge>
+                    </TableCell>
+                    <TableCell className="tabular-nums">
+                      {structured?.aiConfidenceScore ?? 0}%
+                    </TableCell>
+                    <TableCell className="text-muted-foreground pe-6 text-right">
+                      {formatDateTime(document.uploadedAt)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </DashboardCard>
+        <DashboardCard className="gap-0 xl:col-span-3">
+          <CardHeader className="border-b">
+            <CardTitle>Add note or prescription</CardTitle>
+            <CardDescription>This creates a patient timeline record and audit log.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form action={addDoctorNoteAction} className="flex flex-col gap-4">
+              <input type="hidden" name="code" value={data.consent.code} />
+              <FieldGroup>
+                <Field>
+                  <FieldLabel htmlFor="title">Title</FieldLabel>
+                  <Input id="title" name="title" defaultValue="Consultation note" required />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="note">Clinical note</FieldLabel>
+                  <Textarea
+                    id="note"
+                    name="note"
+                    defaultValue="Reviewed uploaded timeline. Continue current medications and follow up in 2 weeks."
+                    required
+                  />
+                </Field>
+                <Button type="submit">Save note to patient vault</Button>
+              </FieldGroup>
+            </form>
+          </CardContent>
+        </DashboardCard>
+      </section>
+    </div>
+  );
+}

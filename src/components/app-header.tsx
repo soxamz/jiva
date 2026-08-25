@@ -1,0 +1,63 @@
+import Link from 'next/link';
+import { BellIcon, SendIcon } from 'lucide-react';
+
+import { signOutAction } from '@/lib/actions';
+import { cn } from '@/lib/utils';
+import { AppBreadcrumbs } from '@/components/app-breadcrumbs';
+import { type AppShellUser } from '@/components/app-shared';
+import { CustomSidebarTrigger } from '@/components/custom-sidebar-trigger';
+import { DecorIcon } from '@/components/decor-icon';
+import { NavUser } from '@/components/nav-user';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+
+export function AppHeader({ user }: { user: AppShellUser }) {
+  const isPatient = user.role === 'patient';
+  const quickActionHref = isPatient ? '/share' : '/doctor';
+  const quickActionLabel = isPatient ? 'Share health record' : 'Open doctor portal';
+  const activityHref = isPatient ? '/access-log' : '/emergency';
+  const activityLabel = isPatient ? 'Open access log' : 'Open emergency access';
+
+  return (
+    <header
+      className={cn(
+        'sticky top-0 z-50 flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4 md:px-6',
+        'bg-background/95 supports-backdrop-filter:bg-background/50 backdrop-blur-sm'
+      )}
+    >
+      <DecorIcon className="hidden md:block" position="bottom-left" />
+      <div className="flex min-w-0 items-center gap-3">
+        <CustomSidebarTrigger />
+        <Separator
+          className="mr-2 h-4 data-[orientation=vertical]:self-center"
+          orientation="vertical"
+        />
+        <AppBreadcrumbs page={{ title: isPatient ? 'Patient workspace' : 'Clinical workspace' }} />
+      </div>
+      <div className="flex items-center gap-3">
+        <Button
+          aria-label={quickActionLabel}
+          nativeButton={false}
+          render={<Link href={quickActionHref} />}
+          size="icon-sm"
+          title={quickActionLabel}
+          variant="outline"
+        >
+          <SendIcon data-icon="only" />
+        </Button>
+        <Button
+          aria-label={activityLabel}
+          nativeButton={false}
+          render={<Link href={activityHref} />}
+          size="icon-sm"
+          title={activityLabel}
+          variant="outline"
+        >
+          <BellIcon data-icon="only" />
+        </Button>
+        <Separator className="h-4 data-[orientation=vertical]:self-center" orientation="vertical" />
+        <NavUser signOutAction={signOutAction} user={user} />
+      </div>
+    </header>
+  );
+}

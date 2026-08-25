@@ -1,5 +1,5 @@
-import { AuthForm } from '@/components/auth-form';
+import { SignInForm } from '@/components/auth/sign-in-form';
 
-export default function EmmergencyPage() {
-  return <AuthForm />;
+export default function SignInPage() {
+  return <SignInForm />;
 }

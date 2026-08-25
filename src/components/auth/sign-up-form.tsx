@@ -1,82 +1,70 @@
+'use client';
+
+import Link from 'next/link';
+import { useActionState } from 'react';
+
+import { signUpAction, type FormState } from '@/lib/actions';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-  FieldSeparator,
-} from '@/components/ui/field';
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Fingerprint } from 'lucide-react';
-import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '../ui/input-otp';
+import { Select } from '@/components/ui/select';
 
-export function SignInForm({ className, ...props }: React.ComponentProps<'form'>) {
+export function SignUpForm({ className, ...props }: React.ComponentProps<'form'>) {
+  const [state, action, pending] = useActionState<FormState, FormData>(signUpAction, undefined);
+
   return (
-    <form className={cn('flex flex-col gap-6', className)} {...props}>
+    <form action={action} className={cn('flex w-full flex-col gap-4', className)} {...props}>
       <FieldGroup>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Secure Clinical Access</h1>
-          <p className="text-muted-foreground text-sm text-balance">
-            Verify identity via Aadhaar or registered mobile number.
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold tracking-tight">Create demo account</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Register a patient, doctor, or responder profile for the prototype.
           </p>
         </div>
         <Field>
-          <FieldLabel htmlFor="email">Aadhaar / Mobile Number</FieldLabel>
+          <FieldLabel htmlFor="name">Name</FieldLabel>
+          <Input id="name" name="name" placeholder="Aarav Sharma" required />
+          <FieldError errors={state?.errors?.name?.map((message) => ({ message }))} />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="phone">Mobile number</FieldLabel>
           <Input
-            id="email"
-            type="email"
-            placeholder="Enter 12-digit Aadhaar or 10-digit mobile"
+            id="phone"
+            name="phone"
+            inputMode="numeric"
+            placeholder="10-digit phone"
             required
           />
+          <FieldError errors={state?.errors?.phone?.map((message) => ({ message }))} />
         </Field>
         <Field>
-          <div className="flex items-center">
-            <FieldLabel htmlFor="password">One-Time Password (OTP)</FieldLabel>
-          </div>
-          <InputOTP maxLength={6}>
-            <InputOTPGroup className="w-full">
-              <InputOTPSlot index={0} className="w-full" />
-              <InputOTPSlot index={1} className="w-full" />
-              <InputOTPSlot index={2} className="w-full" />
-            </InputOTPGroup>
-            <InputOTPSeparator />
-            <InputOTPGroup className="w-full">
-              <InputOTPSlot index={3} className="w-full" />
-              <InputOTPSlot index={4} className="w-full" />
-              <InputOTPSlot index={5} className="w-full" />
-            </InputOTPGroup>
-          </InputOTP>
+          <FieldLabel htmlFor="aadhaar">Aadhaar number</FieldLabel>
+          <Input id="aadhaar" name="aadhaar" inputMode="numeric" placeholder="Optional for demo" />
+          <FieldError errors={state?.errors?.aadhaar?.map((message) => ({ message }))} />
         </Field>
         <Field>
-          <Button type="submit">Verify & Autheticate</Button>
+          <FieldLabel htmlFor="role">Role</FieldLabel>
+          <Select id="role" name="role" defaultValue="patient">
+            <option value="patient">Patient</option>
+            <option value="doctor">Doctor</option>
+            <option value="responder">Emergency responder</option>
+          </Select>
         </Field>
-        <FieldSeparator>Or continue with</FieldSeparator>
         <Field>
-          <Alert variant="destructive">
-            <AlertTitle>Emergency Break-Glass</AlertTitle>
-            <AlertDescription>
-              For authorized first responders and ER personnel requiring immediate access to
-              critical patient histories during life-threatening events. All access is strictly
-              audited.
-            </AlertDescription>
-          </Alert>
-          <Alert>
-            <Fingerprint />
-            <AlertTitle>Biometric Authentication</AlertTitle>
-            <AlertDescription>
-              Connect standard USB fingerprint scanner for rapid login.
-            </AlertDescription>
-          </Alert>
-          <Button variant="destructive">Initiate Emergency Access</Button>
-          <FieldDescription className="text-center">
-            Don&apos;t have an account?{' '}
-            <a href="#" className="underline underline-offset-4">
-              Sign up
-            </a>
-          </FieldDescription>
+          <FieldLabel htmlFor="otp">Demo OTP</FieldLabel>
+          <Input id="otp" name="otp" inputMode="numeric" defaultValue="123456" required />
+          <FieldError errors={state?.errors?.otp?.map((message) => ({ message }))} />
         </Field>
+        {state?.message && <FieldError>{state.message}</FieldError>}
+        <Field>
+          <Button type="submit" disabled={pending}>
+            {pending ? 'Creating...' : 'Create account'}
+          </Button>
+        </Field>
+        <FieldDescription className="text-center">
+          Already registered? <Link href="/sign-in">Sign in</Link>
+        </FieldDescription>
       </FieldGroup>
     </form>
   );

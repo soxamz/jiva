@@ -1,82 +1,57 @@
+'use client';
+
+import Link from 'next/link';
+import { useActionState } from 'react';
+
+import { signInAction, type FormState } from '@/lib/actions';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-  FieldSeparator,
-} from '@/components/ui/field';
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Fingerprint } from 'lucide-react';
-import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '../ui/input-otp';
 
 export function SignInForm({ className, ...props }: React.ComponentProps<'form'>) {
+  const [state, action, pending] = useActionState<FormState, FormData>(signInAction, undefined);
+
   return (
-    <form className={cn('flex flex-col gap-6', className)} {...props}>
+    <form action={action} className={cn('flex w-full flex-col gap-4', className)} {...props}>
       <FieldGroup>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Secure Clinical Access</h1>
-          <p className="text-muted-foreground text-sm text-balance">
-            Verify identity via Aadhaar or registered mobile number.
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold tracking-tight">Secure clinical access</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Sign in with the demo OTP flow. Use OTP 123456.
           </p>
         </div>
         <Field>
-          <FieldLabel htmlFor="email">Aadhaar / Mobile Number</FieldLabel>
+          <FieldLabel htmlFor="identifier">Aadhaar / mobile number</FieldLabel>
           <Input
-            id="email"
-            type="email"
-            placeholder="Enter 12-digit Aadhaar or 10-digit mobile"
+            id="identifier"
+            name="identifier"
+            inputMode="numeric"
+            defaultValue="9876543210"
+            aria-describedby="identifier-error"
             required
+          />
+          <FieldError
+            id="identifier-error"
+            errors={state?.errors?.identifier?.map((message) => ({ message }))}
           />
         </Field>
         <Field>
-          <div className="flex items-center">
-            <FieldLabel htmlFor="password">One-Time Password (OTP)</FieldLabel>
-          </div>
-          <InputOTP maxLength={6}>
-            <InputOTPGroup className="w-full">
-              <InputOTPSlot index={0} className="w-full" />
-              <InputOTPSlot index={1} className="w-full" />
-              <InputOTPSlot index={2} className="w-full" />
-            </InputOTPGroup>
-            <InputOTPSeparator />
-            <InputOTPGroup className="w-full">
-              <InputOTPSlot index={3} className="w-full" />
-              <InputOTPSlot index={4} className="w-full" />
-              <InputOTPSlot index={5} className="w-full" />
-            </InputOTPGroup>
-          </InputOTP>
+          <FieldLabel htmlFor="otp">One-time password</FieldLabel>
+          <Input id="otp" name="otp" inputMode="numeric" defaultValue="123456" required />
+          <FieldError errors={state?.errors?.otp?.map((message) => ({ message }))} />
         </Field>
+        {state?.message && <FieldError>{state.message}</FieldError>}
         <Field>
-          <Button type="submit">Verify & Autheticate</Button>
+          <Button type="submit" disabled={pending}>
+            {pending ? 'Verifying...' : 'Verify and authenticate'}
+          </Button>
         </Field>
-        <FieldSeparator>Or continue with</FieldSeparator>
-        <Field>
-          <Alert variant="destructive">
-            <AlertTitle>Emergency Break-Glass</AlertTitle>
-            <AlertDescription>
-              For authorized first responders and ER personnel requiring immediate access to
-              critical patient histories during life-threatening events. All access is strictly
-              audited.
-            </AlertDescription>
-          </Alert>
-          <Alert>
-            <Fingerprint />
-            <AlertTitle>Biometric Authentication</AlertTitle>
-            <AlertDescription>
-              Connect standard USB fingerprint scanner for rapid login.
-            </AlertDescription>
-          </Alert>
-          <Button variant="destructive">Initiate Emergency Access</Button>
-          <FieldDescription className="text-center">
-            Don&apos;t have an account?{' '}
-            <a href="#" className="underline underline-offset-4">
-              Sign up
-            </a>
-          </FieldDescription>
-        </Field>
+        <FieldDescription className="text-center">
+          Need an account? <Link href="/sign-up">Create one</Link>
+          <br />
+          Emergency responder? <Link href="/emergency">Use break-glass</Link>
+        </FieldDescription>
       </FieldGroup>
     </form>
   );
