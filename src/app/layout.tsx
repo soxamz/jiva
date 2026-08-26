@@ -20,8 +20,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'JivaHQ',
-  description: 'Digital health vault and clinical intake prototype',
+  title: 'JivaHQ Clinical Intake',
+  description:
+    'Conversational clinical intake with adaptive SOCRATES questioning and draft physician summaries.',
 };
 
 export default async function RootLayout({ children }: LayoutProps<'/'>) {

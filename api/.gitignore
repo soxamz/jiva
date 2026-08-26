@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+.ruff_cache/
+app/data/sessions_store.json
+runtime/
