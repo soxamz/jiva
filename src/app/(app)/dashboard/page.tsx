@@ -1,14 +1,6 @@
 import Link from 'next/link';
-import {
-  ActivityIcon,
-  AlertTriangleIcon,
-  FileTextIcon,
-  HeartPulseIcon,
-  PhoneIcon,
-  PillIcon,
-  QrCodeIcon,
-  ShieldCheckIcon,
-} from 'lucide-react';
+import { ActivityIcon, FileTextIcon, PillIcon, QrCodeIcon, ShieldCheckIcon } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import {
@@ -20,391 +12,274 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { getPatientWorkspace } from '@/lib/dal';
-import { formatDateTime, minutesUntil } from '@/lib/format';
+import { formatDateTime } from '@/lib/format';
 import { getI18n } from '@/lib/i18n';
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemHeader,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/ui/item';
+import { cn } from '@/lib/utils';
 
-function DashboardAction({
-  href,
-  title,
-  description,
-  icon: Icon,
-  actionLabel,
-  variant = 'secondary',
-}: Readonly<{
+type DashboardLinkCardProps = {
   href: string;
   title: string;
   description: string;
-  icon: React.ComponentType<{ 'aria-hidden'?: boolean }>;
   actionLabel: string;
-  variant?: 'default' | 'secondary';
+  icon: typeof FileTextIcon;
+  iconClassName: string;
+};
+
+function DashboardLinkCard({
+  href,
+  title,
+  description,
+  actionLabel,
+  icon: Icon,
+  iconClassName,
+}: Readonly<DashboardLinkCardProps>) {
+  return (
+    <Link
+      href={href}
+      className="patient-bento-action group focus-visible:ring-ring/30 border-border/70 flex min-w-0 items-center gap-3 rounded-xl border px-3 py-3 transition-[background-color,color] focus-visible:ring-3 focus-visible:outline-none"
+    >
+      <span
+        className={cn(
+          'flex size-10 shrink-0 items-center justify-center rounded-xl',
+          iconClassName
+        )}
+      >
+        <Icon className="size-5" aria-hidden />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-medium">{title}</span>
+        <span className="text-muted-foreground mt-0.5 block truncate text-xs">{description}</span>
+      </span>
+      <span className="text-primary shrink-0 text-xs font-medium group-hover:underline">
+        {actionLabel}
+      </span>
+    </Link>
+  );
+}
+
+function SummaryCard({
+  icon: Icon,
+  label,
+  value,
+  href,
+  actionLabel,
+  children,
+  iconClassName = 'bg-sky-50 text-primary dark:bg-sky-950/40',
+  className,
+}: Readonly<{
+  icon: typeof FileTextIcon;
+  label: string;
+  value?: React.ReactNode;
+  href: string;
+  actionLabel: string;
+  children?: React.ReactNode;
+  iconClassName?: string;
+  className?: string;
 }>) {
   return (
-    <Item variant="outline" className="h-full">
-      <ItemMedia variant="icon">
-        <Icon />
-      </ItemMedia>
-      <ItemHeader>
-        <ItemContent>
-          <ItemTitle>{title}</ItemTitle>
-          <ItemDescription>{description}</ItemDescription>
-        </ItemContent>
-      </ItemHeader>
-      <ItemActions>
-        <Link href={href} className={buttonVariants({ size: 'sm', variant })}>
+    <Card
+      className={cn(
+        'patient-glass-card min-h-36 min-w-0 overflow-hidden rounded-2xl py-4 [--card-spacing:--spacing(4)]',
+        className
+      )}
+    >
+      <CardContent className="flex h-full flex-col">
+        <span className={cn('flex size-9 items-center justify-center rounded-xl', iconClassName)}>
+          <Icon className="size-4" aria-hidden />
+        </span>
+        <p className="text-muted-foreground mt-3 text-xs font-medium">{label}</p>
+        {value !== undefined && (
+          <p className="mt-1 text-2xl font-semibold tracking-normal">{value}</p>
+        )}
+        {children}
+        <Link
+          href={href}
+          className={cn(
+            buttonVariants({ size: 'xs', variant: 'secondary' }),
+            'mt-auto w-full justify-center rounded-xl'
+          )}
+        >
           {actionLabel}
         </Link>
-      </ItemActions>
-    </Item>
+      </CardContent>
+    </Card>
   );
 }
 
 export default async function DashboardPage() {
   const data = await getPatientWorkspace();
   const { locale, t } = await getI18n();
-  const latestIntake = data.intakeSessions[0];
-  const urgentIntakes = data.intakeSessions.filter((intake) => intake.redFlag).length;
-  const healthCompleteness =
-    (data.profile?.bloodType ? 25 : 0) +
-    ((data.profile?.allergies?.length ?? 0) > 0 ? 25 : 0) +
-    ((data.profile?.currentMedications?.length ?? 0) > 0 ? 25 : 0) +
-    ((data.profile?.emergencyContacts?.length ?? 0) > 0 ? 25 : 0);
   const medications = data.profile?.currentMedications ?? [];
-  const allergies = data.profile?.allergies ?? [];
-  const emergencyContacts = data.profile?.emergencyContacts ?? [];
 
   return (
-    <div className="flex flex-col gap-4">
-      <section className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-        <div className="min-w-0">
-          <p className="text-muted-foreground text-sm">{t('dashboard.healthSpace')}</p>
-          <h1 className="text-2xl font-semibold">
-            {t('dashboard.hello', { name: data.user.name })}
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">{t('dashboard.readyForVisit')}</p>
-        </div>
-        <Link href="/emergency-card" className={buttonVariants({ variant: 'outline' })}>
-          <ShieldCheckIcon data-icon="inline-start" aria-hidden />
-          {t('dashboard.emergencyCard')}
-        </Link>
+    <div className="flex min-w-0 flex-col gap-6">
+      <section>
+        <h1 className="text-3xl font-semibold tracking-normal text-balance sm:text-4xl">
+          {t('dashboard.hello', { name: data.user.name })}
+        </h1>
+        <p className="text-muted-foreground mt-1 text-sm">{t('dashboard.readyForVisit')}</p>
       </section>
 
-      <section className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Item variant="outline" className="h-full">
-          <ItemMedia variant="icon">
-            <FileTextIcon aria-hidden />
-          </ItemMedia>
-          <ItemHeader>
-            <ItemContent>
-              <ItemTitle className="text-2xl">{data.documents.length}</ItemTitle>
-              <ItemDescription>{t('dashboard.medicalRecords')}</ItemDescription>
-            </ItemContent>
-          </ItemHeader>
-          <ItemActions>
+      <section className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Card className="!border-primary !bg-primary !text-primary-foreground min-h-36 min-w-0 rounded-2xl py-4 shadow-none [--card-spacing:--spacing(4)]">
+          <CardContent className="flex h-full flex-col">
+            <p className="text-lg font-semibold">{t('dashboard.checkSymptoms')}</p>
+            <p className="text-primary-foreground/80 mt-1 text-xs leading-5">
+              {t('dashboard.checkSymptomsDescription')}
+            </p>
             <Link
-              href="/documents"
-              className={buttonVariants({ size: 'sm', variant: 'secondary' })}
+              href="/intake"
+              className="text-primary mt-auto inline-flex h-8 w-full items-center justify-center rounded-xl bg-white px-3 text-xs font-medium transition-colors hover:bg-sky-50 focus-visible:ring-3 focus-visible:ring-white/70 focus-visible:outline-none"
             >
-              {t('dashboard.addOrViewRecords')}
+              {t('dashboard.check')}
             </Link>
-          </ItemActions>
-        </Item>
-        <Item variant="outline" className="h-full">
-          <ItemMedia variant="icon">
-            <ShieldCheckIcon aria-hidden />
-          </ItemMedia>
-          <ItemHeader>
-            <ItemContent>
-              <ItemTitle className="text-2xl">
-                {t('dashboard.ready', { percent: healthCompleteness })}
-              </ItemTitle>
-              <ItemDescription>{t('dashboard.emergencyInformation')}</ItemDescription>
-            </ItemContent>
-          </ItemHeader>
-          <ItemActions>
-            <Link
-              href="/emergency-card"
-              className={buttonVariants({ size: 'sm', variant: 'secondary' })}
-            >
-              {t('dashboard.checkDetails')}
-            </Link>
-          </ItemActions>
-        </Item>
-        <Item variant="outline" className="h-full">
-          <ItemMedia variant="icon">
-            <QrCodeIcon aria-hidden />
-          </ItemMedia>
-          <ItemHeader>
-            <ItemContent>
-              <ItemTitle className="text-2xl">
-                {data.activeConsents.length === 0
-                  ? t('dashboard.noAccess')
-                  : t('dashboard.activeAccess', { count: data.activeConsents.length })}
-              </ItemTitle>
-              <ItemDescription>{t('dashboard.doctorAccess')}</ItemDescription>
-            </ItemContent>
-          </ItemHeader>
-          <ItemActions>
-            <Link href="/share" className={buttonVariants({ size: 'sm' })}>
-              {t('dashboard.shareRecords')}
-            </Link>
-          </ItemActions>
-        </Item>
-        <DashboardAction
-          actionLabel={t('dashboard.add')}
-          description={t('dashboard.addMedicalRecordDescription')}
-          href="/documents"
-          icon={FileTextIcon}
-          title={t('dashboard.addMedicalRecord')}
-        />
-        <DashboardAction
-          actionLabel={t('dashboard.check')}
-          description={t('dashboard.checkSymptomsDescription')}
-          href="/intake"
-          icon={HeartPulseIcon}
-          title={t('dashboard.checkSymptoms')}
-          variant="default"
-        />
-        <DashboardAction
-          actionLabel={t('dashboard.shareRecords')}
-          description={t('dashboard.shareWithDoctorDescription')}
+          </CardContent>
+        </Card>
+        <SummaryCard
+          actionLabel={t('dashboard.manageAccess')}
           href="/share"
           icon={QrCodeIcon}
-          title={t('dashboard.shareWithDoctor')}
+          iconClassName="bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300"
+          label={t('dashboard.doctorAccess')}
+          value={
+            data.activeConsents.length === 0
+              ? t('dashboard.noAccess')
+              : t('dashboard.activeAccess', { count: data.activeConsents.length })
+          }
         />
+        <SummaryCard
+          actionLabel={t('dashboard.addOrViewRecords')}
+          href="/documents"
+          icon={FileTextIcon}
+          iconClassName="bg-sky-50 text-primary dark:bg-sky-950/40"
+          label={t('dashboard.medicalRecords')}
+          value={data.documents.length}
+        />
+        <SummaryCard
+          actionLabel={t('dashboard.editHealthInformation')}
+          href="/health-information"
+          icon={PillIcon}
+          iconClassName="bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300"
+          label={t('dashboard.medicines')}
+        >
+          <div className="mt-2 flex min-h-10 flex-wrap content-start gap-1.5">
+            {medications.length ? (
+              medications.slice(0, 2).map((medication) => (
+                <Badge className="max-w-full truncate" key={medication} variant="secondary">
+                  {medication}
+                </Badge>
+              ))
+            ) : (
+              <p className="text-muted-foreground text-sm">{t('dashboard.noMedicines')}</p>
+            )}
+          </div>
+        </SummaryCard>
       </section>
 
-      <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
-        <div className="flex flex-col gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('dashboard.recentUpdates')}</CardTitle>
-              <CardDescription>{t('dashboard.recentUpdatesDescription')}</CardDescription>
-            </CardHeader>
-            <CardContent className="px-0">
-              {data.timeline.length > 0 ? (
-                <ul className="divide-border flex flex-col divide-y">
-                  {data.timeline.slice(0, 4).map((item) => (
-                    <li className="flex items-start gap-2 px-4 py-4" key={item.id}>
-                      <span className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-xl">
-                        {item.type === 'intake' ? (
-                          <ActivityIcon aria-hidden />
-                        ) : (
-                          <FileTextIcon aria-hidden />
-                        )}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium">{item.title}</p>
-                        <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">
-                          {item.body}
-                        </p>
-                        <p className="text-muted-foreground mt-1 text-xs">
-                          {formatDateTime(item.date, locale)}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-muted-foreground px-4 text-sm">{t('dashboard.noUpdates')}</p>
-              )}
-            </CardContent>
-            <CardFooter>
-              <Link
-                href="/timeline"
-                className={buttonVariants({ size: 'sm', variant: 'secondary' })}
-              >
-                {t('dashboard.viewUpdates')}
-              </Link>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('dashboard.latestSymptomCheck')}</CardTitle>
-              <CardDescription>{t('dashboard.latestSymptomDescription')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {latestIntake ? (
-                <div className="flex flex-col gap-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={latestIntake.redFlag ? 'destructive' : 'success'}>
-                      {latestIntake.redFlag ? t('dashboard.needsAttention') : t('dashboard.saved')}
-                    </Badge>
-                    <span className="text-muted-foreground text-sm">
-                      {latestIntake.chiefComplaint}
-                    </span>
-                  </div>
-                  <p className="text-muted-foreground text-sm leading-6">{latestIntake.summary}</p>
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-sm">{t('dashboard.noSymptomCheck')}</p>
-              )}
-            </CardContent>
-            <CardFooter>
-              <Link href="/intake" className={buttonVariants({ size: 'sm', variant: 'secondary' })}>
-                {t('dashboard.checkSymptoms')}
-              </Link>
-            </CardFooter>
-          </Card>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('dashboard.importantInformation')}</CardTitle>
-              <CardDescription>{t('dashboard.importantInformationDescription')}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-muted-foreground text-sm">{t('dashboard.bloodGroup')}</span>
-                <strong className="text-2xl">
-                  {data.profile?.bloodType ?? t('dashboard.notAdded')}
-                </strong>
-              </div>
+      <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(300px,0.75fr)]">
+        <Card className="patient-glass-card rounded-2xl">
+          <CardHeader>
+            <CardTitle>{t('dashboard.recentUpdates')}</CardTitle>
+            <CardDescription>{t('dashboard.recentUpdatesDescription')}</CardDescription>
+          </CardHeader>
+          <CardContent className="px-0">
+            {data.timeline.length ? (
               <ul className="divide-border flex flex-col divide-y">
-                <li className="flex items-start gap-2 py-4">
-                  <span className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-xl">
-                    <PillIcon aria-hidden />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <span className="font-medium">{t('dashboard.medicines')}</span>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {medications.length > 0 ? (
-                        medications.slice(0, 3).map((medication) => (
-                          <Badge key={medication} variant="secondary">
-                            {medication}
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-muted-foreground text-sm">
-                          {t('dashboard.noMedicines')}
-                        </span>
+                {data.timeline.slice(0, 3).map((item) => (
+                  <li className="flex min-w-0 items-start gap-3 px-5 py-4" key={item.id}>
+                    <span
+                      className={cn(
+                        'flex size-10 shrink-0 items-center justify-center rounded-xl',
+                        item.type === 'intake'
+                          ? 'bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300'
+                          : 'text-primary bg-sky-50 dark:bg-sky-950/40'
                       )}
-                    </div>
-                  </div>
-                </li>
-                <li className="flex items-start gap-2 py-4">
-                  <span className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-xl">
-                    <AlertTriangleIcon aria-hidden />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <span className="font-medium">{t('dashboard.allergies')}</span>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {allergies.length > 0 ? (
-                        allergies.map((allergy) => <Badge key={allergy}>{allergy}</Badge>)
-                      ) : (
-                        <span className="text-muted-foreground text-sm">
-                          {t('dashboard.noAllergies')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </li>
-              </ul>
-            </CardContent>
-            <CardFooter className="gap-2">
-              <Link
-                href="/health-information"
-                className={buttonVariants({ size: 'sm', variant: 'secondary' })}
-              >
-                {t('dashboard.editHealthInformation')}
-              </Link>
-              <Link
-                href="/emergency-card"
-                className={buttonVariants({ size: 'sm', variant: 'secondary' })}
-              >
-                {t('dashboard.openEmergencyCard')}
-              </Link>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <PhoneIcon aria-hidden />
-                <CardTitle>{t('dashboard.emergencyContacts')}</CardTitle>
-              </div>
-              <CardDescription>{t('dashboard.emergencyContactsDescription')}</CardDescription>
-            </CardHeader>
-            <CardContent className="px-0">
-              {emergencyContacts.length > 0 ? (
-                <ul className="divide-border flex flex-col divide-y">
-                  {emergencyContacts.slice(0, 2).map((contact) => (
-                    <li
-                      className="flex items-center justify-between gap-3 px-5 py-3"
-                      key={contact.phone}
                     >
-                      <div className="min-w-0">
-                        <p className="truncate font-medium">{contact.name}</p>
-                        <p className="text-muted-foreground text-sm">{contact.relation}</p>
+                      {item.type === 'intake' ? (
+                        <ActivityIcon className="size-4" aria-hidden />
+                      ) : (
+                        <FileTextIcon className="size-4" aria-hidden />
+                      )}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 items-center justify-between gap-3">
+                        <p className="truncate font-medium">{item.title}</p>
+                        {item.redFlag && (
+                          <Badge className="shrink-0" variant="destructive">
+                            {t('dashboard.needsAttention')}
+                          </Badge>
+                        )}
                       </div>
-                      <span className="text-muted-foreground shrink-0 font-mono text-sm">
-                        {contact.phone}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-muted-foreground px-5 text-sm">
-                  {t('dashboard.noEmergencyContacts')}
-                </p>
+                      <p className="text-muted-foreground mt-1 line-clamp-2 text-sm leading-5">
+                        {item.body}
+                      </p>
+                      <p className="text-primary mt-1.5 text-xs font-medium">
+                        {formatDateTime(item.date, locale)}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-muted-foreground px-5 text-sm">{t('dashboard.noUpdates')}</p>
+            )}
+          </CardContent>
+          <CardFooter>
+            <Link
+              href="/timeline"
+              className={cn(
+                buttonVariants({ size: 'sm', variant: 'secondary' }),
+                'w-full rounded-xl'
               )}
-            </CardContent>
-            <CardFooter>
-              <Link
-                href="/health-information"
-                className={buttonVariants({ size: 'sm', variant: 'secondary' })}
-              >
-                {t('dashboard.updateContacts')}
-              </Link>
-            </CardFooter>
-          </Card>
+            >
+              {t('dashboard.viewUpdates')}
+            </Link>
+          </CardFooter>
+        </Card>
 
-          <Card>
+        <aside className="flex min-w-0 flex-col gap-4" aria-label={t('dashboard.quickActions')}>
+          <Card className="patient-glass-card rounded-2xl py-4 [--card-spacing:--spacing(4)]">
             <CardHeader>
-              <CardTitle>{t('dashboard.recordAccess')}</CardTitle>
-              <CardDescription>{t('dashboard.recordAccessDescription')}</CardDescription>
+              <CardTitle>{t('dashboard.quickActions')}</CardTitle>
+              <CardDescription>{t('dashboard.quickActionsDescription')}</CardDescription>
             </CardHeader>
-            <CardContent>
-              {data.activeConsents.length > 0 ? (
-                <ul className="flex flex-col gap-3">
-                  {data.activeConsents.slice(0, 2).map((consent) => (
-                    <li className="flex items-center justify-between gap-3" key={consent.id}>
-                      <span className="font-mono font-medium">{consent.code}</span>
-                      <span className="text-muted-foreground text-sm">
-                        {t('dashboard.minutesLeft', { count: minutesUntil(consent.expiresAt) })}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <PhoneIcon aria-hidden />
-                  <p className="text-muted-foreground text-sm">{t('dashboard.noDoctorAccess')}</p>
-                </div>
-              )}
+            <CardContent className="mt-3 flex flex-col gap-2">
+              <DashboardLinkCard
+                actionLabel={t('dashboard.add')}
+                description={t('dashboard.addMedicalRecordDescription')}
+                href="/documents"
+                icon={FileTextIcon}
+                iconClassName="bg-sky-50 text-primary dark:bg-sky-950/40"
+                title={t('dashboard.addMedicalRecord')}
+              />
+              <DashboardLinkCard
+                actionLabel={t('dashboard.shareRecords')}
+                description={t('dashboard.shareWithDoctorDescription')}
+                href="/share"
+                icon={QrCodeIcon}
+                iconClassName="bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300"
+                title={t('dashboard.shareWithDoctor')}
+              />
+              <DashboardLinkCard
+                actionLabel={t('nav.accessLog')}
+                description={t('dashboard.recordAccessDescription')}
+                href="/access-log"
+                icon={ActivityIcon}
+                iconClassName="bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300"
+                title={t('dashboard.recordAccess')}
+              />
+              <DashboardLinkCard
+                actionLabel={t('dashboard.checkDetails')}
+                description={t('dashboard.emergencyInformation')}
+                href="/emergency-card"
+                icon={ShieldCheckIcon}
+                iconClassName="bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                title={t('dashboard.emergencyCard')}
+              />
             </CardContent>
-            <CardFooter>
-              <Link href="/share" className={buttonVariants({ size: 'sm', variant: 'secondary' })}>
-                {t('dashboard.manageAccess')}
-              </Link>
-            </CardFooter>
           </Card>
-        </div>
+        </aside>
       </section>
-
-      {urgentIntakes > 0 && (
-        <p className="text-destructive text-sm">{t('dashboard.urgentNotice')}</p>
-      )}
     </div>
   );
 }

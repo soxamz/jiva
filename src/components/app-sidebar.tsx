@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { HeartPulseIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { LogoIcon } from '@/components/logo';
@@ -30,16 +31,20 @@ export function AppSidebar({ user }: { user: AppShellUser }) {
   return (
     <Sidebar
       className={cn(
-        '*:data-[slot=sidebar-inner]:bg-background',
-        '*:data-[slot=sidebar-inner]:dark:bg-[radial-gradient(60%_18%_at_10%_0%,--theme(--color-foreground/.08),transparent)]',
+        user.role === 'patient'
+          ? 'patient-glass-sidebar'
+          : '*:data-[slot=sidebar-inner]:bg-background',
         '**:data-[slot=sidebar-menu-button]:[&>span]:text-foreground/75'
       )}
       collapsible="icon"
       variant="sidebar"
     >
       <SidebarHeader className="h-14 justify-center border-b px-2">
-        <SidebarMenuButton render={<Link href={homeHref} />} tooltip={t('sidebar.home')}>
-          <LogoIcon />
+        <SidebarMenuButton
+          render={<Link aria-label={t('sidebar.home')} href={homeHref} />}
+          tooltip={t('sidebar.home')}
+        >
+          <LogoIcon className="text-primary" />
           <span className="text-foreground! font-medium">JivaHQ</span>
         </SidebarMenuButton>
       </SidebarHeader>
@@ -49,7 +54,23 @@ export function AppSidebar({ user }: { user: AppShellUser }) {
         ))}
       </SidebarContent>
       <SidebarFooter className="gap-0 p-0">
-        <LatestChange />
+        {user.role === 'patient' ? (
+          <div className="to-primary text-primary-foreground mx-3 mb-3 rounded-2xl bg-linear-to-b from-black p-3 transition-opacity group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0">
+            <HeartPulseIcon className="size-4" aria-hidden />
+            <p className="mt-2 text-sm font-semibold">{t('dashboard.checkSymptoms')}</p>
+            <p className="text-primary-foreground/80 mt-1 text-xs leading-4">
+              {t('dashboard.checkSymptomsDescription')}
+            </p>
+            <Link
+              className="text-primary mt-3 inline-flex h-8 w-full items-center justify-center rounded-xl bg-white px-3 text-xs font-medium transition-colors hover:bg-sky-50 focus-visible:ring-3 focus-visible:ring-white/70 focus-visible:outline-none"
+              href="/intake"
+            >
+              {t('dashboard.check')}
+            </Link>
+          </div>
+        ) : (
+          <LatestChange />
+        )}
         <SidebarMenu className="border-t p-2">
           {footerNavLinks.map((item) => (
             <SidebarMenuItem key={item.title}>

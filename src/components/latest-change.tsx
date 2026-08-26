@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { XIcon } from 'lucide-react';
 import { useI18n } from '@/components/i18n-provider';
 
@@ -28,16 +28,17 @@ export function LatestChange() {
       </span>
       <p className="text-xs font-medium">{t('sidebar.consentControls')}</p>
       <span className="text-muted-foreground text-[10px]">{t('sidebar.consentDescription')}</span>
-      <Button
-        className="w-max px-0 text-xs font-light"
-        size="sm"
-        variant="link"
-        render={<Link href="/share" />}
-        nativeButton={false}
+      <Link
+        className={cn(
+          buttonVariants({ size: 'sm', variant: 'link' }),
+          'w-max px-0 text-xs font-light'
+        )}
+        href="/share"
       >
         {t('sidebar.openSharing')}
-      </Button>
+      </Link>
       <Button
+        aria-label={`Dismiss ${t('sidebar.consentControls')}`}
         className="absolute top-2 right-2 z-10 size-6 rounded-full opacity-0 transition-opacity group-hover/latest-change:opacity-100"
         onClick={() => setIsOpen(false)}
         size="icon-sm"

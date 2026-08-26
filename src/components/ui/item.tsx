@@ -43,7 +43,7 @@ const itemVariants = cva(
       size: {
         default: 'gap-3.5 px-4 py-3.5',
         sm: 'gap-3.5 px-3.5 py-3',
-        xs: 'gap-2 px-2.5 py-2 in-data-[slot=dropdown-menu-content]:p-0',
+        xs: 'gap-2.5 px-3 py-2.5 in-data-[slot=dropdown-menu-content]:p-0',
       },
     },
     defaultVariants: {
