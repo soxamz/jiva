@@ -1,9 +1,9 @@
-from flask import Flask, jsonify
-app = Flask(__name__)
+"""Vercel's FastAPI entrypoint.
 
-@app.route('/api/hello', methods=['GET'])
-def hello_world():
-    return jsonify({"message": "Hello, World!"})
+The runtime discovers ``api/index.py`` and sends all ``/api/*`` requests to
+the exported ASGI application.
+"""
 
-if __name__ == '__main__':
-    app.run(port=5328)
+from main import app
+
+__all__ = ['app']

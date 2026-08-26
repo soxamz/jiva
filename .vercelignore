@@ -1,0 +1,15 @@
+# Local agent, build, and test artifacts are never required by the deployed
+# FastAPI function or the Next.js application.
+.agents/
+.codex/
+.codex_tmp/
+.lingo/
+api/tests/
+api/.venv/
+api/runtime/
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/*.py[cod]
+**/.env*

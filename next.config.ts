@@ -2,6 +2,12 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   async rewrites() {
+    // Vercel routes /api/* directly to api/index.py. Keep this proxy only for
+    // `bun dev`, where the FastAPI server runs separately on port 5328.
+    if (process.env.VERCEL) {
+      return [];
+    }
+
     return [
       {
         source: '/api/:path*',
