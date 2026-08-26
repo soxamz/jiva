@@ -5,7 +5,7 @@ import { requireUser } from '@/lib/dal';
 import { getI18n } from '@/lib/i18n';
 
 export default async function DoctorPage({ searchParams }: PageProps<'/doctor'>) {
-  const user = await requireUser(['doctor', 'responder']);
+  const user = await requireUser(['doctor']);
   const { t } = await getI18n();
   const { access } = await searchParams;
   const accessError =
@@ -50,6 +50,22 @@ export default async function DoctorPage({ searchParams }: PageProps<'/doctor'>)
               {user.doctorId ?? t('doctor.notAssigned')}
             </p>
             <p className="text-muted-foreground mt-2 text-sm">{t('doctor.revokeNotice')}</p>
+          </CardContent>
+        </DashboardCard>
+        <DashboardCard className="gap-0">
+          <CardHeader className="border-b">
+            <CardTitle>{t('doctor.consultationHours')}</CardTitle>
+            <CardDescription>{t('doctor.consultationHoursDescription')}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 text-sm">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">{t('doctor.morningConsultation')}</span>
+              <span className="font-medium">10:00 - 13:00</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">{t('doctor.eveningConsultation')}</span>
+              <span className="font-medium">17:00 - 20:00</span>
+            </div>
           </CardContent>
         </DashboardCard>
       </section>

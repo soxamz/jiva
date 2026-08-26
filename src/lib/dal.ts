@@ -217,7 +217,9 @@ export async function requireUser(roles?: UserRole[]) {
   }
 
   if (roles && !roles.includes(user.role)) {
-    redirect(user.role === 'patient' ? '/dashboard' : '/doctor');
+    redirect(
+      user.role === 'patient' ? '/dashboard' : user.role === 'responder' ? '/emergency' : '/doctor'
+    );
   }
 
   return user;
@@ -559,7 +561,7 @@ async function getValidConsent(code: string, viewerId: string) {
 }
 
 export async function redeemConsentForCurrentUser(code: string) {
-  const viewer = await requireUser(['doctor', 'responder']);
+  const viewer = await requireUser(['doctor']);
   const consent = await getValidConsent(code, viewer.id);
 
   if (!consent.granteeId) {
@@ -575,7 +577,7 @@ export async function redeemConsentForCurrentUser(code: string) {
 }
 
 export async function getDoctorAccessData(code: string) {
-  const viewer = await requireUser(['doctor', 'responder']);
+  const viewer = await requireUser(['doctor']);
   const consent = await getValidConsent(code, viewer.id);
   const [patient] = await db.select().from(users).where(eq(users.id, consent.patientId)).limit(1);
 
@@ -617,7 +619,7 @@ export async function addDoctorNoteForConsent(
   code: string,
   input: { title: string; note: string }
 ) {
-  const viewer = await requireUser(['doctor', 'responder']);
+  const viewer = await requireUser(['doctor']);
   const consent = await getValidConsent(code, viewer.id);
   const [document] = await db
     .insert(documents)
@@ -651,6 +653,42 @@ export async function addDoctorNoteForConsent(
   });
 
   return document;
+}
+
+export async function getEmergencyAccessData(code: string) {
+  const viewer = await requireUser(['responder']);
+  const consent = await getValidConsent(code, viewer.id);
+
+  if (consent.granteeId !== viewer.id) {
+    throw new ConsentAccessError('access_unavailable');
+  }
+
+  const [patient] = await db.select().from(users).where(eq(users.id, consent.patientId)).limit(1);
+
+  if (!patient) {
+    throw new ConsentAccessError('access_unavailable');
+  }
+
+  const [profile] = await db
+    .select()
+    .from(medicalProfiles)
+    .where(eq(medicalProfiles.userId, patient.id))
+    .limit(1);
+
+  const recentIntakes = await db
+    .select()
+    .from(intakeSessions)
+    .where(eq(intakeSessions.patientId, patient.id))
+    .orderBy(desc(intakeSessions.createdAt))
+    .limit(3);
+
+  return {
+    viewer: toSafeUser(viewer),
+    patient: toSafeUser(patient),
+    profile,
+    recentIntakes,
+    consent,
+  };
 }
 
 export async function createBreakGlassAccess(input: { identifier: string; reason: string }) {

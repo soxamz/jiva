@@ -22,7 +22,8 @@ import {
 export function AppSidebar({ user }: { user: AppShellUser }) {
   const { t } = useI18n();
   const pathname = usePathname();
-  const homeHref = user.role === 'patient' ? '/dashboard' : '/doctor';
+  const homeHref =
+    user.role === 'patient' ? '/dashboard' : user.role === 'responder' ? '/emergency' : '/doctor';
   const navGroups = getNavGroups(user.role, pathname, t);
   const footerNavLinks = getFooterNavLinks(user.role, pathname, t);
 

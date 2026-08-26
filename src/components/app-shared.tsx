@@ -67,12 +67,17 @@ function patientGroups(t: Translate): SidebarNavGroup[] {
   ];
 }
 
-function clinicalGroups(t: Translate): SidebarNavGroup[] {
+function doctorGroups(t: Translate): SidebarNavGroup[] {
   return [
     {
       label: t('nav.clinicalWorkspace'),
       items: [{ title: t('nav.doctorPortal'), path: '/doctor', icon: <StethoscopeIcon /> }],
     },
+  ];
+}
+
+function responderGroups(t: Translate): SidebarNavGroup[] {
+  return [
     {
       label: t('nav.emergency'),
       items: [{ title: t('nav.breakGlass'), path: '/emergency', icon: <AmbulanceIcon /> }],
@@ -99,7 +104,14 @@ function withActiveState(groups: SidebarNavGroup[], pathname: string): SidebarNa
 }
 
 export function getNavGroups(role: AppShellUser['role'], pathname: string, t: Translate) {
-  return withActiveState(role === 'patient' ? patientGroups(t) : clinicalGroups(t), pathname);
+  const groups =
+    role === 'patient'
+      ? patientGroups(t)
+      : role === 'responder'
+        ? responderGroups(t)
+        : doctorGroups(t);
+
+  return withActiveState(groups, pathname);
 }
 
 export function getFooterNavLinks(
@@ -110,7 +122,9 @@ export function getFooterNavLinks(
   const item =
     role === 'patient'
       ? { title: t('nav.emergencyAccess'), path: '/emergency', icon: <AmbulanceIcon /> }
-      : { title: t('nav.patientDashboard'), path: '/dashboard', icon: <LifeBuoyIcon /> };
+      : role === 'responder'
+        ? { title: t('nav.breakGlass'), path: '/emergency', icon: <AmbulanceIcon /> }
+        : { title: t('nav.doctorPortal'), path: '/doctor', icon: <LifeBuoyIcon /> };
 
   return [{ ...item, isActive: matchesRoute(pathname, item.path) }];
 }

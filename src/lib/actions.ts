@@ -344,5 +344,5 @@ export async function breakGlassAction(formData: FormData) {
     role: result.responder.role,
   });
 
-  redirect(`/doctor/access/${result.code}`);
+  redirect(`/emergency/access/${result.code}`);
 }
