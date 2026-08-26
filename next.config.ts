@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // CrewAI turns often take 20–40s; Next's default rewrite proxy timeout is 30s
+  // and surfaces as "socket hang up" / Internal Server Error.
+  experimental: {
+    proxyTimeout: 120_000,
+  },
   reactCompiler: true,
 };
 
