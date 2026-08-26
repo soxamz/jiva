@@ -12,34 +12,32 @@ import {
 } from '@/components/ui/table';
 import { getPatientWorkspace } from '@/lib/dal';
 import { formatDateTime } from '@/lib/format';
+import { getI18n } from '@/lib/i18n';
 
 export default async function AccessLogPage() {
   const data = await getPatientWorkspace();
+  const { locale, t } = await getI18n();
 
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold">Activity on your records</h1>
-        <p className="text-muted-foreground text-sm">
-          See when your records were added, shared, or opened.
-        </p>
+        <h1 className="text-2xl font-semibold">{t('accessLog.title')}</h1>
+        <p className="text-muted-foreground text-sm">{t('accessLog.description')}</p>
       </div>
       <section className="grid grid-cols-1 gap-4">
         <DashboardCard className="gap-0">
           <CardHeader>
-            <CardTitle>Recent activity</CardTitle>
-            <CardDescription>
-              Everything important that happens to your records is listed here.
-            </CardDescription>
+            <CardTitle>{t('accessLog.recent')}</CardTitle>
+            <CardDescription>{t('accessLog.recentDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
             <Table>
               <TableCaption className="sr-only">Recent audit activity.</TableCaption>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="ps-6">What happened</TableHead>
-                  <TableHead>Related record</TableHead>
-                  <TableHead className="pe-6 text-right">Time</TableHead>
+                  <TableHead className="ps-6">{t('accessLog.what')}</TableHead>
+                  <TableHead>{t('accessLog.related')}</TableHead>
+                  <TableHead className="pe-6 text-right">{t('accessLog.time')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -52,7 +50,7 @@ export default async function AccessLogPage() {
                     </TableCell>
                     <TableCell>{log.targetResourceType ?? 'system'}</TableCell>
                     <TableCell className="text-muted-foreground pe-6 text-right">
-                      {formatDateTime(log.createdAt)}
+                      {formatDateTime(log.createdAt, locale)}
                     </TableCell>
                   </TableRow>
                 ))}

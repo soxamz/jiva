@@ -1,0 +1,35 @@
+{
+  "brand": {
+    "name": "JivaHQ",
+    "demoLabel": "JivaHQ SIH டெமோ"
+  },
+  "header": {
+    "patientWorkspace": "நோயாளி பணியிடம்",
+    "clinicalWorkspace": "மருத்துவ பணியிடம்",
+    "shareHealthRecord": "சுகாதார பதிவைப் பகிர்",
+    "openDoctorPortal": "மருத்துவர் போர்ட்டலைத் திற",
+    "openAccessLog": "அணுகல் பதிவைத் திற",
+    "openEmergencyAccess": "அவசர அணுகலைத் திற",
+    "signOut": "வெளியேறு"
+  },
+  "navigation": {
+    "dashboard": "டாஷ்போர்டு",
+    "timeline": "காலவரிசை",
+    "documents": "ஆவணங்கள்",
+    "healthInformation": "சுகாதார தகவல்",
+    "intake": "அறிகுறி சரிபார்ப்பு",
+    "shareAccess": "அணுகலைப் பகிர்",
+    "accessLog": "அணுகல் பதிவு",
+    "emergencyCard": "அவசர அட்டை",
+    "doctorPortal": "மருத்துவர் போர்ட்டல்"
+  },
+  "language": {
+    "choose": "மொழியைத் தேர்ந்தெடு",
+    "english": "ஆங்கிலம்",
+    "hindi": "இந்தி",
+    "odia": "ஒடியா",
+    "bengali": "பெங்காலி",
+    "telugu": "தெலுங்கு",
+    "tamil": "தமிழ்"
+  }
+}

@@ -7,6 +7,7 @@ import { z } from 'zod';
 import {
   addDoctorNoteForConsent,
   authenticateMockUser,
+  isConsentAccessError,
   createBreakGlassAccess,
   createDocumentForCurrentPatient,
   createMockUser,
@@ -18,11 +19,13 @@ import {
 } from '@/lib/dal';
 import { normalizeIdentifier } from '@/lib/identity';
 import { clearSession, createSession } from '@/lib/session';
+import { isLocale, setLocale } from '@/lib/i18n';
 
 export type FormState =
   | {
       message?: string;
       errors?: Record<string, string[]>;
+      errorCode?: 'access_unavailable' | 'assigned_to_another_clinician';
     }
   | undefined;
 
@@ -188,6 +191,14 @@ export async function signOutAction() {
   redirect('/sign-in');
 }
 
+export async function setLocaleAction(value: string) {
+  if (!isLocale(value)) {
+    throw new Error('Unsupported language.');
+  }
+
+  await setLocale(value);
+}
+
 export async function uploadDocumentAction(formData: FormData) {
   const parsed = documentSchema.parse({
     title: formData.get('title'),
@@ -278,11 +289,30 @@ export async function revokeConsentAction(formData: FormData) {
   redirect('/share');
 }
 
-export async function redeemConsentAction(formData: FormData) {
-  const { code } = codeSchema.parse({
+export async function redeemConsentAction(
+  _state: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const parsed = codeSchema.safeParse({
     code: formData.get('code'),
   });
-  const normalizedCode = await redeemConsentForCurrentUser(code);
+
+  if (!parsed.success) {
+    return formErrors(parsed.error);
+  }
+
+  let normalizedCode: string;
+
+  try {
+    normalizedCode = await redeemConsentForCurrentUser(parsed.data.code);
+  } catch (error) {
+    if (isConsentAccessError(error)) {
+      return { errorCode: error.code };
+    }
+
+    return { errorCode: 'access_unavailable' };
+  }
+
   redirect(`/doctor/access/${normalizedCode}`);
 }
 

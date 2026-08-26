@@ -33,40 +33,52 @@ export type SidebarNavGroup = {
   items: SidebarNavItem[];
 };
 
-const patientGroups: SidebarNavGroup[] = [
-  {
-    label: 'Health record',
-    items: [
-      { title: 'Dashboard', path: '/dashboard', icon: <LayoutDashboardIcon /> },
-      { title: 'Timeline', path: '/timeline', icon: <ActivityIcon /> },
-      { title: 'Documents', path: '/documents', icon: <FileTextIcon /> },
-      { title: 'Health information', path: '/health-information', icon: <HeartPulseIcon /> },
-    ],
-  },
-  {
-    label: 'Care',
-    items: [
-      { title: 'Intake', path: '/intake', icon: <ClipboardListIcon /> },
-      { title: 'Share access', path: '/share', icon: <QrCodeIcon /> },
-      { title: 'Access log', path: '/access-log', icon: <HistoryIcon /> },
-    ],
-  },
-  {
-    label: 'Safety',
-    items: [{ title: 'Emergency card', path: '/emergency-card', icon: <ShieldCheckIcon /> }],
-  },
-];
+type Translate = (key: string) => string;
 
-const clinicalGroups: SidebarNavGroup[] = [
-  {
-    label: 'Clinical workspace',
-    items: [{ title: 'Doctor portal', path: '/doctor', icon: <StethoscopeIcon /> }],
-  },
-  {
-    label: 'Emergency',
-    items: [{ title: 'Break-glass access', path: '/emergency', icon: <AmbulanceIcon /> }],
-  },
-];
+function patientGroups(t: Translate): SidebarNavGroup[] {
+  return [
+    {
+      label: t('nav.healthRecord'),
+      items: [
+        { title: t('nav.dashboard'), path: '/dashboard', icon: <LayoutDashboardIcon /> },
+        { title: t('nav.timeline'), path: '/timeline', icon: <ActivityIcon /> },
+        { title: t('nav.documents'), path: '/documents', icon: <FileTextIcon /> },
+        {
+          title: t('nav.healthInformation'),
+          path: '/health-information',
+          icon: <HeartPulseIcon />,
+        },
+      ],
+    },
+    {
+      label: t('nav.care'),
+      items: [
+        { title: t('nav.intake'), path: '/intake', icon: <ClipboardListIcon /> },
+        { title: t('nav.shareAccess'), path: '/share', icon: <QrCodeIcon /> },
+        { title: t('nav.accessLog'), path: '/access-log', icon: <HistoryIcon /> },
+      ],
+    },
+    {
+      label: t('nav.safety'),
+      items: [
+        { title: t('nav.emergencyCard'), path: '/emergency-card', icon: <ShieldCheckIcon /> },
+      ],
+    },
+  ];
+}
+
+function clinicalGroups(t: Translate): SidebarNavGroup[] {
+  return [
+    {
+      label: t('nav.clinicalWorkspace'),
+      items: [{ title: t('nav.doctorPortal'), path: '/doctor', icon: <StethoscopeIcon /> }],
+    },
+    {
+      label: t('nav.emergency'),
+      items: [{ title: t('nav.breakGlass'), path: '/emergency', icon: <AmbulanceIcon /> }],
+    },
+  ];
+}
 
 function matchesRoute(pathname: string, path: string) {
   return pathname === path || (path !== '/emergency' && pathname.startsWith(`${path}/`));
@@ -86,15 +98,19 @@ function withActiveState(groups: SidebarNavGroup[], pathname: string): SidebarNa
   }));
 }
 
-export function getNavGroups(role: AppShellUser['role'], pathname: string) {
-  return withActiveState(role === 'patient' ? patientGroups : clinicalGroups, pathname);
+export function getNavGroups(role: AppShellUser['role'], pathname: string, t: Translate) {
+  return withActiveState(role === 'patient' ? patientGroups(t) : clinicalGroups(t), pathname);
 }
 
-export function getFooterNavLinks(role: AppShellUser['role'], pathname: string): SidebarNavItem[] {
+export function getFooterNavLinks(
+  role: AppShellUser['role'],
+  pathname: string,
+  t: Translate
+): SidebarNavItem[] {
   const item =
     role === 'patient'
-      ? { title: 'Emergency access', path: '/emergency', icon: <AmbulanceIcon /> }
-      : { title: 'Patient dashboard', path: '/dashboard', icon: <LifeBuoyIcon /> };
+      ? { title: t('nav.emergencyAccess'), path: '/emergency', icon: <AmbulanceIcon /> }
+      : { title: t('nav.patientDashboard'), path: '/dashboard', icon: <LifeBuoyIcon /> };
 
   return [{ ...item, isActive: matchesRoute(pathname, item.path) }];
 }

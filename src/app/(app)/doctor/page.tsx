@@ -1,58 +1,55 @@
-import { redeemConsentAction } from '@/lib/actions';
+import { DoctorConsentForm } from '@/components/doctor-consent-form';
 import { DashboardCard } from '@/components/dashboard-card';
-import { Button } from '@/components/ui/button';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
 import { requireUser } from '@/lib/dal';
+import { getI18n } from '@/lib/i18n';
 
-export default async function DoctorPage() {
+export default async function DoctorPage({ searchParams }: PageProps<'/doctor'>) {
   const user = await requireUser(['doctor', 'responder']);
+  const { t } = await getI18n();
+  const { access } = await searchParams;
+  const accessError =
+    access === 'assigned_to_another_clinician'
+      ? t('doctor.accessBoundMessage')
+      : access === 'access_unavailable'
+        ? t('doctor.accessUnavailableMessage')
+        : null;
 
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-normal">Doctor portal</h1>
-        <p className="text-muted-foreground text-sm">
-          Signed in as {user.name}. Redeem an active patient consent code.
-        </p>
+        <h1 className="text-2xl font-semibold tracking-normal">{t('doctor.title')}</h1>
+        <p className="text-muted-foreground text-sm">{t('doctor.signedIn', { name: user.name })}</p>
       </div>
+      {accessError && (
+        <div
+          className="border-destructive/30 bg-destructive/5 text-destructive rounded-2xl border px-4 py-3 text-sm"
+          role="alert"
+        >
+          <p className="font-medium">{t('doctor.accessDeniedTitle')}</p>
+          <p className="mt-1">{accessError}</p>
+        </div>
+      )}
       <section className="bg-border grid grid-cols-1 gap-px p-px lg:grid-cols-3">
         <DashboardCard className="gap-0 lg:col-span-2">
           <CardHeader className="border-b">
-            <CardTitle>Open patient record</CardTitle>
-            <CardDescription>
-              Use the patient-issued code to view a time-bound record.
-            </CardDescription>
+            <CardTitle>{t('doctor.openRecord')}</CardTitle>
+            <CardDescription>{t('doctor.openRecordDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <form action={redeemConsentAction} className="flex flex-col gap-4">
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="code">Consent code or PIN</FieldLabel>
-                  <Input
-                    id="code"
-                    name="code"
-                    className="font-mono uppercase"
-                    defaultValue="JIVA-DEMO"
-                    required
-                  />
-                </Field>
-                <Button type="submit">Access patient summary</Button>
-              </FieldGroup>
-            </form>
+            <DoctorConsentForm />
           </CardContent>
         </DashboardCard>
         <DashboardCard className="gap-0">
           <CardHeader className="border-b">
-            <CardTitle>Demo access</CardTitle>
-            <CardDescription>For the seeded doctor account.</CardDescription>
+            <CardTitle>{t('doctor.doctorId')}</CardTitle>
+            <CardDescription>{t('doctor.doctorIdDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="font-mono text-2xl font-semibold">JIVA-DEMO</p>
-            <p className="text-muted-foreground mt-2 text-sm">
-              The patient can revoke the code from consent sharing at any time.
+            <p className="font-mono text-2xl font-semibold">
+              {user.doctorId ?? t('doctor.notAssigned')}
             </p>
+            <p className="text-muted-foreground mt-2 text-sm">{t('doctor.revokeNotice')}</p>
           </CardContent>
         </DashboardCard>
       </section>

@@ -16,37 +16,33 @@ import {
 } from '@/components/ui/table';
 import { getPatientWorkspace } from '@/lib/dal';
 import { formatDateTime, minutesUntil } from '@/lib/format';
+import { getI18n } from '@/lib/i18n';
 
 export default async function SharePage() {
   const data = await getPatientWorkspace();
+  const { locale, t } = await getI18n();
 
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold">Share your records</h1>
-        <p className="text-muted-foreground text-sm">
-          Give a doctor temporary access. You can stop it anytime.
-        </p>
+        <h1 className="text-2xl font-semibold">{t('share.title')}</h1>
+        <p className="text-muted-foreground text-sm">{t('share.description')}</p>
       </div>
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-[0.75fr_1.25fr]">
         <DashboardCard className="gap-0">
           <CardHeader>
-            <CardTitle>Create doctor access</CardTitle>
-            <CardDescription>
-              Access stays open for 2 hours by default, up to 24 hours.
-            </CardDescription>
+            <CardTitle>{t('share.create')}</CardTitle>
+            <CardDescription>{t('share.createDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form action={grantConsentAction} className="flex flex-col gap-4">
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="doctorId">Doctor ID</FieldLabel>
+                  <FieldLabel htmlFor="doctorId">{t('share.doctorId')}</FieldLabel>
                   <Input id="doctorId" name="doctorId" defaultValue="HPR-DEMO-1001" />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="durationMinutes">
-                    How long should access stay open?
-                  </FieldLabel>
+                  <FieldLabel htmlFor="durationMinutes">{t('share.duration')}</FieldLabel>
                   <Input
                     id="durationMinutes"
                     name="durationMinutes"
@@ -56,15 +52,15 @@ export default async function SharePage() {
                     defaultValue={120}
                   />
                 </Field>
-                <Button type="submit">Create access code</Button>
+                <Button type="submit">{t('share.createCode')}</Button>
               </FieldGroup>
             </form>
           </CardContent>
         </DashboardCard>
         <DashboardCard className="gap-0">
           <CardHeader>
-            <CardTitle>People with access</CardTitle>
-            <CardDescription>You can stop access immediately from this list.</CardDescription>
+            <CardTitle>{t('share.people')}</CardTitle>
+            <CardDescription>{t('share.peopleDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
             <Table>
@@ -74,24 +70,24 @@ export default async function SharePage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="ps-6">Code</TableHead>
-                  <TableHead>Granted</TableHead>
-                  <TableHead>Expires</TableHead>
-                  <TableHead className="pe-6 text-right">Action</TableHead>
+                  <TableHead>{t('share.granted')}</TableHead>
+                  <TableHead>{t('share.expires')}</TableHead>
+                  <TableHead className="pe-6 text-right">{t('share.action')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data.activeConsents.map((consent) => (
                   <TableRow className="h-12" key={consent.id}>
                     <TableCell className="ps-6 font-mono font-medium">{consent.code}</TableCell>
-                    <TableCell>{formatDateTime(consent.grantedAt)}</TableCell>
+                    <TableCell>{formatDateTime(consent.grantedAt, locale)}</TableCell>
                     <TableCell className="tabular-nums">
-                      {minutesUntil(consent.expiresAt)} min
+                      {t('dashboard.minutesLeft', { count: minutesUntil(consent.expiresAt) })}
                     </TableCell>
                     <TableCell className="pe-6 text-right">
                       <form action={revokeConsentAction}>
                         <input type="hidden" name="consentId" value={consent.id} />
                         <Button type="submit" variant="destructive" size="sm">
-                          Stop access
+                          {t('share.stop')}
                         </Button>
                       </form>
                     </TableCell>
@@ -100,7 +96,7 @@ export default async function SharePage() {
                 {data.activeConsents.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-muted-foreground ps-6">
-                      No active consent links.
+                      {t('share.none')}
                     </TableCell>
                   </TableRow>
                 )}

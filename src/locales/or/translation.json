@@ -1,0 +1,35 @@
+{
+  "brand": {
+    "name": "JivaHQ",
+    "demoLabel": "JivaHQ SIH ପ୍ରଦର୍ଶନ"
+  },
+  "header": {
+    "patientWorkspace": "ରୋଗୀ କାର୍ଯ୍ୟସ୍ଥାନ",
+    "clinicalWorkspace": "କ୍ଲିନିକାଲ କାର୍ଯ୍ୟସ୍ଥାନ",
+    "shareHealthRecord": "ସ୍ୱାସ୍ଥ୍ୟ ରେକର୍ଡ ସେୟାର କରନ୍ତୁ",
+    "openDoctorPortal": "ଡାକ୍ତର ପୋର୍ଟାଲ ଖୋଲନ୍ତୁ",
+    "openAccessLog": "ଆକ୍ସେସ ଲଗ ଖୋଲନ୍ତୁ",
+    "openEmergencyAccess": "ଜରୁରୀକାଳୀନ ଆକ୍ସେସ ଖୋଲନ୍ତୁ",
+    "signOut": "ସାଇନ ଆଉଟ"
+  },
+  "navigation": {
+    "dashboard": "ଡାସବୋର୍ଡ",
+    "timeline": "ଟାଇମଲାଇନ",
+    "documents": "ଡକ୍ୟୁମେଣ୍ଟ",
+    "healthInformation": "ସ୍ୱାସ୍ଥ୍ୟ ସୂଚନା",
+    "intake": "ଲକ୍ଷଣ ପରୀକ୍ଷା",
+    "shareAccess": "ଆକ୍ସେସ ସେୟାର କରନ୍ତୁ",
+    "accessLog": "ଆକ୍ସେସ ଲଗ",
+    "emergencyCard": "ଜରୁରୀକାଳୀନ କାର୍ଡ",
+    "doctorPortal": "ଡାକ୍ତର ପୋର୍ଟାଲ"
+  },
+  "language": {
+    "choose": "ଭାଷା ବାଛନ୍ତୁ",
+    "english": "ଇଂରାଜୀ",
+    "hindi": "ହିନ୍ଦୀ",
+    "odia": "ଓଡ଼ିଆ",
+    "bengali": "ବଙ୍ଗାଳୀ",
+    "telugu": "ତେଲୁଗୁ",
+    "tamil": "ତାମିଲ"
+  }
+}

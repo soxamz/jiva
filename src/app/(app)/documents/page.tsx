@@ -17,33 +17,33 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { getPatientWorkspace } from '@/lib/dal';
 import { formatBytes, formatDateTime } from '@/lib/format';
+import { getI18n } from '@/lib/i18n';
 
 export default async function DocumentsPage() {
   const data = await getPatientWorkspace();
+  const { locale, t } = await getI18n();
 
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold">Your medical records</h1>
-        <p className="text-muted-foreground text-sm">
-          Keep reports, prescriptions, and discharge summaries in one place.
-        </p>
+        <h1 className="text-2xl font-semibold">{t('documents.title')}</h1>
+        <p className="text-muted-foreground text-sm">{t('documents.description')}</p>
       </div>
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-[0.75fr_1.25fr]">
         <Card className="gap-0">
           <CardHeader>
-            <CardTitle>Upload record</CardTitle>
-            <CardDescription>PDF, JPG, or PNG under 10MB.</CardDescription>
+            <CardTitle>{t('documents.upload')}</CardTitle>
+            <CardDescription>{t('documents.uploadDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form action={uploadDocumentAction} className="flex flex-col gap-4">
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="title">Title</FieldLabel>
+                  <FieldLabel htmlFor="title">{t('documents.document')}</FieldLabel>
                   <Input id="title" name="title" placeholder="CBC report" required />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="docType">Document type</FieldLabel>
+                  <FieldLabel htmlFor="docType">{t('documents.documentType')}</FieldLabel>
                   <Select id="docType" name="docType" defaultValue="lab">
                     <option value="lab">Lab report</option>
                     <option value="rx">Prescription</option>
@@ -53,33 +53,33 @@ export default async function DocumentsPage() {
                   </Select>
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="file">File</FieldLabel>
+                  <FieldLabel htmlFor="file">{t('documents.file')}</FieldLabel>
                   <Input id="file" name="file" type="file" accept=".pdf,.jpg,.jpeg,.png" required />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="notes">Notes</FieldLabel>
+                  <FieldLabel htmlFor="notes">{t('documents.notes')}</FieldLabel>
                   <Textarea id="notes" name="notes" placeholder="Optional context for the doctor" />
                 </Field>
-                <Button type="submit">Add record</Button>
+                <Button type="submit">{t('documents.add')}</Button>
               </FieldGroup>
             </form>
           </CardContent>
         </Card>
         <Card className="gap-0">
           <CardHeader>
-            <CardTitle>Saved records</CardTitle>
-            <CardDescription>Your records are ready when you need to share them.</CardDescription>
+            <CardTitle>{t('documents.saved')}</CardTitle>
+            <CardDescription>{t('documents.savedDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
             <Table>
               <TableCaption className="sr-only">Uploaded medical document metadata.</TableCaption>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="ps-6">Document</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Size</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="pe-6 text-right">Uploaded</TableHead>
+                  <TableHead className="ps-6">{t('documents.document')}</TableHead>
+                  <TableHead>{t('documents.type')}</TableHead>
+                  <TableHead>{t('documents.size')}</TableHead>
+                  <TableHead>{t('documents.status')}</TableHead>
+                  <TableHead className="pe-6 text-right">{t('documents.uploaded')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -97,11 +97,13 @@ export default async function DocumentsPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={document.status === 'processed' ? 'success' : 'secondary'}>
-                        {document.status === 'processed' ? 'Ready' : 'Being prepared'}
+                        {document.status === 'processed'
+                          ? t('documents.ready')
+                          : t('documents.processing')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground pe-6 text-right">
-                      {formatDateTime(document.uploadedAt)}
+                      {formatDateTime(document.uploadedAt, locale)}
                     </TableCell>
                   </TableRow>
                 ))}

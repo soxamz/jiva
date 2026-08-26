@@ -15,31 +15,46 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { getDoctorAccessData } from '@/lib/dal';
+import { getDoctorAccessData, isConsentAccessError } from '@/lib/dal';
 import { formatDateTime, minutesUntil } from '@/lib/format';
+import { getI18n } from '@/lib/i18n';
+import { redirect } from 'next/navigation';
 
 export default async function DoctorAccessPage({ params }: PageProps<'/doctor/access/[code]'>) {
   const { code } = await params;
-  const data = await getDoctorAccessData(code);
+  let data: Awaited<ReturnType<typeof getDoctorAccessData>>;
+
+  try {
+    data = await getDoctorAccessData(code);
+  } catch (error) {
+    const access = isConsentAccessError(error) ? error.code : 'access_unavailable';
+    redirect(`/doctor?access=${access}`);
+  }
+
+  const { locale, t } = await getI18n();
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-muted-foreground text-sm">Active consent code {data.consent.code}</p>
+          <p className="text-muted-foreground text-sm">
+            {t('doctor.activeConsent', { code: data.consent.code })}
+          </p>
           <h1 className="text-2xl font-semibold tracking-normal">{data.patient.name}</h1>
         </div>
-        <Badge variant="success">{minutesUntil(data.consent.expiresAt)} min remaining</Badge>
+        <Badge variant="success">
+          {t('doctor.remaining', { count: minutesUntil(data.consent.expiresAt) })}
+        </Badge>
       </div>
       <section className="bg-border grid grid-cols-1 gap-px p-px xl:grid-cols-3">
         <DashboardCard className="gap-0">
           <CardHeader className="border-b">
-            <CardTitle>Critical profile</CardTitle>
-            <CardDescription>Emergency and safety context.</CardDescription>
+            <CardTitle>{t('doctor.criticalProfile')}</CardTitle>
+            <CardDescription>{t('doctor.criticalProfileDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <div className="flex items-end justify-between">
-              <span className="text-muted-foreground text-sm">Blood type</span>
+              <span className="text-muted-foreground text-sm">{t('emergencyCard.bloodType')}</span>
               <strong className="text-3xl tabular-nums">{data.profile?.bloodType ?? 'NA'}</strong>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -60,10 +75,8 @@ export default async function DoctorAccessPage({ params }: PageProps<'/doctor/ac
         </DashboardCard>
         <DashboardCard className="gap-0 xl:col-span-2">
           <CardHeader className="border-b">
-            <CardTitle>Physician draft summary</CardTitle>
-            <CardDescription>
-              AI output is source-linked context, not an autonomous diagnosis.
-            </CardDescription>
+            <CardTitle>{t('doctor.physicianSummary')}</CardTitle>
+            <CardDescription>{t('doctor.physicianSummaryDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
             <ul className="divide-border flex flex-col divide-y">
@@ -72,7 +85,7 @@ export default async function DoctorAccessPage({ params }: PageProps<'/doctor/ac
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-medium">{intake.chiefComplaint}</p>
                     <Badge variant={intake.redFlag ? 'destructive' : 'success'}>
-                      {intake.redFlag ? 'red flag' : 'routine'}
+                      {intake.redFlag ? t('doctor.redFlag') : t('doctor.routine')}
                     </Badge>
                   </div>
                   <p className="text-muted-foreground text-sm leading-6">{intake.summary}</p>
@@ -83,8 +96,8 @@ export default async function DoctorAccessPage({ params }: PageProps<'/doctor/ac
         </DashboardCard>
         <DashboardCard className="gap-0 xl:col-span-3">
           <CardHeader className="border-b">
-            <CardTitle>Patient records</CardTitle>
-            <CardDescription>Structured values extracted from uploaded metadata.</CardDescription>
+            <CardTitle>{t('doctor.patientRecords')}</CardTitle>
+            <CardDescription>{t('doctor.patientRecordsDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
             <Table>
@@ -93,10 +106,10 @@ export default async function DoctorAccessPage({ params }: PageProps<'/doctor/ac
               </TableCaption>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="ps-6">Document</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Confidence</TableHead>
-                  <TableHead className="pe-6 text-right">Uploaded</TableHead>
+                  <TableHead className="ps-6">{t('documents.document')}</TableHead>
+                  <TableHead>{t('documents.type')}</TableHead>
+                  <TableHead>{t('doctor.confidence')}</TableHead>
+                  <TableHead className="pe-6 text-right">{t('documents.uploaded')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -113,7 +126,7 @@ export default async function DoctorAccessPage({ params }: PageProps<'/doctor/ac
                       {structured?.aiConfidenceScore ?? 0}%
                     </TableCell>
                     <TableCell className="text-muted-foreground pe-6 text-right">
-                      {formatDateTime(document.uploadedAt)}
+                      {formatDateTime(document.uploadedAt, locale)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -123,19 +136,19 @@ export default async function DoctorAccessPage({ params }: PageProps<'/doctor/ac
         </DashboardCard>
         <DashboardCard className="gap-0 xl:col-span-3">
           <CardHeader className="border-b">
-            <CardTitle>Add note or prescription</CardTitle>
-            <CardDescription>This creates a patient timeline record and audit log.</CardDescription>
+            <CardTitle>{t('doctor.addNote')}</CardTitle>
+            <CardDescription>{t('doctor.addNoteDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form action={addDoctorNoteAction} className="flex flex-col gap-4">
               <input type="hidden" name="code" value={data.consent.code} />
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="title">Title</FieldLabel>
+                  <FieldLabel htmlFor="title">{t('documents.document')}</FieldLabel>
                   <Input id="title" name="title" defaultValue="Consultation note" required />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="note">Clinical note</FieldLabel>
+                  <FieldLabel htmlFor="note">{t('doctor.clinicalNote')}</FieldLabel>
                   <Textarea
                     id="note"
                     name="note"
@@ -143,7 +156,7 @@ export default async function DoctorAccessPage({ params }: PageProps<'/doctor/ac
                     required
                   />
                 </Field>
-                <Button type="submit">Save note to patient vault</Button>
+                <Button type="submit">{t('doctor.saveNote')}</Button>
               </FieldGroup>
             </form>
           </CardContent>

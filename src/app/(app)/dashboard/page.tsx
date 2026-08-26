@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/card';
 import { getPatientWorkspace } from '@/lib/dal';
 import { formatDateTime, minutesUntil } from '@/lib/format';
+import { getI18n } from '@/lib/i18n';
 import {
   Item,
   ItemActions,
@@ -68,6 +69,7 @@ function DashboardAction({
 
 export default async function DashboardPage() {
   const data = await getPatientWorkspace();
+  const { locale, t } = await getI18n();
   const latestIntake = data.intakeSessions[0];
   const urgentIntakes = data.intakeSessions.filter((intake) => intake.redFlag).length;
   const healthCompleteness =
@@ -77,20 +79,21 @@ export default async function DashboardPage() {
     ((data.profile?.emergencyContacts?.length ?? 0) > 0 ? 25 : 0);
   const medications = data.profile?.currentMedications ?? [];
   const allergies = data.profile?.allergies ?? [];
+  const emergencyContacts = data.profile?.emergencyContacts ?? [];
 
   return (
     <div className="flex flex-col gap-4">
       <section className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div className="min-w-0">
-          <p className="text-muted-foreground text-sm">Your health space</p>
-          <h1 className="text-2xl font-semibold">Hello, {data.user.name}</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Keep your records ready for the next doctor visit.
-          </p>
+          <p className="text-muted-foreground text-sm">{t('dashboard.healthSpace')}</p>
+          <h1 className="text-2xl font-semibold">
+            {t('dashboard.hello', { name: data.user.name })}
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">{t('dashboard.readyForVisit')}</p>
         </div>
         <Link href="/emergency-card" className={buttonVariants({ variant: 'outline' })}>
           <ShieldCheckIcon data-icon="inline-start" aria-hidden />
-          Emergency card
+          {t('dashboard.emergencyCard')}
         </Link>
       </section>
 
@@ -102,7 +105,7 @@ export default async function DashboardPage() {
           <ItemHeader>
             <ItemContent>
               <ItemTitle className="text-2xl">{data.documents.length}</ItemTitle>
-              <ItemDescription>Medical records</ItemDescription>
+              <ItemDescription>{t('dashboard.medicalRecords')}</ItemDescription>
             </ItemContent>
           </ItemHeader>
           <ItemActions>
@@ -110,7 +113,7 @@ export default async function DashboardPage() {
               href="/documents"
               className={buttonVariants({ size: 'sm', variant: 'secondary' })}
             >
-              Add or view records
+              {t('dashboard.addOrViewRecords')}
             </Link>
           </ItemActions>
         </Item>
@@ -120,8 +123,10 @@ export default async function DashboardPage() {
           </ItemMedia>
           <ItemHeader>
             <ItemContent>
-              <ItemTitle className="text-2xl">{healthCompleteness}% ready</ItemTitle>
-              <ItemDescription>Emergency information</ItemDescription>
+              <ItemTitle className="text-2xl">
+                {t('dashboard.ready', { percent: healthCompleteness })}
+              </ItemTitle>
+              <ItemDescription>{t('dashboard.emergencyInformation')}</ItemDescription>
             </ItemContent>
           </ItemHeader>
           <ItemActions>
@@ -129,7 +134,7 @@ export default async function DashboardPage() {
               href="/emergency-card"
               className={buttonVariants({ size: 'sm', variant: 'secondary' })}
             >
-              Check details
+              {t('dashboard.checkDetails')}
             </Link>
           </ItemActions>
         </Item>
@@ -141,216 +146,264 @@ export default async function DashboardPage() {
             <ItemContent>
               <ItemTitle className="text-2xl">
                 {data.activeConsents.length === 0
-                  ? 'No access'
-                  : `${data.activeConsents.length} active`}
+                  ? t('dashboard.noAccess')
+                  : t('dashboard.activeAccess', { count: data.activeConsents.length })}
               </ItemTitle>
-              <ItemDescription>Doctor access</ItemDescription>
+              <ItemDescription>{t('dashboard.doctorAccess')}</ItemDescription>
             </ItemContent>
           </ItemHeader>
           <ItemActions>
             <Link href="/share" className={buttonVariants({ size: 'sm' })}>
-              Share records
+              {t('dashboard.shareRecords')}
             </Link>
           </ItemActions>
         </Item>
         <DashboardAction
-          actionLabel="Add"
-          description="Add a report, prescription, or discharge summary."
+          actionLabel={t('dashboard.add')}
+          description={t('dashboard.addMedicalRecordDescription')}
           href="/documents"
           icon={FileTextIcon}
-          title="Add a medical record"
+          title={t('dashboard.addMedicalRecord')}
         />
         <DashboardAction
-          actionLabel="Check"
-          description="Tell us what you are feeling before a doctor visit."
+          actionLabel={t('dashboard.check')}
+          description={t('dashboard.checkSymptomsDescription')}
           href="/intake"
           icon={HeartPulseIcon}
-          title="Check symptoms"
+          title={t('dashboard.checkSymptoms')}
           variant="default"
         />
         <DashboardAction
-          actionLabel="Share records"
-          description="Give a doctor temporary access that you can stop anytime."
+          actionLabel={t('dashboard.shareRecords')}
+          description={t('dashboard.shareWithDoctorDescription')}
           href="/share"
           icon={QrCodeIcon}
-          title="Share with a doctor"
+          title={t('dashboard.shareWithDoctor')}
         />
       </section>
 
       <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent health updates</CardTitle>
-            <CardDescription>Your latest records and symptom checks.</CardDescription>
-          </CardHeader>
-          <CardContent className="px-0">
-            {data.timeline.length > 0 ? (
-              <ul className="divide-border flex flex-col divide-y">
-                {data.timeline.slice(0, 4).map((item) => (
-                  <li className="flex items-start gap-2 px-4 py-4" key={item.id}>
-                    <span className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-xl">
-                      {item.type === 'intake' ? (
-                        <ActivityIcon aria-hidden />
-                      ) : (
-                        <FileTextIcon aria-hidden />
-                      )}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{item.title}</p>
-                      <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">{item.body}</p>
-                      <p className="text-muted-foreground mt-1 text-xs">
-                        {formatDateTime(item.date)}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-muted-foreground px-4 text-sm">No health updates yet.</p>
-            )}
-          </CardContent>
-          <CardFooter>
-            <Link href="/timeline" className={buttonVariants({ size: 'sm', variant: 'secondary' })}>
-              View all updates
-            </Link>
-          </CardFooter>
-        </Card>
+        <div className="flex flex-col gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('dashboard.recentUpdates')}</CardTitle>
+              <CardDescription>{t('dashboard.recentUpdatesDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent className="px-0">
+              {data.timeline.length > 0 ? (
+                <ul className="divide-border flex flex-col divide-y">
+                  {data.timeline.slice(0, 4).map((item) => (
+                    <li className="flex items-start gap-2 px-4 py-4" key={item.id}>
+                      <span className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-xl">
+                        {item.type === 'intake' ? (
+                          <ActivityIcon aria-hidden />
+                        ) : (
+                          <FileTextIcon aria-hidden />
+                        )}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium">{item.title}</p>
+                        <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">
+                          {item.body}
+                        </p>
+                        <p className="text-muted-foreground mt-1 text-xs">
+                          {formatDateTime(item.date, locale)}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-muted-foreground px-4 text-sm">{t('dashboard.noUpdates')}</p>
+              )}
+            </CardContent>
+            <CardFooter>
+              <Link
+                href="/timeline"
+                className={buttonVariants({ size: 'sm', variant: 'secondary' })}
+              >
+                {t('dashboard.viewUpdates')}
+              </Link>
+            </CardFooter>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Important health information</CardTitle>
-            <CardDescription>Useful details for you and your care team.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-muted-foreground text-sm">Blood group</span>
-              <strong className="text-2xl">{data.profile?.bloodType ?? 'Not added'}</strong>
-            </div>
-            <ul className="divide-border flex flex-col divide-y">
-              <li className="flex items-start gap-2 py-4">
-                <span className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-xl">
-                  <PillIcon aria-hidden />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <span className="font-medium">Medicines</span>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {medications.length > 0 ? (
-                      medications.slice(0, 3).map((medication) => (
-                        <Badge key={medication} variant="secondary">
-                          {medication}
-                        </Badge>
-                      ))
-                    ) : (
-                      <span className="text-muted-foreground text-sm">No medicines added.</span>
-                    )}
-                  </div>
-                </div>
-              </li>
-              <li className="flex items-start gap-2 py-4">
-                <span className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-xl">
-                  <AlertTriangleIcon aria-hidden />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <span className="font-medium">Allergies</span>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {allergies.length > 0 ? (
-                      allergies.map((allergy) => <Badge key={allergy}>{allergy}</Badge>)
-                    ) : (
-                      <span className="text-muted-foreground text-sm">No allergies added.</span>
-                    )}
-                  </div>
-                </div>
-              </li>
-            </ul>
-          </CardContent>
-          <CardFooter className="gap-2">
-            <Link
-              href="/health-information"
-              className={buttonVariants({ size: 'sm', variant: 'secondary' })}
-            >
-              Edit health information
-            </Link>
-            <Link
-              href="/emergency-card"
-              className={buttonVariants({ size: 'sm', variant: 'secondary' })}
-            >
-              Open emergency card
-            </Link>
-          </CardFooter>
-        </Card>
-      </section>
-
-      <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Latest symptom check</CardTitle>
-            <CardDescription>Saved so you can discuss it with a doctor.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {latestIntake ? (
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant={latestIntake.redFlag ? 'destructive' : 'success'}>
-                    {latestIntake.redFlag ? 'Needs quick attention' : 'Saved'}
-                  </Badge>
-                  <span className="text-muted-foreground text-sm">
-                    {latestIntake.chiefComplaint}
-                  </span>
-                </div>
-                <p className="text-muted-foreground text-sm leading-6">{latestIntake.summary}</p>
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                You have not checked any symptoms yet.
-              </p>
-            )}
-          </CardContent>
-          <CardFooter>
-            <Link href="/intake" className={buttonVariants({ size: 'sm', variant: 'secondary' })}>
-              Check symptoms
-            </Link>
-          </CardFooter>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Record access</CardTitle>
-            <CardDescription>Only share records for as long as you choose.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {data.activeConsents.length > 0 ? (
-              <ul className="flex flex-col gap-3">
-                {data.activeConsents.slice(0, 2).map((consent) => (
-                  <li className="flex items-center justify-between gap-3" key={consent.id}>
-                    <span className="font-mono font-medium">{consent.code}</span>
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('dashboard.latestSymptomCheck')}</CardTitle>
+              <CardDescription>{t('dashboard.latestSymptomDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {latestIntake ? (
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={latestIntake.redFlag ? 'destructive' : 'success'}>
+                      {latestIntake.redFlag ? t('dashboard.needsAttention') : t('dashboard.saved')}
+                    </Badge>
                     <span className="text-muted-foreground text-sm">
-                      {minutesUntil(consent.expiresAt)} min left
+                      {latestIntake.chiefComplaint}
                     </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="flex items-center gap-3">
-                <PhoneIcon aria-hidden />
-                <p className="text-muted-foreground text-sm">
-                  No doctor has access to your records.
-                </p>
+                  </div>
+                  <p className="text-muted-foreground text-sm leading-6">{latestIntake.summary}</p>
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm">{t('dashboard.noSymptomCheck')}</p>
+              )}
+            </CardContent>
+            <CardFooter>
+              <Link href="/intake" className={buttonVariants({ size: 'sm', variant: 'secondary' })}>
+                {t('dashboard.checkSymptoms')}
+              </Link>
+            </CardFooter>
+          </Card>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('dashboard.importantInformation')}</CardTitle>
+              <CardDescription>{t('dashboard.importantInformationDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-muted-foreground text-sm">{t('dashboard.bloodGroup')}</span>
+                <strong className="text-2xl">
+                  {data.profile?.bloodType ?? t('dashboard.notAdded')}
+                </strong>
               </div>
-            )}
-          </CardContent>
-          <CardFooter>
-            <Link href="/share" className={buttonVariants({ size: 'sm', variant: 'secondary' })}>
-              Manage access
-            </Link>
-          </CardFooter>
-        </Card>
+              <ul className="divide-border flex flex-col divide-y">
+                <li className="flex items-start gap-2 py-4">
+                  <span className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-xl">
+                    <PillIcon aria-hidden />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <span className="font-medium">{t('dashboard.medicines')}</span>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {medications.length > 0 ? (
+                        medications.slice(0, 3).map((medication) => (
+                          <Badge key={medication} variant="secondary">
+                            {medication}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground text-sm">
+                          {t('dashboard.noMedicines')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </li>
+                <li className="flex items-start gap-2 py-4">
+                  <span className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-xl">
+                    <AlertTriangleIcon aria-hidden />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <span className="font-medium">{t('dashboard.allergies')}</span>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {allergies.length > 0 ? (
+                        allergies.map((allergy) => <Badge key={allergy}>{allergy}</Badge>)
+                      ) : (
+                        <span className="text-muted-foreground text-sm">
+                          {t('dashboard.noAllergies')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </CardContent>
+            <CardFooter className="gap-2">
+              <Link
+                href="/health-information"
+                className={buttonVariants({ size: 'sm', variant: 'secondary' })}
+              >
+                {t('dashboard.editHealthInformation')}
+              </Link>
+              <Link
+                href="/emergency-card"
+                className={buttonVariants({ size: 'sm', variant: 'secondary' })}
+              >
+                {t('dashboard.openEmergencyCard')}
+              </Link>
+            </CardFooter>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <PhoneIcon aria-hidden />
+                <CardTitle>{t('dashboard.emergencyContacts')}</CardTitle>
+              </div>
+              <CardDescription>{t('dashboard.emergencyContactsDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent className="px-0">
+              {emergencyContacts.length > 0 ? (
+                <ul className="divide-border flex flex-col divide-y">
+                  {emergencyContacts.slice(0, 2).map((contact) => (
+                    <li
+                      className="flex items-center justify-between gap-3 px-5 py-3"
+                      key={contact.phone}
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{contact.name}</p>
+                        <p className="text-muted-foreground text-sm">{contact.relation}</p>
+                      </div>
+                      <span className="text-muted-foreground shrink-0 font-mono text-sm">
+                        {contact.phone}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-muted-foreground px-5 text-sm">
+                  {t('dashboard.noEmergencyContacts')}
+                </p>
+              )}
+            </CardContent>
+            <CardFooter>
+              <Link
+                href="/health-information"
+                className={buttonVariants({ size: 'sm', variant: 'secondary' })}
+              >
+                {t('dashboard.updateContacts')}
+              </Link>
+            </CardFooter>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('dashboard.recordAccess')}</CardTitle>
+              <CardDescription>{t('dashboard.recordAccessDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {data.activeConsents.length > 0 ? (
+                <ul className="flex flex-col gap-3">
+                  {data.activeConsents.slice(0, 2).map((consent) => (
+                    <li className="flex items-center justify-between gap-3" key={consent.id}>
+                      <span className="font-mono font-medium">{consent.code}</span>
+                      <span className="text-muted-foreground text-sm">
+                        {t('dashboard.minutesLeft', { count: minutesUntil(consent.expiresAt) })}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <PhoneIcon aria-hidden />
+                  <p className="text-muted-foreground text-sm">{t('dashboard.noDoctorAccess')}</p>
+                </div>
+              )}
+            </CardContent>
+            <CardFooter>
+              <Link href="/share" className={buttonVariants({ size: 'sm', variant: 'secondary' })}>
+                {t('dashboard.manageAccess')}
+              </Link>
+            </CardFooter>
+          </Card>
+        </div>
       </section>
 
       {urgentIntakes > 0 && (
-        <p className="text-destructive text-sm">
-          You have a symptom check marked for quick attention. Please contact a healthcare
-          professional if you need help.
-        </p>
+        <p className="text-destructive text-sm">{t('dashboard.urgentNotice')}</p>
       )}
     </div>
   );

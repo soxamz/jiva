@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "files": {
+    "src/locales/bn/translation.json": {
+      "sha256": "0302a51dccb1c1add3bb150583e5332d5be2e8eb3e261c4810010ccdb4aa65df"
+    },
+    "src/locales/en/translation.json": {
+      "sha256": "8b2bb9ae62b371ff225bd493fa8ab3c439cfb5bb4fc1502574250ab438970470"
+    },
+    "src/locales/hi/translation.json": {
+      "sha256": "c048796760560ae3e61f5dc4e630ac8a3440d0af21121751131b5e60cd0968d6"
+    },
+    "src/locales/or/translation.json": {
+      "sha256": "60ae043794968057a4c31f63df8b7c30e75ae2ac18621e30a51c8618b521335e"
+    },
+    "src/locales/ta/translation.json": {
+      "sha256": "55f16886d8e0381d6ab3e665fbdcf5dfd72d9883c99bfb0ca8042a1d2d592cd1"
+    },
+    "src/locales/te/translation.json": {
+      "sha256": "66db60af9bb4a20747c8193d9a3baf836135bb00935a6c1341d8607f11da0677"
+    }
+  }
+}

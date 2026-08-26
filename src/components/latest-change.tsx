@@ -5,15 +5,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { XIcon } from 'lucide-react';
-
-const latestChange = {
-  badge: 'HEALTH VAULT',
-  title: 'Consent controls',
-  description: 'Grant and revoke access.',
-  readMore: { href: '/share', label: 'Open sharing' },
-} as const;
+import { useI18n } from '@/components/i18n-provider';
 
 export function LatestChange() {
+  const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(true);
 
   if (!isOpen) {
@@ -29,18 +24,18 @@ export function LatestChange() {
       )}
     >
       <span className="text-muted-foreground font-mono text-[10px] font-light">
-        {latestChange.badge}
+        {t('sidebar.badge')}
       </span>
-      <p className="text-xs font-medium">{latestChange.title}</p>
-      <span className="text-muted-foreground text-[10px]">{latestChange.description}</span>
+      <p className="text-xs font-medium">{t('sidebar.consentControls')}</p>
+      <span className="text-muted-foreground text-[10px]">{t('sidebar.consentDescription')}</span>
       <Button
         className="w-max px-0 text-xs font-light"
         size="sm"
         variant="link"
-        render={<Link href={latestChange.readMore.href} />}
+        render={<Link href="/share" />}
         nativeButton={false}
       >
-        {latestChange.readMore.label}
+        {t('sidebar.openSharing')}
       </Button>
       <Button
         className="absolute top-2 right-2 z-10 size-6 rounded-full opacity-0 transition-opacity group-hover/latest-change:opacity-100"
