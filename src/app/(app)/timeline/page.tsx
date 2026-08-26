@@ -1,8 +1,6 @@
 import { ActivityIcon, FileTextIcon } from 'lucide-react';
-
-import { DashboardCard } from '@/components/dashboard-card';
 import { Badge } from '@/components/ui/badge';
-import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getPatientWorkspace } from '@/lib/dal';
 import { formatDateTime } from '@/lib/format';
 
@@ -12,16 +10,14 @@ export default async function TimelinePage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-normal">Health timeline</h1>
-        <p className="text-muted-foreground text-sm">
-          Chronological documents and intake summaries.
-        </p>
+        <h1 className="text-2xl font-semibold">Your health updates</h1>
+        <p className="text-muted-foreground text-sm">Records and symptom checks in date order.</p>
       </div>
-      <section className="bg-border grid grid-cols-1 gap-px p-px">
-        <DashboardCard className="gap-0">
-          <CardHeader className="border-b">
-            <CardTitle>Events</CardTitle>
-            <CardDescription>Mock AI summaries are draft context for doctors.</CardDescription>
+      <section className="grid grid-cols-1 gap-4">
+        <Card className="gap-0">
+          <CardHeader>
+            <CardTitle>All updates</CardTitle>
+            <CardDescription>Review what you have added and when.</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
             <ul className="divide-border flex flex-col divide-y">
@@ -41,17 +37,12 @@ export default async function TimelinePage() {
                     <p className="text-muted-foreground mt-1 text-xs">
                       {formatDateTime(item.date)}
                     </p>
-                    {item.confidence && (
-                      <p className="text-muted-foreground mt-1 text-xs">
-                        AI extraction confidence: {item.confidence}%
-                      </p>
-                    )}
                   </div>
                 </li>
               ))}
             </ul>
           </CardContent>
-        </DashboardCard>
+        </Card>
       </section>
     </div>
   );

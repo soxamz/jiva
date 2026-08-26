@@ -23,16 +23,18 @@ export default async function SharePage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-normal">Consent sharing</h1>
+        <h1 className="text-2xl font-semibold">Share your records</h1>
         <p className="text-muted-foreground text-sm">
-          Generate time-bound access codes for doctors.
+          Give a doctor temporary access. You can stop it anytime.
         </p>
       </div>
-      <section className="bg-border grid grid-cols-1 gap-px p-px xl:grid-cols-[0.75fr_1.25fr]">
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-[0.75fr_1.25fr]">
         <DashboardCard className="gap-0">
-          <CardHeader className="border-b">
-            <CardTitle>Generate access</CardTitle>
-            <CardDescription>Default access is 2 hours, maximum 24 hours.</CardDescription>
+          <CardHeader>
+            <CardTitle>Create doctor access</CardTitle>
+            <CardDescription>
+              Access stays open for 2 hours by default, up to 24 hours.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form action={grantConsentAction} className="flex flex-col gap-4">
@@ -42,7 +44,9 @@ export default async function SharePage() {
                   <Input id="doctorId" name="doctorId" defaultValue="HPR-DEMO-1001" />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="durationMinutes">Duration in minutes</FieldLabel>
+                  <FieldLabel htmlFor="durationMinutes">
+                    How long should access stay open?
+                  </FieldLabel>
                   <Input
                     id="durationMinutes"
                     name="durationMinutes"
@@ -52,15 +56,15 @@ export default async function SharePage() {
                     defaultValue={120}
                   />
                 </Field>
-                <Button type="submit">Generate QR/PIN</Button>
+                <Button type="submit">Create access code</Button>
               </FieldGroup>
             </form>
           </CardContent>
         </DashboardCard>
         <DashboardCard className="gap-0">
-          <CardHeader className="border-b">
-            <CardTitle>Active shares</CardTitle>
-            <CardDescription>Revoke access immediately from this list.</CardDescription>
+          <CardHeader>
+            <CardTitle>People with access</CardTitle>
+            <CardDescription>You can stop access immediately from this list.</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
             <Table>
@@ -87,7 +91,7 @@ export default async function SharePage() {
                       <form action={revokeConsentAction}>
                         <input type="hidden" name="consentId" value={consent.id} />
                         <Button type="submit" variant="destructive" size="sm">
-                          Revoke
+                          Stop access
                         </Button>
                       </form>
                     </TableCell>
@@ -106,9 +110,9 @@ export default async function SharePage() {
         </DashboardCard>
         <DashboardCard className="gap-0 xl:col-span-2">
           <CardContent className="flex items-center gap-2">
-            <Badge variant="secondary">Demo doctor code: JIVA-DEMO</Badge>
+            <Badge variant="secondary">Demo doctor ID: HPR-DEMO-1001</Badge>
             <p className="text-muted-foreground text-sm">
-              Scan or enter an active code in the doctor portal.
+              The doctor can enter the active access code in their portal.
             </p>
           </CardContent>
         </DashboardCard>

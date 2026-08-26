@@ -5,14 +5,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="relative flex h-dvh min-h-0 flex-col overflow-hidden lg:grid lg:grid-cols-2">
       <div className="relative hidden min-h-0 flex-col overflow-hidden p-8 lg:flex">
         <img
-          src="https://i.pinimg.com/1200x/58/2f/50/582f50f37da10956a760473d74f85c48.jpg"
+          src="https://i.pinimg.com/736x/e7/4b/f4/e74bf44fd459fbe8f150af2df17d1a3a.jpg"
           alt="Image"
-          className="absolute inset-0 h-full w-full object-cover opacity-85 dark:brightness-[0.2]"
+          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2]"
         />
         <Link href="/" className="relative z-20 inline-flex items-center text-2xl">
           JIVA
         </Link>
-        <div className="relative z-20 mt-auto rounded-2xl p-2 shadow-xl backdrop-blur-sm">
+        <div className="relative z-20 mt-auto rounded-2xl p-4 shadow-xl backdrop-blur-sm">
           Welcome to Panery, where local food ecosystems thrive. Our mission is to empower local
           food producers and agents by providing a seamless platform to connect, collaborate, and
           grow together.

@@ -19,25 +19,26 @@ export default async function AccessLogPage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-normal">Audit log</h1>
+        <h1 className="text-2xl font-semibold">Activity on your records</h1>
         <p className="text-muted-foreground text-sm">
-          Database-backed audit trail with mock blockchain hashes.
+          See when your records were added, shared, or opened.
         </p>
       </div>
-      <section className="bg-border grid grid-cols-1 gap-px p-px">
+      <section className="grid grid-cols-1 gap-4">
         <DashboardCard className="gap-0">
-          <CardHeader className="border-b">
+          <CardHeader>
             <CardTitle>Recent activity</CardTitle>
-            <CardDescription>Every demo mutation writes a persistent log row.</CardDescription>
+            <CardDescription>
+              Everything important that happens to your records is listed here.
+            </CardDescription>
           </CardHeader>
           <CardContent className="px-0">
             <Table>
               <TableCaption className="sr-only">Recent audit activity.</TableCaption>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="ps-6">Action</TableHead>
-                  <TableHead>Resource</TableHead>
-                  <TableHead>Hash</TableHead>
+                  <TableHead className="ps-6">What happened</TableHead>
+                  <TableHead>Related record</TableHead>
                   <TableHead className="pe-6 text-right">Time</TableHead>
                 </TableRow>
               </TableHeader>
@@ -46,13 +47,10 @@ export default async function AccessLogPage() {
                   <TableRow className="h-12" key={log.id}>
                     <TableCell className="ps-6">
                       <Badge variant={log.action === 'BREAK_GLASS' ? 'destructive' : 'secondary'}>
-                        {log.action}
+                        {log.action.replaceAll('_', ' ').toLowerCase()}
                       </Badge>
                     </TableCell>
                     <TableCell>{log.targetResourceType ?? 'system'}</TableCell>
-                    <TableCell className="max-w-72 truncate font-mono text-xs">
-                      {log.blockchainTxHash}
-                    </TableCell>
                     <TableCell className="text-muted-foreground pe-6 text-right">
                       {formatDateTime(log.createdAt)}
                     </TableCell>

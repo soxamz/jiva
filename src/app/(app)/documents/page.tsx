@@ -1,8 +1,7 @@
 import { uploadDocumentAction } from '@/lib/actions';
-import { DashboardCard } from '@/components/dashboard-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -25,21 +24,19 @@ export default async function DocumentsPage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-normal">Documents</h1>
-        <p className="text-muted-foreground text-sm">Upload metadata; object storage is mocked.</p>
+        <h1 className="text-2xl font-semibold">Your medical records</h1>
+        <p className="text-muted-foreground text-sm">
+          Keep reports, prescriptions, and discharge summaries in one place.
+        </p>
       </div>
-      <section className="bg-border grid grid-cols-1 gap-px p-px xl:grid-cols-[0.75fr_1.25fr]">
-        <DashboardCard className="gap-0">
-          <CardHeader className="border-b">
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-[0.75fr_1.25fr]">
+        <Card className="gap-0">
+          <CardHeader>
             <CardTitle>Upload record</CardTitle>
             <CardDescription>PDF, JPG, or PNG under 10MB.</CardDescription>
           </CardHeader>
           <CardContent>
-            <form
-              action={uploadDocumentAction}
-              encType="multipart/form-data"
-              className="flex flex-col gap-4"
-            >
+            <form action={uploadDocumentAction} className="flex flex-col gap-4">
               <FieldGroup>
                 <Field>
                   <FieldLabel htmlFor="title">Title</FieldLabel>
@@ -63,15 +60,15 @@ export default async function DocumentsPage() {
                   <FieldLabel htmlFor="notes">Notes</FieldLabel>
                   <Textarea id="notes" name="notes" placeholder="Optional context for the doctor" />
                 </Field>
-                <Button type="submit">Upload and mock-process</Button>
+                <Button type="submit">Add record</Button>
               </FieldGroup>
             </form>
           </CardContent>
-        </DashboardCard>
-        <DashboardCard className="gap-0">
-          <CardHeader className="border-b">
-            <CardTitle>Vault records</CardTitle>
-            <CardDescription>Metadata and extraction status from the health vault.</CardDescription>
+        </Card>
+        <Card className="gap-0">
+          <CardHeader>
+            <CardTitle>Saved records</CardTitle>
+            <CardDescription>Your records are ready when you need to share them.</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
             <Table>
@@ -81,12 +78,12 @@ export default async function DocumentsPage() {
                   <TableHead className="ps-6">Document</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Size</TableHead>
-                  <TableHead>AI</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="pe-6 text-right">Uploaded</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.documents.map(({ document, structured }) => (
+                {data.documents.map(({ document }) => (
                   <TableRow className="h-12" key={document.id}>
                     <TableCell className="max-w-48 ps-6">
                       <p className="truncate font-medium">{document.title}</p>
@@ -98,8 +95,10 @@ export default async function DocumentsPage() {
                     <TableCell className="tabular-nums">
                       {formatBytes(document.fileSizeBytes)}
                     </TableCell>
-                    <TableCell className="tabular-nums">
-                      {structured?.aiConfidenceScore ?? 0}%
+                    <TableCell>
+                      <Badge variant={document.status === 'processed' ? 'success' : 'secondary'}>
+                        {document.status === 'processed' ? 'Ready' : 'Being prepared'}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground pe-6 text-right">
                       {formatDateTime(document.uploadedAt)}
@@ -109,7 +108,7 @@ export default async function DocumentsPage() {
               </TableBody>
             </Table>
           </CardContent>
-        </DashboardCard>
+        </Card>
       </section>
     </div>
   );

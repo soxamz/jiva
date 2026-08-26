@@ -1,8 +1,7 @@
 import { submitIntakeAction } from '@/lib/actions';
-import { DashboardCard } from '@/components/dashboard-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,22 +14,24 @@ export default async function IntakePage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-normal">BYOD intake</h1>
+        <h1 className="text-2xl font-semibold">Tell us how you feel</h1>
         <p className="text-muted-foreground text-sm">
-          SOCRATES-style intake with demo red-flag rules.
+          Share your symptoms before you meet a doctor.
         </p>
       </div>
-      <section className="bg-border grid grid-cols-1 gap-px p-px xl:grid-cols-[0.8fr_1.2fr]">
-        <DashboardCard className="gap-0">
-          <CardHeader className="border-b">
-            <CardTitle>New intake</CardTitle>
-            <CardDescription>Try chest pain or severity 9 to trigger triage.</CardDescription>
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-[0.8fr_1.2fr]">
+        <Card className="gap-0">
+          <CardHeader>
+            <CardTitle>Describe your symptoms</CardTitle>
+            <CardDescription>
+              Answer in your own words. Urgent symptoms will be highlighted.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form action={submitIntakeAction} className="flex flex-col gap-4">
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="chiefComplaint">Chief complaint</FieldLabel>
+                  <FieldLabel htmlFor="chiefComplaint">What is troubling you?</FieldLabel>
                   <Input
                     id="chiefComplaint"
                     name="chiefComplaint"
@@ -39,7 +40,7 @@ export default async function IntakePage() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="symptomDuration">Onset and duration</FieldLabel>
+                  <FieldLabel htmlFor="symptomDuration">When did it begin?</FieldLabel>
                   <Input
                     id="symptomDuration"
                     name="symptomDuration"
@@ -48,7 +49,7 @@ export default async function IntakePage() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="location">Location</FieldLabel>
+                  <FieldLabel htmlFor="location">Where do you feel it?</FieldLabel>
                   <Input
                     id="location"
                     name="location"
@@ -56,7 +57,7 @@ export default async function IntakePage() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="character">Character</FieldLabel>
+                  <FieldLabel htmlFor="character">What does it feel like?</FieldLabel>
                   <Textarea
                     id="character"
                     name="character"
@@ -64,7 +65,7 @@ export default async function IntakePage() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="severity">Severity 1-10</FieldLabel>
+                  <FieldLabel htmlFor="severity">How severe is it? (1 to 10)</FieldLabel>
                   <Input
                     id="severity"
                     name="severity"
@@ -76,26 +77,26 @@ export default async function IntakePage() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="aggravatingFactors">Aggravating factors</FieldLabel>
+                  <FieldLabel htmlFor="aggravatingFactors">What makes it worse?</FieldLabel>
                   <Textarea id="aggravatingFactors" name="aggravatingFactors" />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="relievingFactors">Relieving factors</FieldLabel>
+                  <FieldLabel htmlFor="relievingFactors">What makes it better?</FieldLabel>
                   <Textarea id="relievingFactors" name="relievingFactors" />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="associatedSymptoms">Associated symptoms</FieldLabel>
+                  <FieldLabel htmlFor="associatedSymptoms">Any other symptoms?</FieldLabel>
                   <Textarea id="associatedSymptoms" name="associatedSymptoms" />
                 </Field>
-                <Button type="submit">Submit intake</Button>
+                <Button type="submit">Check my symptoms</Button>
               </FieldGroup>
             </form>
           </CardContent>
-        </DashboardCard>
-        <DashboardCard className="gap-0">
-          <CardHeader className="border-b">
-            <CardTitle>Submitted intakes</CardTitle>
-            <CardDescription>Physician-ready draft summaries.</CardDescription>
+        </Card>
+        <Card className="gap-0">
+          <CardHeader>
+            <CardTitle>Previous symptom checks</CardTitle>
+            <CardDescription>A summary is saved for you and your doctor.</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
             <ul className="divide-border flex flex-col divide-y">
@@ -109,7 +110,7 @@ export default async function IntakePage() {
                       </p>
                     </div>
                     <Badge variant={intake.redFlag ? 'destructive' : 'success'}>
-                      {intake.redFlag ? 'red flag' : 'routine'}
+                      {intake.redFlag ? 'Needs quick attention' : 'Saved'}
                     </Badge>
                   </div>
                   <p className="text-muted-foreground text-sm leading-6">{intake.summary}</p>
@@ -117,7 +118,7 @@ export default async function IntakePage() {
               ))}
             </ul>
           </CardContent>
-        </DashboardCard>
+        </Card>
       </section>
     </div>
   );

@@ -1,8 +1,6 @@
 import { AlertTriangleIcon, PhoneIcon, ShieldCheckIcon } from 'lucide-react';
-
-import { DashboardCard } from '@/components/dashboard-card';
 import { Badge } from '@/components/ui/badge';
-import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getPatientWorkspace } from '@/lib/dal';
 
 export default async function EmergencyCardPage() {
@@ -12,37 +10,39 @@ export default async function EmergencyCardPage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-normal">Offline emergency card</h1>
+        <h1 className="text-2xl font-semibold">Emergency card</h1>
         <p className="text-muted-foreground text-sm">
-          Critical profile summary for first responders.
+          Important health details for you, your family, and first responders.
         </p>
       </div>
-      <section className="bg-border grid grid-cols-1 gap-px p-px md:grid-cols-3">
-        <DashboardCard className="gap-0 md:col-span-3">
-          <CardHeader className="border-b">
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Card className="gap-0 md:col-span-3">
+          <CardHeader>
             <div className="flex flex-wrap items-center gap-2">
               <ShieldCheckIcon aria-hidden />
               <CardTitle>{data.user.name}</CardTitle>
               <Badge variant="success">Verified profile</Badge>
             </div>
-            <CardDescription>Offline-style critical care summary.</CardDescription>
+            <CardDescription>
+              Important information available quickly in an emergency.
+            </CardDescription>
           </CardHeader>
-        </DashboardCard>
-        <DashboardCard className="gap-0">
+        </Card>
+        <Card className="gap-0">
           <CardHeader>
             <CardTitle className="text-xs font-normal tracking-wide">Blood type</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold tabular-nums">{profile?.bloodType ?? 'NA'}</p>
           </CardContent>
-        </DashboardCard>
-        <DashboardCard className="gap-0 md:col-span-2">
-          <CardHeader className="border-b">
+        </Card>
+        <Card className="gap-0 md:col-span-2">
+          <CardHeader>
             <div className="flex items-center gap-2">
               <AlertTriangleIcon aria-hidden />
               <CardTitle>Allergies</CardTitle>
             </div>
-            <CardDescription>Immediate contraindication information.</CardDescription>
+            <CardDescription>Tell a doctor about these before treatment.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             {(profile?.allergies ?? []).length ? (
@@ -55,9 +55,9 @@ export default async function EmergencyCardPage() {
               <Badge variant="secondary">No allergies listed</Badge>
             )}
           </CardContent>
-        </DashboardCard>
-        <DashboardCard className="gap-0">
-          <CardHeader className="border-b">
+        </Card>
+        <Card className="gap-0">
+          <CardHeader>
             <CardTitle>Critical conditions</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
@@ -71,9 +71,9 @@ export default async function EmergencyCardPage() {
               <Badge variant="secondary">None listed</Badge>
             )}
           </CardContent>
-        </DashboardCard>
-        <DashboardCard className="gap-0">
-          <CardHeader className="border-b">
+        </Card>
+        <Card className="gap-0">
+          <CardHeader>
             <CardTitle>Current medications</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
@@ -87,14 +87,14 @@ export default async function EmergencyCardPage() {
               <Badge variant="secondary">None listed</Badge>
             )}
           </CardContent>
-        </DashboardCard>
-        <DashboardCard className="gap-0 md:col-span-3">
-          <CardHeader className="border-b">
+        </Card>
+        <Card className="gap-0 md:col-span-3">
+          <CardHeader>
             <div className="flex items-center gap-2">
               <PhoneIcon aria-hidden />
               <CardTitle>Emergency contacts</CardTitle>
             </div>
-            <CardDescription>Contact details stored in the verified profile.</CardDescription>
+            <CardDescription>People to call when you need help.</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
             <ul className="divide-border grid grid-cols-1 divide-y md:grid-cols-2 md:divide-x md:divide-y-0">
@@ -107,7 +107,7 @@ export default async function EmergencyCardPage() {
               ))}
             </ul>
           </CardContent>
-        </DashboardCard>
+        </Card>
       </section>
     </div>
   );
