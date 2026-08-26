@@ -4,10 +4,10 @@ import json
 import re
 from typing import Any
 
-from crewai import Crew, Process, Task
+from groq import Groq
 from pydantic import BaseModel, Field
 
-from app.agents.factories import create_symptom_interpreter_agent
+from app.config import get_settings
 from app.schemas.intake import RedFlagResult, SessionState
 from app.schemas.socrates import SocratesSlots
 from app.services.llm import redact_pii
@@ -50,11 +50,8 @@ def run_turn_crew(
     transcript_blob = _format_transcript(session)
     slots_json = session.slots.model_dump_json()
 
-    interpreter = create_symptom_interpreter_agent()
-
-    interpret_task = Task(
-        description=(
-            f"Patient utterance (PII-redacted):\n{safe_text}\n\n"
+    prompt = (
+        f"Patient utterance (PII-redacted):\n{safe_text}\n\n"
             f"Current chief complaint: {session.chief_complaint}\n"
             f"Current SOCRATES slots JSON: {slots_json}\n"
             f"Last asked dimension: {session.last_asked_dimension}\n"
@@ -93,25 +90,8 @@ def run_turn_crew(
             '"ayush_vaya": str|null, "ayush_prakriti": str|null, '
             '"ayush_vikriti": str|null, "ayush_agni": str|null, '
             '"ayush_bala": str|null, "ayush_manas_vyayam": str|null, "notes": str}'
-        ),
-        expected_output="Valid JSON for InterpreterOutput only.",
-        agent=interpreter,
-        output_pydantic=InterpreterOutput,
     )
-
-    crew = Crew(
-        agents=[interpreter],
-        tasks=[interpret_task],
-        process=Process.sequential,
-        verbose=False,
-    )
-    result = crew.kickoff()
-
-    interpreter_out = _coerce_pydantic(
-        interpret_task.output.pydantic if interpret_task.output else None,
-        InterpreterOutput,
-        result,
-    )
+    interpreter_out = _interpret_with_groq(prompt)
 
     # Rules own hard triage; LLM triage is off the hot path for MVP speed.
     merged = rule_red_flags.model_copy(deep=True)
@@ -120,6 +100,32 @@ def run_turn_crew(
         interpreter=interpreter_out,
         merged_red_flags=merged,
     )
+
+
+def _interpret_with_groq(prompt: str) -> InterpreterOutput:
+    """Use Groq directly instead of bundling the CrewAI/LiteLLM orchestration stack."""
+    settings = get_settings()
+    if not settings.groq_api_key:
+        return InterpreterOutput()
+
+    try:
+        completion = Groq(api_key=settings.groq_api_key).chat.completions.create(
+            model=settings.groq_llm_turn.removeprefix("groq/"),
+            temperature=0.1,
+            response_format={"type": "json_object"},
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Return only valid JSON matching the requested schema.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+        )
+        content = completion.choices[0].message.content or "{}"
+        return _coerce_pydantic(None, InterpreterOutput, content)
+    except Exception:
+        # The deterministic intake flow still captures the active probe answer.
+        return InterpreterOutput()
 
 
 def _format_transcript(session: SessionState) -> str:

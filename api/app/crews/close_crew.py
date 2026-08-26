@@ -1,15 +1,5 @@
 from __future__ import annotations
 
-import json
-import re
-from typing import Any
-
-from crewai import Crew, Process, Task
-
-from app.agents.factories import (
-    create_history_structurer_agent,
-    create_physician_summarizer_agent,
-)
 from app.schemas.intake import PatientHistory, PhysicianSummary, SessionState
 from app.services.ayush_analysis import build_ayush_block
 from app.services.llm import redact_pii
@@ -336,6 +326,17 @@ def run_close_crew(session: SessionState) -> CloseCrewResult:
             for rf in session.red_flag_history
             for flag in rf.flags
         }
+    )
+
+    # The historical CrewAI output was overwritten with these deterministic,
+    # session-grounded values before returning. Keep that safe behavior without
+    # bundling the CrewAI and LiteLLM dependency tree.
+    history = _bind_history_to_session(
+        _fallback_history(session, red_flags, transcript), session, red_flags
+    )
+    return CloseCrewResult(
+        patient_history=history,
+        physician_summary=_fallback_summary(session, history, red_flags),
     )
 
     seed_en = compose_hpi_en(session)
