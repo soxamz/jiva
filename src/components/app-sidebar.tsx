@@ -8,6 +8,7 @@ import { LogoIcon } from '@/components/logo';
 import { getFooterNavLinks, getNavGroups, type AppShellUser } from '@/components/app-shared';
 import { LatestChange } from '@/components/latest-change';
 import { NavGroup } from '@/components/nav-group';
+import { useI18n } from '@/components/i18n-provider';
 import {
   Sidebar,
   SidebarContent,
@@ -19,10 +20,12 @@ import {
 } from '@/components/ui/sidebar';
 
 export function AppSidebar({ user }: { user: AppShellUser }) {
+  const { t } = useI18n();
   const pathname = usePathname();
-  const homeHref = user.role === 'patient' ? '/dashboard' : '/doctor';
-  const navGroups = getNavGroups(user.role, pathname);
-  const footerNavLinks = getFooterNavLinks(user.role, pathname);
+  const homeHref =
+    user.role === 'patient' ? '/dashboard' : user.role === 'responder' ? '/emergency' : '/doctor';
+  const navGroups = getNavGroups(user.role, pathname, t);
+  const footerNavLinks = getFooterNavLinks(user.role, pathname, t);
 
   return (
     <Sidebar
@@ -35,7 +38,7 @@ export function AppSidebar({ user }: { user: AppShellUser }) {
       variant="sidebar"
     >
       <SidebarHeader className="h-14 justify-center border-b px-2">
-        <SidebarMenuButton render={<Link href={homeHref} />} tooltip="JivaHQ home">
+        <SidebarMenuButton render={<Link href={homeHref} />} tooltip={t('sidebar.home')}>
           <LogoIcon />
           <span className="text-foreground! font-medium">JivaHQ</span>
         </SidebarMenuButton>

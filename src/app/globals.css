@@ -127,4 +127,19 @@
   html {
     @apply font-sans;
   }
+  html:lang(hi) {
+    font-family: var(--font-sans), 'Noto Sans Devanagari', sans-serif;
+  }
+  html:lang(or) {
+    font-family: var(--font-sans), 'Noto Sans Oriya', sans-serif;
+  }
+  html:lang(bn) {
+    font-family: var(--font-sans), 'Noto Sans Bengali', sans-serif;
+  }
+  html:lang(te) {
+    font-family: var(--font-sans), 'Noto Sans Telugu', sans-serif;
+  }
+  html:lang(ta) {
+    font-family: var(--font-sans), 'Noto Sans Tamil', sans-serif;
+  }
 }

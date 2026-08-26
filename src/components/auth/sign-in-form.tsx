@@ -8,21 +8,21 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { useI18n } from '@/components/i18n-provider';
 
 export function SignInForm({ className, ...props }: React.ComponentProps<'form'>) {
+  const { t } = useI18n();
   const [state, action, pending] = useActionState<FormState, FormData>(signInAction, undefined);
 
   return (
     <form action={action} className={cn('flex w-full flex-col gap-4', className)} {...props}>
       <FieldGroup>
         <div className="text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">Secure clinical access</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Sign in with the demo OTP flow. Use OTP 123456.
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('auth.signInTitle')}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">{t('auth.signInDescription')}</p>
         </div>
         <Field>
-          <FieldLabel htmlFor="identifier">Aadhaar / mobile number</FieldLabel>
+          <FieldLabel htmlFor="identifier">{t('auth.identifier')}</FieldLabel>
           <Input
             id="identifier"
             name="identifier"
@@ -37,20 +37,20 @@ export function SignInForm({ className, ...props }: React.ComponentProps<'form'>
           />
         </Field>
         <Field>
-          <FieldLabel htmlFor="otp">One-time password</FieldLabel>
+          <FieldLabel htmlFor="otp">{t('auth.otp')}</FieldLabel>
           <Input id="otp" name="otp" inputMode="numeric" defaultValue="123456" required />
           <FieldError errors={state?.errors?.otp?.map((message) => ({ message }))} />
         </Field>
         {state?.message && <FieldError>{state.message}</FieldError>}
         <Field>
           <Button type="submit" disabled={pending}>
-            {pending ? 'Verifying...' : 'Verify and authenticate'}
+            {pending ? t('auth.verifying') : t('auth.verify')}
           </Button>
         </Field>
         <FieldDescription className="text-center">
-          Need an account? <Link href="/sign-up">Create one</Link>
+          {t('auth.needAccount')} <Link href="/sign-up">{t('auth.createAccount')}</Link>
           <br />
-          Emergency responder? <Link href="/emergency">Use break-glass</Link>
+          {t('auth.responder')} <Link href="/emergency">{t('auth.useBreakGlass')}</Link>
         </FieldDescription>
       </FieldGroup>
     </form>

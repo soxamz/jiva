@@ -2,6 +2,10 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Inter } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { ThemeProvider } from '@/components/theme-provider';
+import { I18nProvider } from '@/components/i18n-provider';
+import { getI18n } from '@/lib/i18n';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -21,10 +25,12 @@ export const metadata: Metadata = {
     'Conversational clinical intake with adaptive SOCRATES questioning and draft physician summaries.',
 };
 
-export default function RootLayout({ children }: LayoutProps<'/'>) {
+export default async function RootLayout({ children }: LayoutProps<'/'>) {
+  const { language, locale, messages } = await getI18n();
+
   return (
     <html
-      lang="en"
+      lang={language.intl}
       className={cn(
         'h-full',
         'antialiased',
@@ -34,7 +40,18 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         inter.variable
       )}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <I18nProvider locale={locale} messages={messages}>
+            <TooltipProvider>{children}</TooltipProvider>
+          </I18nProvider>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

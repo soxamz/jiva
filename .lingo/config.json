@@ -1,0 +1,11 @@
+{
+  "sourceLocale": "en",
+  "targetLocales": ["hi", "or", "bn", "te", "ta"],
+  "files": [
+    {
+      "pattern": "src/locales/en/translation.json"
+    }
+  ],
+  "orgId": "org_6MdmXMdtM6TBhr5I",
+  "engineId": "eng_siunh6Oqn8wFi8fC"
+}

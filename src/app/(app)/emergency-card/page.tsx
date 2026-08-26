@@ -2,18 +2,18 @@ import { AlertTriangleIcon, PhoneIcon, ShieldCheckIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getPatientWorkspace } from '@/lib/dal';
+import { getI18n } from '@/lib/i18n';
 
 export default async function EmergencyCardPage() {
   const data = await getPatientWorkspace();
+  const { t } = await getI18n();
   const profile = data.profile;
 
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold">Emergency card</h1>
-        <p className="text-muted-foreground text-sm">
-          Important health details for you, your family, and first responders.
-        </p>
+        <h1 className="text-2xl font-semibold">{t('emergencyCard.title')}</h1>
+        <p className="text-muted-foreground text-sm">{t('emergencyCard.description')}</p>
       </div>
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card className="gap-0 md:col-span-3">
@@ -21,16 +21,16 @@ export default async function EmergencyCardPage() {
             <div className="flex flex-wrap items-center gap-2">
               <ShieldCheckIcon aria-hidden />
               <CardTitle>{data.user.name}</CardTitle>
-              <Badge variant="success">Verified profile</Badge>
+              <Badge variant="success">{t('emergencyCard.verified')}</Badge>
             </div>
-            <CardDescription>
-              Important information available quickly in an emergency.
-            </CardDescription>
+            <CardDescription>{t('emergencyCard.verifiedDescription')}</CardDescription>
           </CardHeader>
         </Card>
         <Card className="gap-0">
           <CardHeader>
-            <CardTitle className="text-xs font-normal tracking-wide">Blood type</CardTitle>
+            <CardTitle className="text-xs font-normal tracking-wide">
+              {t('emergencyCard.bloodType')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold tabular-nums">{profile?.bloodType ?? 'NA'}</p>
@@ -40,9 +40,9 @@ export default async function EmergencyCardPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <AlertTriangleIcon aria-hidden />
-              <CardTitle>Allergies</CardTitle>
+              <CardTitle>{t('dashboard.allergies')}</CardTitle>
             </div>
-            <CardDescription>Tell a doctor about these before treatment.</CardDescription>
+            <CardDescription>{t('dashboard.importantInformationDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             {(profile?.allergies ?? []).length ? (
@@ -52,13 +52,13 @@ export default async function EmergencyCardPage() {
                 </Badge>
               ))
             ) : (
-              <Badge variant="secondary">No allergies listed</Badge>
+              <Badge variant="secondary">{t('emergencyCard.noAllergies')}</Badge>
             )}
           </CardContent>
         </Card>
         <Card className="gap-0">
           <CardHeader>
-            <CardTitle>Critical conditions</CardTitle>
+            <CardTitle>{t('health.criticalConditions')}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             {(profile?.criticalConditions ?? []).length ? (
@@ -68,13 +68,13 @@ export default async function EmergencyCardPage() {
                 </Badge>
               ))
             ) : (
-              <Badge variant="secondary">None listed</Badge>
+              <Badge variant="secondary">{t('emergencyCard.noneListed')}</Badge>
             )}
           </CardContent>
         </Card>
         <Card className="gap-0">
           <CardHeader>
-            <CardTitle>Current medications</CardTitle>
+            <CardTitle>{t('health.currentMedicines')}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             {(profile?.currentMedications ?? []).length ? (
@@ -84,7 +84,7 @@ export default async function EmergencyCardPage() {
                 </Badge>
               ))
             ) : (
-              <Badge variant="secondary">None listed</Badge>
+              <Badge variant="secondary">{t('emergencyCard.noneListed')}</Badge>
             )}
           </CardContent>
         </Card>
@@ -92,9 +92,9 @@ export default async function EmergencyCardPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <PhoneIcon aria-hidden />
-              <CardTitle>Emergency contacts</CardTitle>
+              <CardTitle>{t('dashboard.emergencyContacts')}</CardTitle>
             </div>
-            <CardDescription>People to call when you need help.</CardDescription>
+            <CardDescription>{t('dashboard.emergencyContactsDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
             <ul className="divide-border grid grid-cols-1 divide-y md:grid-cols-2 md:divide-x md:divide-y-0">

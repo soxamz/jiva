@@ -10,13 +10,16 @@ import { DecorIcon } from '@/components/decor-icon';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ModeToggle } from './mode-toggle';
+import { LanguageToggle } from './language-toggle';
+import { getI18n } from '@/lib/i18n';
 
-export function AppHeader({ user }: { user: AppShellUser }) {
+export async function AppHeader({ user }: { user: AppShellUser }) {
+  const { t } = await getI18n();
   const isPatient = user.role === 'patient';
   const quickActionHref = isPatient ? '/share' : '/doctor';
-  const quickActionLabel = isPatient ? 'Share health record' : 'Open doctor portal';
+  const quickActionLabel = isPatient ? t('header.shareHealthRecord') : t('header.openDoctorPortal');
   const activityHref = isPatient ? '/access-log' : '/emergency';
-  const activityLabel = isPatient ? 'Open access log' : 'Open emergency access';
+  const activityLabel = isPatient ? t('header.openAccessLog') : t('header.openEmergencyAccess');
 
   return (
     <header
@@ -32,7 +35,9 @@ export function AppHeader({ user }: { user: AppShellUser }) {
           className="mr-2 h-4 data-[orientation=vertical]:self-center"
           orientation="vertical"
         />
-        <AppBreadcrumbs page={{ title: isPatient ? 'Patient workspace' : 'Clinical workspace' }} />
+        <AppBreadcrumbs
+          page={{ title: isPatient ? t('header.patientWorkspace') : t('header.clinicalWorkspace') }}
+        />
       </div>
       <div className="flex items-center gap-3">
         <Button
@@ -55,10 +60,11 @@ export function AppHeader({ user }: { user: AppShellUser }) {
         >
           <BellIcon data-icon="only" />
         </Button>
+        <LanguageToggle />
         <ModeToggle />
         <form action={signOutAction}>
           <Button size="sm" type="submit" variant="destructive">
-            Sign out
+            {t('header.signOut')}
           </Button>
         </form>
       </div>

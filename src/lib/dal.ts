@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { cache } from 'react';
-import { and, desc, eq, gt, lt, or } from 'drizzle-orm';
+import { and, desc, eq, lt, or } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 
 import { db } from '@/db/client';
@@ -57,6 +57,19 @@ export type MedicalProfileInput = {
     phone: string;
   }>;
 };
+
+export type ConsentAccessErrorCode = 'access_unavailable' | 'assigned_to_another_clinician';
+
+export class ConsentAccessError extends Error {
+  constructor(public readonly code: ConsentAccessErrorCode) {
+    super(code);
+    this.name = 'ConsentAccessError';
+  }
+}
+
+export function isConsentAccessError(error: unknown): error is ConsentAccessError {
+  return error instanceof ConsentAccessError;
+}
 
 function toSafeUser(user: typeof users.$inferSelect): SafeUser {
   return {
@@ -204,7 +217,9 @@ export async function requireUser(roles?: UserRole[]) {
   }
 
   if (roles && !roles.includes(user.role)) {
-    redirect(user.role === 'patient' ? '/dashboard' : '/doctor');
+    redirect(
+      user.role === 'patient' ? '/dashboard' : user.role === 'responder' ? '/emergency' : '/doctor'
+    );
   }
 
   return user;
@@ -529,31 +544,24 @@ async function getValidConsent(code: string, viewerId: string) {
   await expireOldConsents();
 
   const normalized = normalizeCode(code);
-  const [consent] = await db
-    .select()
-    .from(consents)
-    .where(
-      and(
-        eq(consents.code, normalized),
-        eq(consents.status, 'active'),
-        gt(consents.expiresAt, new Date())
-      )
-    )
-    .limit(1);
+  const [consent] = await db.select().from(consents).where(eq(consents.code, normalized)).limit(1);
 
-  if (!consent) {
-    throw new Error('Access code is invalid, revoked, or expired.');
+  if (!consent || consent.status !== 'active' || consent.expiresAt <= new Date()) {
+    throw new ConsentAccessError('access_unavailable');
   }
 
   if (consent.granteeId && consent.granteeId !== viewerId) {
-    throw new Error('This access code is already bound to another clinician.');
+    await logAudit(viewerId, 'CONSENT_ACCESS_DENIED', 'consent', consent.id, {
+      reason: 'assigned_to_another_clinician',
+    });
+    throw new ConsentAccessError('assigned_to_another_clinician');
   }
 
   return consent;
 }
 
 export async function redeemConsentForCurrentUser(code: string) {
-  const viewer = await requireUser(['doctor', 'responder']);
+  const viewer = await requireUser(['doctor']);
   const consent = await getValidConsent(code, viewer.id);
 
   if (!consent.granteeId) {
@@ -569,7 +577,7 @@ export async function redeemConsentForCurrentUser(code: string) {
 }
 
 export async function getDoctorAccessData(code: string) {
-  const viewer = await requireUser(['doctor', 'responder']);
+  const viewer = await requireUser(['doctor']);
   const consent = await getValidConsent(code, viewer.id);
   const [patient] = await db.select().from(users).where(eq(users.id, consent.patientId)).limit(1);
 
@@ -611,7 +619,7 @@ export async function addDoctorNoteForConsent(
   code: string,
   input: { title: string; note: string }
 ) {
-  const viewer = await requireUser(['doctor', 'responder']);
+  const viewer = await requireUser(['doctor']);
   const consent = await getValidConsent(code, viewer.id);
   const [document] = await db
     .insert(documents)
@@ -645,6 +653,42 @@ export async function addDoctorNoteForConsent(
   });
 
   return document;
+}
+
+export async function getEmergencyAccessData(code: string) {
+  const viewer = await requireUser(['responder']);
+  const consent = await getValidConsent(code, viewer.id);
+
+  if (consent.granteeId !== viewer.id) {
+    throw new ConsentAccessError('access_unavailable');
+  }
+
+  const [patient] = await db.select().from(users).where(eq(users.id, consent.patientId)).limit(1);
+
+  if (!patient) {
+    throw new ConsentAccessError('access_unavailable');
+  }
+
+  const [profile] = await db
+    .select()
+    .from(medicalProfiles)
+    .where(eq(medicalProfiles.userId, patient.id))
+    .limit(1);
+
+  const recentIntakes = await db
+    .select()
+    .from(intakeSessions)
+    .where(eq(intakeSessions.patientId, patient.id))
+    .orderBy(desc(intakeSessions.createdAt))
+    .limit(3);
+
+  return {
+    viewer: toSafeUser(viewer),
+    patient: toSafeUser(patient),
+    profile,
+    recentIntakes,
+    consent,
+  };
 }
 
 export async function createBreakGlassAccess(input: { identifier: string; reason: string }) {

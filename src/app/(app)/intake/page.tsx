@@ -7,31 +7,29 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { getPatientWorkspace } from '@/lib/dal';
 import { formatDateTime } from '@/lib/format';
+import { getI18n } from '@/lib/i18n';
 
 export default async function IntakePage() {
   const data = await getPatientWorkspace();
+  const { locale, t } = await getI18n();
 
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold">Tell us how you feel</h1>
-        <p className="text-muted-foreground text-sm">
-          Share your symptoms before you meet a doctor.
-        </p>
+        <h1 className="text-2xl font-semibold">{t('intake.title')}</h1>
+        <p className="text-muted-foreground text-sm">{t('intake.description')}</p>
       </div>
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-[0.8fr_1.2fr]">
         <Card className="gap-0">
           <CardHeader>
-            <CardTitle>Describe your symptoms</CardTitle>
-            <CardDescription>
-              Answer in your own words. Urgent symptoms will be highlighted.
-            </CardDescription>
+            <CardTitle>{t('intake.describe')}</CardTitle>
+            <CardDescription>{t('intake.describeDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form action={submitIntakeAction} className="flex flex-col gap-4">
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="chiefComplaint">What is troubling you?</FieldLabel>
+                  <FieldLabel htmlFor="chiefComplaint">{t('intake.chiefComplaint')}</FieldLabel>
                   <Input
                     id="chiefComplaint"
                     name="chiefComplaint"
@@ -40,7 +38,7 @@ export default async function IntakePage() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="symptomDuration">When did it begin?</FieldLabel>
+                  <FieldLabel htmlFor="symptomDuration">{t('intake.duration')}</FieldLabel>
                   <Input
                     id="symptomDuration"
                     name="symptomDuration"
@@ -49,7 +47,7 @@ export default async function IntakePage() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="location">Where do you feel it?</FieldLabel>
+                  <FieldLabel htmlFor="location">{t('intake.location')}</FieldLabel>
                   <Input
                     id="location"
                     name="location"
@@ -57,7 +55,7 @@ export default async function IntakePage() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="character">What does it feel like?</FieldLabel>
+                  <FieldLabel htmlFor="character">{t('intake.character')}</FieldLabel>
                   <Textarea
                     id="character"
                     name="character"
@@ -65,7 +63,7 @@ export default async function IntakePage() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="severity">How severe is it? (1 to 10)</FieldLabel>
+                  <FieldLabel htmlFor="severity">{t('intake.severity')}</FieldLabel>
                   <Input
                     id="severity"
                     name="severity"
@@ -77,26 +75,26 @@ export default async function IntakePage() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="aggravatingFactors">What makes it worse?</FieldLabel>
+                  <FieldLabel htmlFor="aggravatingFactors">{t('intake.worse')}</FieldLabel>
                   <Textarea id="aggravatingFactors" name="aggravatingFactors" />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="relievingFactors">What makes it better?</FieldLabel>
+                  <FieldLabel htmlFor="relievingFactors">{t('intake.better')}</FieldLabel>
                   <Textarea id="relievingFactors" name="relievingFactors" />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="associatedSymptoms">Any other symptoms?</FieldLabel>
+                  <FieldLabel htmlFor="associatedSymptoms">{t('intake.otherSymptoms')}</FieldLabel>
                   <Textarea id="associatedSymptoms" name="associatedSymptoms" />
                 </Field>
-                <Button type="submit">Check my symptoms</Button>
+                <Button type="submit">{t('intake.submit')}</Button>
               </FieldGroup>
             </form>
           </CardContent>
         </Card>
         <Card className="gap-0">
           <CardHeader>
-            <CardTitle>Previous symptom checks</CardTitle>
-            <CardDescription>A summary is saved for you and your doctor.</CardDescription>
+            <CardTitle>{t('intake.previous')}</CardTitle>
+            <CardDescription>{t('intake.previousDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
             <ul className="divide-border flex flex-col divide-y">
@@ -106,11 +104,11 @@ export default async function IntakePage() {
                     <div>
                       <p className="font-medium">{intake.chiefComplaint}</p>
                       <p className="text-muted-foreground text-xs">
-                        {formatDateTime(intake.createdAt)}
+                        {formatDateTime(intake.createdAt, locale)}
                       </p>
                     </div>
                     <Badge variant={intake.redFlag ? 'destructive' : 'success'}>
-                      {intake.redFlag ? 'Needs quick attention' : 'Saved'}
+                      {intake.redFlag ? t('dashboard.needsAttention') : t('dashboard.saved')}
                     </Badge>
                   </div>
                   <p className="text-muted-foreground text-sm leading-6">{intake.summary}</p>

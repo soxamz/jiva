@@ -1,12 +1,23 @@
-export function formatDateTime(date: Date) {
-  return new Intl.DateTimeFormat('en-IN', {
+import type { Locale } from '@/lib/i18n-client';
+
+const intlLocales: Record<Locale, string> = {
+  en: 'en-IN',
+  hi: 'hi-IN',
+  or: 'or-IN',
+  bn: 'bn-IN',
+  te: 'te-IN',
+  ta: 'ta-IN',
+};
+
+export function formatDateTime(date: Date, locale: Locale = 'en') {
+  return new Intl.DateTimeFormat(intlLocales[locale], {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(date);
 }
 
-export function formatDate(date: Date) {
-  return new Intl.DateTimeFormat('en-IN', {
+export function formatDate(date: Date, locale: Locale = 'en') {
+  return new Intl.DateTimeFormat(intlLocales[locale], {
     dateStyle: 'medium',
   }).format(date);
 }
