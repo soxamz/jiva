@@ -1,0 +1,136 @@
+{
+  "version": "1.1.0",
+  "emergency_redirect_message": "Thank you for sharing that. Your symptoms may need urgent attention. Please speak to the triage nurse or go to the emergency desk now — we are alerting the clinic staff to help you right away.",
+  "rules": [
+    {
+      "id": "chest_pain_acute",
+      "flag": "acute_chest_pain",
+      "action": "bypass_queue",
+      "patterns": [
+        "chest pain",
+        "pain in chest",
+        "chest mein dard",
+        "seene mein dard",
+        "seene me dard",
+        "crushing chest",
+        "pressure in chest",
+        "chest pressure",
+        "heart attack",
+        "dil ka dard"
+      ]
+    },
+    {
+      "id": "sob_at_rest",
+      "flag": "shortness_of_breath_at_rest",
+      "action": "bypass_queue",
+      "patterns": [
+        "can't breathe",
+        "cannot breathe",
+        "shortness of breath",
+        "breathless at rest",
+        "saans nahi aa",
+        "saans nahi aa rahi",
+        "difficulty breathing",
+        "gasping for air"
+      ]
+    },
+    {
+      "id": "stroke_signs",
+      "flag": "possible_stroke",
+      "action": "bypass_queue",
+      "patterns": [
+        "one sided weakness",
+        "weakness on one side",
+        "face drooping",
+        "slurred speech",
+        "cannot speak clearly",
+        "sudden numbness",
+        "stroke",
+        "paralysis",
+        "ek taraf weakness",
+        "munh tedha"
+      ]
+    },
+    {
+      "id": "suicidal_ideation",
+      "flag": "suicidal_ideation",
+      "action": "escalate",
+      "patterns": [
+        "want to die",
+        "kill myself",
+        "suicide",
+        "end my life",
+        "marna chahta",
+        "marna chahti",
+        "khudkhushi"
+      ]
+    },
+    {
+      "id": "severe_bleeding",
+      "flag": "severe_bleeding",
+      "action": "bypass_queue",
+      "patterns": [
+        "severe bleeding",
+        "bleeding heavily",
+        "won't stop bleeding",
+        "blood pouring",
+        "bahut khoon",
+        "khoon nahi ruk",
+        "uncontrolled bleeding",
+        "bleeding won't stop"
+      ]
+    },
+    {
+      "id": "head_trauma_fall",
+      "flag": "head_trauma_or_fall",
+      "action": "bypass_queue",
+      "patterns": [
+        "unconscious after fall",
+        "passed out after fall",
+        "not waking after fall",
+        "severe head injury",
+        "open skull",
+        "brain injury"
+      ]
+    },
+    {
+      "id": "active_seizure",
+      "flag": "active_seizure",
+      "action": "bypass_queue",
+      "patterns": [
+        "seizure now",
+        "having a seizure",
+        "fitting now",
+        "convulsion",
+        "mirgi ka dora",
+        "currently seizing"
+      ]
+    },
+    {
+      "id": "anaphylaxis",
+      "flag": "possible_anaphylaxis",
+      "action": "bypass_queue",
+      "patterns": [
+        "throat swelling",
+        "lips swelling",
+        "can't swallow",
+        "allergic reaction severe",
+        "anaphylaxis",
+        "gale mein sujan"
+      ]
+    },
+    {
+      "id": "altered_consciousness",
+      "flag": "altered_consciousness",
+      "action": "bypass_queue",
+      "patterns": [
+        "passed out",
+        "unconscious",
+        "not responding",
+        "confused suddenly",
+        "behosh",
+        "hoshi nahi"
+      ]
+    }
+  ]
+}
