@@ -46,6 +46,18 @@ type IntakeInput = {
   associatedSymptoms?: string;
 };
 
+export type MedicalProfileInput = {
+  bloodType: string;
+  allergies: string[];
+  criticalConditions: string[];
+  currentMedications: string[];
+  emergencyContacts: Array<{
+    name: string;
+    relation: string;
+    phone: string;
+  }>;
+};
+
 function toSafeUser(user: typeof users.$inferSelect): SafeUser {
   return {
     id: user.id,
@@ -374,6 +386,49 @@ export async function createDocumentForCurrentPatient(input: DocumentInput) {
   });
 
   return document;
+}
+
+export async function updateMedicalProfileForCurrentPatient(input: MedicalProfileInput) {
+  const user = await requireUser(['patient']);
+  const [existingProfile] = await db
+    .select({ id: medicalProfiles.id })
+    .from(medicalProfiles)
+    .where(eq(medicalProfiles.userId, user.id))
+    .limit(1);
+
+  const profileValues = {
+    bloodType: input.bloodType,
+    allergies: input.allergies,
+    criticalConditions: input.criticalConditions,
+    currentMedications: input.currentMedications,
+    emergencyContacts: input.emergencyContacts,
+    updatedAt: new Date(),
+  };
+
+  const [profile] = existingProfile
+    ? await db
+        .update(medicalProfiles)
+        .set(profileValues)
+        .where(eq(medicalProfiles.id, existingProfile.id))
+        .returning()
+    : await db
+        .insert(medicalProfiles)
+        .values({ userId: user.id, ...profileValues })
+        .returning();
+
+  await logAudit(user.id, 'PROFILE_UPDATED', 'medical_profile', profile.id, {
+    patientId: user.id,
+    fields: [
+      'bloodType',
+      'allergies',
+      'criticalConditions',
+      'currentMedications',
+      'emergencyContacts',
+    ],
+    emergencyContactCount: input.emergencyContacts.length,
+  });
+
+  return profile;
 }
 
 export async function submitIntakeForCurrentPatient(input: IntakeInput) {

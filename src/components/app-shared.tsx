@@ -5,6 +5,7 @@ import {
   ClipboardListIcon,
   FileTextIcon,
   HistoryIcon,
+  HeartPulseIcon,
   LayoutDashboardIcon,
   LifeBuoyIcon,
   QrCodeIcon,
@@ -39,6 +40,7 @@ const patientGroups: SidebarNavGroup[] = [
       { title: 'Dashboard', path: '/dashboard', icon: <LayoutDashboardIcon /> },
       { title: 'Timeline', path: '/timeline', icon: <ActivityIcon /> },
       { title: 'Documents', path: '/documents', icon: <FileTextIcon /> },
+      { title: 'Health information', path: '/health-information', icon: <HeartPulseIcon /> },
     ],
   },
   {

@@ -14,6 +14,7 @@ import {
   redeemConsentForCurrentUser,
   revokeConsentForCurrentPatient,
   submitIntakeForCurrentPatient,
+  updateMedicalProfileForCurrentPatient,
 } from '@/lib/dal';
 import { normalizeIdentifier } from '@/lib/identity';
 import { clearSession, createSession } from '@/lib/session';
@@ -81,10 +82,52 @@ const breakGlassSchema = z.object({
   reason: z.string().trim().min(5),
 });
 
+const listItemSchema = z.string().trim().min(1).max(100);
+
+const profileSchema = z.object({
+  bloodType: z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown']),
+  allergies: z.array(listItemSchema).max(12),
+  criticalConditions: z.array(listItemSchema).max(12),
+  currentMedications: z.array(listItemSchema).max(12),
+  emergencyContacts: z
+    .array(
+      z.object({
+        name: z.string().trim().min(2).max(80),
+        relation: z.string().trim().min(2).max(60),
+        phone: z
+          .string()
+          .trim()
+          .regex(/^[0-9+() -]{7,20}$/, 'Enter a valid contact number.'),
+      })
+    )
+    .max(5),
+});
+
 function formErrors(error: z.ZodError): FormState {
   return {
     errors: error.flatten().fieldErrors,
   };
+}
+
+function splitCommaSeparatedValues(value: FormDataEntryValue | null) {
+  return String(value ?? '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function parseEmergencyContacts(value: FormDataEntryValue | null) {
+  const entries = String(value ?? '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.split('|').map((part) => part.trim()));
+
+  if (entries.some((entry) => entry.length !== 3)) {
+    throw new Error('Enter each emergency contact as: Name | relation | phone number.');
+  }
+
+  return entries.map(([name, relation, phone]) => ({ name, relation, phone }));
 }
 
 export async function signInAction(_state: FormState, formData: FormData): Promise<FormState> {
@@ -177,6 +220,24 @@ export async function uploadDocumentAction(formData: FormData) {
   revalidatePath('/documents');
   revalidatePath('/timeline');
   redirect('/documents');
+}
+
+export async function updateMedicalProfileAction(formData: FormData) {
+  const profile = profileSchema.parse({
+    bloodType: formData.get('bloodType'),
+    allergies: splitCommaSeparatedValues(formData.get('allergies')),
+    criticalConditions: splitCommaSeparatedValues(formData.get('criticalConditions')),
+    currentMedications: splitCommaSeparatedValues(formData.get('currentMedications')),
+    emergencyContacts: parseEmergencyContacts(formData.get('emergencyContacts')),
+  });
+
+  await updateMedicalProfileForCurrentPatient(profile);
+
+  revalidatePath('/dashboard');
+  revalidatePath('/emergency-card');
+  revalidatePath('/health-information');
+  revalidatePath('/access-log');
+  redirect('/health-information');
 }
 
 export async function submitIntakeAction(formData: FormData) {

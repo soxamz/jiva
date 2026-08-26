@@ -263,7 +263,13 @@ export default async function DashboardPage() {
               </li>
             </ul>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="gap-2">
+            <Link
+              href="/health-information"
+              className={buttonVariants({ size: 'sm', variant: 'secondary' })}
+            >
+              Edit health information
+            </Link>
             <Link
               href="/emergency-card"
               className={buttonVariants({ size: 'sm', variant: 'secondary' })}
