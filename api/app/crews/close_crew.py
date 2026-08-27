@@ -30,61 +30,70 @@ def compose_hpi_en(session: SessionState, history: PatientHistory | None = None)
     sev_txt = f"severity {sev}/10" if sev is not None else "severity not recorded"
 
     non_pain = subtype in ("fever", "respiratory", "gi", "general")
-    # Prefer pain-style opening when site/character were actually collected
-    has_pain_slots = bool(h.hpi.site) or bool(h.hpi.character)
+    # Prefer pain-style opening only when real site/character were collected
+    # (sentinel denials like "none" must not force a pain frame for fever/etc.).
+    has_pain_slots = _is_positive_clinical(h.hpi.site) or _is_positive_clinical(
+        h.hpi.character
+    )
     if non_pain and not has_pain_slots:
         problem = _chief_problem_en(chief, subtype)
         parts = [
-            f"DRAFT HPI: Patient reports {problem}, {onset}, {sev_txt}."
+            f"**DRAFT HPI:** Patient reports {problem}, {onset}, {sev_txt}."
         ]
     else:
         site = _clinical_en("site", h.hpi.site) or "unspecified site"
         character = _clinical_en("character", h.hpi.character) or "character unclear"
+        if _is_denial_value(h.hpi.character):
+            character = "character denied / none reported when asked"
         parts = [
-            f"DRAFT HPI: Patient reports {character} at {site}, {onset}, {sev_txt}."
+            f"**DRAFT HPI:** Patient reports {character} at {site}, {onset}, {sev_txt}."
         ]
     if _is_stated(h.hpi.associations):
         parts.append(
-            f"Associations: {_fmt_slot(_clinical_en('associations', h.hpi.associations))}."
+            f"- **Associations:** {_fmt_slot(_clinical_en('associations', h.hpi.associations))}."
         )
     if _is_stated(h.hpi.time_course):
         parts.append(
-            f"Time course: {_fmt_slot(_clinical_en('time_course', h.hpi.time_course))}."
+            f"- **Time course:** {_fmt_slot(_clinical_en('time_course', h.hpi.time_course))}."
         )
     if _is_stated(h.hpi.exacerbating_relieving):
         parts.append(
-            "Aggravating/relieving: "
+            "- **Aggravating/relieving:** "
             f"{_fmt_slot(_clinical_en('exacerbating_relieving', h.hpi.exacerbating_relieving))}."
         )
     if _is_stated(h.hpi.radiation):
-        parts.append(f"Radiation: {_fmt_slot(_clinical_en('radiation', h.hpi.radiation))}.")
+        parts.append(
+            f"- **Radiation:** {_fmt_slot(_clinical_en('radiation', h.hpi.radiation))}."
+        )
     if _is_stated(h.pain_now):
-        parts.append(f"Pain now: {_fmt_slot(_clinical_en('pain_now', h.pain_now))}.")
+        parts.append(f"- **Pain now:** {_fmt_slot(_clinical_en('pain_now', h.pain_now))}.")
     if _is_stated(h.mechanism):
-        parts.append(f"Mechanism/injury: {_fmt_slot(h.mechanism)}.")
+        parts.append(f"- **Mechanism/injury:** {_fmt_slot(h.mechanism)}.")
     if _is_stated(h.prior_medications):
-        parts.append(f"Prior medications: {_fmt_slot(h.prior_medications)}.")
+        parts.append(f"- **Prior medications:** {_fmt_slot(h.prior_medications)}.")
     if _is_stated(h.prior_consult):
-        parts.append(f"Prior consult: {_fmt_slot(h.prior_consult)}.")
+        parts.append(f"- **Prior consult:** {_fmt_slot(h.prior_consult)}.")
     if _is_stated(h.bleeding_now):
-        parts.append(f"Bleeding now: {_fmt_slot(h.bleeding_now)}.")
+        parts.append(f"- **Bleeding now:** {_fmt_slot(h.bleeding_now)}.")
     if _is_stated(h.consciousness):
-        parts.append(f"Consciousness after event: {_fmt_slot(h.consciousness)}.")
+        parts.append(f"- **Consciousness after event:** {_fmt_slot(h.consciousness)}.")
     if _is_stated(h.blood_thinners):
-        parts.append(f"Blood thinners: {_fmt_slot(h.blood_thinners)}.")
+        parts.append(f"- **Blood thinners:** {_fmt_slot(h.blood_thinners)}.")
     if h.medications:
-        parts.append(f"Medications: {', '.join(h.medications)}.")
+        parts.append(f"- **Medications:** {', '.join(h.medications)}.")
     if h.allergies:
-        parts.append(f"Allergies: {', '.join(h.allergies)}.")
+        parts.append(f"- **Allergies:** {', '.join(h.allergies)}.")
 
     ayush_parts = None
     if _session_has_ayush_probes(session):
         ayush_parts = _compose_ayush_en(h.ayush or session.ayush)
     if ayush_parts:
+        parts.append("")
         parts.append(ayush_parts)
 
+    parts.append("")
     parts.append("Clinician verification required. Not a diagnosis.")
-    return " ".join(parts)
+    return "\n".join(parts)
 
 
 def _chief_problem_en(chief: str, subtype: str) -> str:
@@ -126,7 +135,7 @@ def _session_has_ayush_probes(session: SessionState) -> bool:
 def _compose_ayush_en(ayush) -> str | None:
     if ayush is None:
         return None
-    lines: list[str] = []
+    lines: list[str] = ["**Dashavidha (draft):**"]
     mapping = [
         ("Vaya", ayush.vaya),
         ("Prakriti", ayush.prakriti),
@@ -139,18 +148,46 @@ def _compose_ayush_en(ayush) -> str | None:
         ("Ahara Shakti / Agni", ayush.ahara_shakti),
         ("Vyayama Shakti", ayush.vyayama_shakti),
     ]
+    seen_values: set[str] = set()
     for label, value in mapping:
         if not _is_stated(value):
             continue
         low = str(value).strip().lower()
         if "not stated" in low:
             continue
-        lines.append(f"{label}: {_fmt_slot(value)}")
+        # Skip exact duplicate values already shown under another label
+        if low in seen_values:
+            continue
+        seen_values.add(low)
+        lines.append(f"- **{label}:** {_fmt_slot(value)}")
     if ayush.provisional_notes and _is_stated(ayush.provisional_notes):
-        lines.append(f"Provisional notes: {ayush.provisional_notes}")
-    if not lines:
+        notes = str(ayush.provisional_notes).strip()
+        if notes.lower() not in seen_values:
+            lines.append(f"- **Provisional notes:** {notes}")
+    if len(lines) <= 1:
         return None
-    return "Dashavidha (draft): " + "; ".join(lines) + "."
+    return "\n".join(lines)
+
+
+def _is_denial_value(value: str | None) -> bool:
+    if value is None or value == "":
+        return False
+    return str(value).strip().lower() in {
+        "none",
+        "no",
+        "nil",
+        "nothing",
+        "null",
+        "n/a",
+        "na",
+    }
+
+
+def _is_positive_clinical(value: str | None) -> bool:
+    """True when a slot has real clinical content (not empty/unclear/denial)."""
+    if not _is_stated(value):
+        return False
+    return not _is_denial_value(value)
 
 
 def _is_stated(value: str | None) -> bool:
@@ -275,30 +312,32 @@ def compose_hpi_hi(session: SessionState, history: PatientHistory | None = None)
     onset = _clinical_en("onset", h.hpi.onset) or h.hpi.onset or "शुरुआत अस्पष्ट"
     sev = h.hpi.severity
     sev_txt = f"तीव्रता {sev}/10" if sev is not None else "तीव्रता दर्ज नहीं"
-    if subtype in ("fever", "respiratory", "gi", "general") and not (
-        h.hpi.site or h.hpi.character
-    ):
+    has_pain_slots = _is_positive_clinical(h.hpi.site) or _is_positive_clinical(
+        h.hpi.character
+    )
+    if subtype in ("fever", "respiratory", "gi", "general") and not has_pain_slots:
         problem = _chief_problem_en(chief, subtype)
-        parts = [f"ड्राफ्ट HPI: {problem}, {onset}, {sev_txt}."]
+        parts = [f"**ड्राफ्ट HPI:** {problem}, {onset}, {sev_txt}."]
     else:
         site = _clinical_en("site", h.hpi.site) or h.hpi.site or "स्थान अस्पष्ट"
         character = (
             _clinical_en("character", h.hpi.character) or h.hpi.character or "प्रकृति अस्पष्ट"
         )
-        parts = [f"ड्राफ्ट HPI: {site} पर {character}, {onset}, {sev_txt}."]
+        parts = [f"**ड्राफ्ट HPI:** {site} पर {character}, {onset}, {sev_txt}."]
     if _is_stated(h.hpi.associations):
         parts.append(
-            f"सह लक्षण: {_fmt_slot(_clinical_en('associations', h.hpi.associations))}."
+            f"- **सह लक्षण:** {_fmt_slot(_clinical_en('associations', h.hpi.associations))}."
         )
     if _is_stated(h.prior_medications):
-        parts.append(f"पूर्व दवाएँ: {_fmt_slot(h.prior_medications)}.")
+        parts.append(f"- **पूर्व दवाएँ:** {_fmt_slot(h.prior_medications)}.")
     if _is_stated(h.prior_consult):
-        parts.append(f"पूर्व परामर्श: {_fmt_slot(h.prior_consult)}.")
+        parts.append(f"- **पूर्व परामर्श:** {_fmt_slot(h.prior_consult)}.")
     if _is_stated(h.mechanism):
-        parts.append(f"चोट/कारण: {_fmt_slot(h.mechanism)}.")
+        parts.append(f"- **चोट/कारण:** {_fmt_slot(h.mechanism)}.")
     ayush = h.ayush or session.ayush
     if ayush is not None and _session_has_ayush_probes(session):
-        hi_bits = []
+        hi_bits = ["**दशविध (ड्राफ्ट):**"]
+        seen: set[str] = set()
         for label, value in (
             ("वय", ayush.vaya),
             ("प्रकृति", ayush.prakriti),
@@ -308,11 +347,17 @@ def compose_hpi_hi(session: SessionState, history: PatientHistory | None = None)
             ("व्यायाम शक्ति", ayush.vyayama_shakti),
         ):
             if _is_stated(value) and "not stated" not in str(value).lower():
-                hi_bits.append(f"{label}: {_fmt_slot(value)}")
-        if hi_bits:
-            parts.append("दशविध (ड्राफ्ट): " + "; ".join(hi_bits) + ".")
+                low = str(value).strip().lower()
+                if low in seen:
+                    continue
+                seen.add(low)
+                hi_bits.append(f"- **{label}:** {_fmt_slot(value)}")
+        if len(hi_bits) > 1:
+            parts.append("")
+            parts.extend(hi_bits)
+    parts.append("")
     parts.append("केवल चिकित्सक सत्यापन हेतु। निदान नहीं।")
-    return " ".join(parts)
+    return "\n".join(parts)
 
 
 def run_close_crew(session: SessionState) -> CloseCrewResult:

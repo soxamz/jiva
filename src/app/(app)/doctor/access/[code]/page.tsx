@@ -16,6 +16,30 @@ import { formatDateTime, minutesUntil } from '@/lib/format';
 import { getI18n } from '@/lib/i18n';
 import { redirect } from 'next/navigation';
 
+function BoldSummary({ text }: { text: string }) {
+  const blocks = text
+    .split(/\n\n+/)
+    .map((block) => block.trim())
+    .filter(Boolean);
+  return (
+    <div className="text-muted-foreground space-y-3 text-sm leading-6">
+      {blocks.map((block, blockIndex) => (
+        <div key={`${blockIndex}-${block.slice(0, 24)}`} className="whitespace-pre-wrap">
+          {block.split(/(\*\*[^*]+\*\*)/g).map((part, index) =>
+            part.startsWith('**') && part.endsWith('**') ? (
+              <strong key={`${blockIndex}-${index}`} className="text-foreground font-semibold">
+                {part.slice(2, -2)}
+              </strong>
+            ) : (
+              <span key={`${blockIndex}-${index}`}>{part}</span>
+            )
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default async function DoctorAccessPage({ params }: PageProps<'/doctor/access/[code]'>) {
   const { code } = await params;
   let data: Awaited<ReturnType<typeof getDoctorAccessData>>;
@@ -104,9 +128,7 @@ export default async function DoctorAccessPage({ params }: PageProps<'/doctor/ac
                           : t('doctor.routine')}
                       </Badge>
                     </div>
-                    <div className="text-muted-foreground whitespace-pre-wrap text-sm leading-6">
-                      {summaryText}
-                    </div>
+                    <BoldSummary text={summaryText} />
                     {clinical?.detected_contradictions &&
                     clinical.detected_contradictions.length > 0 ? (
                       <div className="flex flex-col gap-1">

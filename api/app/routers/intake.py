@@ -43,8 +43,14 @@ async def turn(session_id: str, request: Request) -> TurnResponse:
             if not raw:
                 raise HTTPException(status_code=400, detail="Empty audio upload")
             filename = getattr(upload, "filename", None) or "audio.webm"
+            language_value = form.get("language")
+            language = (
+                language_value.strip()
+                if isinstance(language_value, str) and language_value.strip()
+                else None
+            )
             return await asyncio.to_thread(
-                intake_flow.process_audio_turn, session_id, raw, filename
+                intake_flow.process_audio_turn, session_id, raw, filename, language
             )
 
         if isinstance(text_value, str) and text_value.strip():

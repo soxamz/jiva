@@ -35,6 +35,8 @@ python -m venv .venv
 # source .venv/bin/activate
 
 pip install -r requirements.txt
+# ML3 physician synthesis needs crewai (listed in requirements.txt).
+# If POST /api/ml3/synthesize returns 503, reinstall: pip install "crewai>=0.28.8,<1.0.0"
 copy .env.example .env   # then fill API keys (Windows)
 # cp .env.example .env   # macOS / Linux
 ```

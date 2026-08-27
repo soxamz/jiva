@@ -21,6 +21,7 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html
       lang={language.intl}
+      suppressHydrationWarning
       className={cn('h-full', 'antialiased', 'font-sans', 'font-serif', "font-sans", inter.variable)}
     >
       <body className="flex min-h-full flex-col">

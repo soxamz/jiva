@@ -268,8 +268,9 @@ class PhysicianLikeTests(unittest.TestCase):
         self.assertIn("whole head", en.lower())
         self.assertIn("gradual onset", en.lower())
         self.assertIn("nonspecific headache", en.lower())
-        self.assertIn("prior consult: yes", en.lower())
+        self.assertIn("prior consult:** yes", en.lower())
         self.assertIn("celene", en.lower())
+        self.assertIn("\n- **", en)
         self.assertNotIn("dheere dheere history of kuch", en.lower())
         self.assertNotIn("denied", en.lower())
 

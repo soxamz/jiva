@@ -129,9 +129,9 @@ export function CriticalExtractsCard({
         <p className="text-muted-foreground text-sm">{emptyLabel}</p>
       ) : (
         <ul className="flex flex-col gap-3">
-          {labs.map((lab) => (
+          {labs.map((lab, index) => (
             <li
-              key={`${lab.test_name}-${lab.flagged_value}`}
+              key={`lab-${index}-${lab.test_name}-${lab.flagged_value}`}
               className="border-border/70 rounded-xl border px-3 py-2.5"
             >
               <div className="flex flex-wrap items-center gap-2">
@@ -141,9 +141,9 @@ export function CriticalExtractsCard({
               <p className="text-muted-foreground mt-1 text-sm">{lab.clinical_significance}</p>
             </li>
           ))}
-          {contradictions.map((item) => (
+          {contradictions.map((item, index) => (
             <li
-              key={`${item.severity}-${item.issue}`}
+              key={`contradiction-${index}-${item.severity}-${item.issue}`}
               className="border-border/70 rounded-xl border px-3 py-2.5"
             >
               <div className="flex flex-wrap items-center gap-2">

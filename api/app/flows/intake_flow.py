@@ -147,9 +147,10 @@ class IntakeFlow:
         session_id: str,
         audio_bytes: bytes,
         filename: str,
+        language: str | None = None,
     ) -> TurnResponse:
         session = self._require_session(session_id)
-        transcript = transcribe_audio(audio_bytes, filename=filename)
+        transcript = transcribe_audio(audio_bytes, filename=filename, language=language)
         if not transcript:
             raise ValueError("ASR returned empty transcript")
         return self._process_utterance(session, transcript, transcript_preview=transcript)

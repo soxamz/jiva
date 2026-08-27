@@ -28,8 +28,15 @@ def draft_physician_summary(
         "Create a concise bilingual clinical handoff draft from the supplied facts. "
         "This is not a diagnosis and must not include treatment advice. Never add, infer, "
         "or negate a symptom, medication, allergy, duration, severity, examination finding, "
-        "or diagnosis that is absent from the facts. Keep the English and Hindi fields plain "
-        "and readable for a clinician. Return JSON only.\n\n"
+        "or diagnosis that is absent from the facts. "
+        "Preserve point-wise structure with markdown: use newlines, '- ' bullets, and "
+        "'**Label:**' bold markers for HPI fields and AYUSH/Dashavidha parameters "
+        "(Associations, Time course, Vaya, Prakriti, Vikriti, Pramana, "
+        "Ahara Shakti / Agni, Vyayama Shakti, Provisional notes, etc.). "
+        "Do not flatten into a single paragraph. Do not invent pain at an unspecified "
+        "site when the chief complaint is fever or another non-pain problem. "
+        "Omit duplicate values repeated under multiple AYUSH labels. "
+        "Return JSON only.\n\n"
         f"Patient history JSON:\n{history.model_dump_json()}\n\n"
         f"Validated draft fallback:\n{fallback.model_dump_json()}\n\n"
         f"Redacted transcript for wording context:\n{transcript}"
@@ -60,5 +67,14 @@ def draft_physician_summary(
     candidate.red_flags = fallback.red_flags
     if not candidate.highlights:
         candidate.highlights = fallback.highlights
+    # Prefer structured fallback when Gemini flattens the point-wise draft.
+    fb = fallback.en or ""
+    cand = candidate.en or ""
+    if ("\n" not in cand or "**" not in cand) and ("\n" in fb and "**" in fb):
+        candidate.en = fb
+    fb_hi = fallback.hi or ""
+    cand_hi = candidate.hi or ""
+    if ("\n" not in cand_hi or "**" not in cand_hi) and ("\n" in fb_hi and "**" in fb_hi):
+        candidate.hi = fb_hi
     logger.info("Gemini generated a clinician-review summary draft")
     return candidate

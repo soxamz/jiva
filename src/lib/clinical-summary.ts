@@ -24,7 +24,10 @@ export type ClinicalSummary = {
 
 export function asClinicalSummary(value: unknown): ClinicalSummary | null {
   if (!value || typeof value !== 'object') return null;
-  return value as ClinicalSummary;
+  const summary = value as ClinicalSummary;
+  const narrative = summary.doctor_english_summary?.trim();
+  if (!narrative) return null;
+  return summary;
 }
 
 export function normalizeSeverity(value: string | undefined) {
@@ -74,17 +77,79 @@ export function mergeMedications(
   clinicalMeds: string[] | undefined,
   profileMeds: string[] | undefined
 ) {
-  const seen = new Set<string>();
-  const merged: string[] = [];
+  const byDrug = new Map<string, string>();
+
+  const drugKey = (label: string) => {
+    const withoutDose = label
+      .toLowerCase()
+      .replace(/\b\d+(?:\.\d+)?\s?(?:mg|mcg|g|ml|iu|units?)\b/gi, ' ')
+      .replace(
+        /\b(once|twice|thrice|three times|daily|nightly|bid|tid|qid|od|hs|prn|oral|po|iv|im|every\s+\d+\s+hours?)\b/gi,
+        ' '
+      )
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return withoutDose || label.toLowerCase().trim();
+  };
+
+  const richness = (label: string) =>
+    label.length + (/(\d+\s?(?:mg|mcg|g|ml))/i.test(label) ? 20 : 0) + (/\b(daily|bid|tid)/i.test(label) ? 10 : 0);
+
   for (const med of [...(clinicalMeds ?? []), ...(profileMeds ?? [])]) {
     const label = med.trim();
     if (!label) continue;
-    const key = label.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    merged.push(label);
+    const key = drugKey(label);
+    const existing = byDrug.get(key);
+    if (!existing || richness(label) > richness(existing)) {
+      byDrug.set(key, label);
+    }
   }
-  return merged;
+
+  return [...byDrug.values()];
+}
+
+export type SummarySection = {
+  title: string;
+  lines: string[];
+};
+
+/** Parse `**Heading:**` markdown blocks into titled sections with bullet/body lines. */
+export function parseSummarySections(markdown: string): SummarySection[] {
+  const text = markdown.trim();
+  if (!text) return [];
+
+  const headingRe = /^\*\*([^*]+):\*\*\s*(.*)$/;
+  const lines = text.split('\n');
+  const sections: SummarySection[] = [];
+  let current: SummarySection | null = null;
+
+  const pushCurrent = () => {
+    if (!current) return;
+    current.lines = current.lines.map((line) => line.trim()).filter(Boolean);
+    sections.push(current);
+    current = null;
+  };
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    const heading = line.match(headingRe);
+    if (heading) {
+      pushCurrent();
+      current = {
+        title: heading[1].trim(),
+        lines: heading[2]?.trim() ? [heading[2].trim()] : [],
+      };
+      continue;
+    }
+    if (!current) {
+      current = { title: 'Summary', lines: [] };
+    }
+    current.lines.push(line.replace(/^[-*•]\s+/, '').trim());
+  }
+  pushCurrent();
+  return sections;
 }
 
 /** Lightweight markdown for physician narrative: paragraphs + **bold**. */
@@ -93,4 +158,15 @@ export function renderSummaryParagraphs(markdown: string) {
     .split(/\n{2,}/)
     .map((block) => block.trim())
     .filter(Boolean);
+}
+
+/** True when Overview should prefer a local digest narrative over a long/unstructured source. */
+export function shouldPreferLocalDigestNarrative(narrative: string | undefined) {
+  const text = narrative?.trim() ?? '';
+  if (!text) return true;
+  if (text.length > 1200) return true;
+  const hasAction = /\*\*Action(?:\s+Required)?:\*\*/i.test(text);
+  const hasWarnings = /\*\*System Warnings:\*\*/i.test(text);
+  const hasStatus = /\*\*Current status:\*\*/i.test(text);
+  return !(hasAction || hasWarnings || hasStatus);
 }

@@ -1,50 +1,53 @@
 import Link from 'next/link';
 import { FileTextIcon, StethoscopeIcon } from 'lucide-react';
 
-import {
-  ClinicalHistoryCard,
-  CriticalExtractsCard,
-  MedicationsCard,
-  SummaryEngineCard,
-  SuggestedActionsCard,
-} from '@/components/clinical-overview/overview-cards';
+import { HistoryTimeline } from '@/components/clinical-overview/history-timeline';
+import { MedicationsPanel } from '@/components/clinical-overview/medications-panel';
+import { OverviewActions } from '@/components/clinical-overview/overview-actions';
+import { OverviewRangeSelector } from '@/components/clinical-overview/range-selector';
+import { SummaryEnginePanel } from '@/components/clinical-overview/summary-engine-panel';
+import { VitalsRow } from '@/components/clinical-overview/vitals-row';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  asClinicalSummary,
-  mergeMedications,
-  parseActionItems,
-} from '@/lib/clinical-summary';
-import { getPatientWorkspace } from '@/lib/dal';
 import { formatDateTime } from '@/lib/format';
 import { getI18n } from '@/lib/i18n';
+import { extractOverviewVitals } from '@/lib/overview-vitals';
+import {
+  getWeekClinicalOverview,
+  parseOverviewRange,
+  type OverviewRangeDays,
+} from '@/lib/week-clinical-overview';
 import { cn } from '@/lib/utils';
 
-export default async function ClinicalOverviewPage() {
-  const data = await getPatientWorkspace();
+export default async function ClinicalOverviewPage({
+  searchParams,
+}: PageProps<'/clinical-overview'>) {
+  const params = await searchParams;
+  const days = parseOverviewRange(params.range);
+  const overview = await getWeekClinicalOverview(days);
   const { locale, t } = await getI18n();
 
-  const latestWithSummary =
-    data.intakeSessions.find((intake) => asClinicalSummary(intake.clinicalSummary)) ?? null;
-  const clinical = asClinicalSummary(latestWithSummary?.clinicalSummary ?? null);
+  const showEmpty = overview.source === 'none';
+  const clinical = overview.clinical;
+  const allergies = overview.profile?.allergies ?? [];
+  const recordCount = overview.weekIntakes.length + overview.weekDocuments.length;
 
-  const allergies = data.profile?.allergies ?? [];
-  const medications = mergeMedications(
-    clinical?.extracted_medications,
-    data.profile?.currentMedications
-  );
-  const actions = parseActionItems(clinical?.doctor_english_summary, clinical?.triage_action);
+  const rangeLabels: Record<OverviewRangeDays, string> = {
+    7: t('overview.range7'),
+    30: t('overview.range30'),
+    90: t('overview.range90'),
+  };
 
   const history = [
-    ...data.intakeSessions.slice(0, 8).map((intake) => ({
+    ...overview.weekIntakes.map((intake) => ({
       id: `intake-${intake.id}`,
       date: intake.createdAt,
       dateLabel: formatDateTime(intake.createdAt, locale),
       type: t('overview.historyIntake'),
       title: intake.chiefComplaint,
     })),
-    ...data.documents.slice(0, 8).map(({ document }) => ({
+    ...overview.weekDocuments.map(({ document }) => ({
       id: `doc-${document.id}`,
       date: document.uploadedAt,
       dateLabel: formatDateTime(document.uploadedAt, locale),
@@ -53,35 +56,57 @@ export default async function ClinicalOverviewPage() {
     })),
   ]
     .sort((a, b) => b.date.getTime() - a.date.getTime())
-    .slice(0, 10)
     .map(({ id, dateLabel, type, title }) => ({ id, dateLabel, type, title }));
 
+  const vitals = extractOverviewVitals(overview.weekDocuments);
+  const sourceNote =
+    overview.source === 'ml3'
+      ? t('overview.sourceMl3')
+      : overview.source === 'stored'
+        ? t('overview.sourceStored')
+        : overview.source === 'local'
+          ? overview.error
+            ? `${t('overview.sourceLocal')} · ${t('overview.ml3FallbackNote')}`
+            : t('overview.sourceLocal')
+          : null;
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-muted-foreground text-sm">{t('overview.eyebrow')}</p>
-          <h1 className="text-2xl font-semibold tracking-normal">{data.user.name}</h1>
-          <p className="text-muted-foreground mt-1 text-sm">{t('overview.description')}</p>
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight">{t('overview.pageTitle')}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {t('overview.windowDescription', { count: overview.days })}
+          </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {allergies.length > 0 ? (
-            allergies.slice(0, 4).map((allergy) => (
-              <Badge key={allergy} variant="destructive">
-                {allergy}
+        <div className="flex flex-wrap items-center gap-2">
+          {allergies.length > 0
+            ? allergies.slice(0, 3).map((allergy) => (
+                <Badge key={allergy} variant="destructive" className="rounded-full">
+                  {allergy}
+                </Badge>
+              ))
+            : (
+              <Badge variant="outline" className="rounded-full">
+                {t('overview.noAllergies')}
               </Badge>
-            ))
-          ) : (
-            <Badge variant="outline">{t('overview.noAllergies')}</Badge>
-          )}
+            )}
+          <OverviewActions
+            noteLabel={t('overview.addNote')}
+            printLabel={t('overview.print')}
+          />
         </div>
       </div>
 
-      {!clinical ? (
-        <Card className="gap-0">
+      <OverviewRangeSelector days={days} labels={rangeLabels} />
+
+      {showEmpty ? (
+        <Card className="patient-glass-card gap-0 rounded-3xl">
           <CardHeader>
-            <CardTitle>{t('overview.emptyTitle')}</CardTitle>
-            <CardDescription>{t('overview.emptyDescription')}</CardDescription>
+            <CardTitle>{t('overview.weekEmptyTitle')}</CardTitle>
+            <CardDescription>
+              {t('overview.windowEmptyDescription', { count: overview.days })}
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-3">
             <Link
@@ -100,48 +125,60 @@ export default async function ClinicalOverviewPage() {
             </Link>
           </CardContent>
         </Card>
-      ) : (
-        <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-          <div className="flex flex-col gap-4 xl:col-span-2">
-            <SummaryEngineCard
+      ) : clinical ? (
+        <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,1fr)]">
+          <div className="flex min-w-0 flex-col gap-4">
+            <SummaryEnginePanel
               clinical={clinical}
-              description={t('overview.summaryDescription')}
+              extractsEmpty={t('overview.extractsEmpty')}
+              extractsTitle={t('overview.extractsTitle')}
+              footerLabel={t('overview.engineFooter')}
               generatedLabel={t('overview.generated', {
-                date: formatDateTime(latestWithSummary!.createdAt, locale),
+                date: formatDateTime(overview.generatedAt ?? new Date(), locale),
               })}
-              highConfidenceLabel={t('overview.highConfidence')}
+              highConfidenceLabel={
+                overview.source === 'ml3' ? t('overview.highConfidence') : t('overview.sourceLocal')
+              }
+              recordsLabel={t('overview.basedOnRecords', { count: recordCount })}
+              reportLabel={t('overview.reportInaccuracy')}
               reviewLabel={t('overview.needsReview')}
+              sourceNote={sourceNote}
               title={t('overview.summaryTitle')}
             />
-            <CriticalExtractsCard
-              clinical={clinical}
-              description={t('overview.extractsDescription')}
-              emptyLabel={t('overview.extractsEmpty')}
-              title={t('overview.extractsTitle')}
+            <VitalsRow
+              labels={{
+                bp: t('overview.vitalBp'),
+                hr: t('overview.vitalHr'),
+                weight: t('overview.vitalWeight'),
+                spo2: t('overview.vitalSpo2'),
+              }}
+              metrics={vitals}
+              statusLabels={{
+                elevated: t('overview.vitalElevated'),
+                normal: t('overview.vitalNormal'),
+                stable: t('overview.vitalStable'),
+                not_recorded: t('overview.vitalNotRecorded'),
+              }}
             />
           </div>
-          <div className="flex flex-col gap-4">
-            <SuggestedActionsCard
-              actions={actions}
-              description={t('overview.actionsDescription')}
-              emptyLabel={t('overview.actionsEmpty')}
-              title={t('overview.actionsTitle')}
-            />
-            <MedicationsCard
-              description={t('overview.medsDescription')}
+          <div className="flex min-w-0 flex-col gap-4">
+            <MedicationsPanel
+              compliantLabel={t('overview.medCompliant')}
               emptyLabel={t('overview.medsEmpty')}
-              medications={medications}
+              footerLabel={t('overview.medsViewAll')}
+              itemsLabel={t('overview.medsItems', { count: overview.medications.length })}
+              medications={overview.medications}
+              reviewLabel={t('overview.medReview')}
               title={t('overview.medsTitle')}
             />
-            <ClinicalHistoryCard
-              description={t('overview.historyDescription')}
+            <HistoryTimeline
               emptyLabel={t('overview.historyEmpty')}
               items={history}
               title={t('overview.historyTitle')}
             />
           </div>
         </section>
-      )}
+      ) : null}
     </div>
   );
 }

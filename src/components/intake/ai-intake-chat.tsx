@@ -23,13 +23,49 @@ import {
   sendTextTurn,
 } from '@/lib/intake-api';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/components/i18n-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
 
+function BoldText({ text }: { text: string }) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return (
+            <strong key={`${part}-${index}`} className="text-foreground font-semibold">
+              {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        return <span key={`${part}-${index}`}>{part}</span>;
+      })}
+    </>
+  );
+}
+
+function DraftSummary({ text }: { text: string }) {
+  const blocks = text
+    .split(/\n\n+/)
+    .map((block) => block.trim())
+    .filter(Boolean);
+  return (
+    <div className="space-y-3 text-sm leading-6">
+      {blocks.map((block, index) => (
+        <div key={`${index}-${block.slice(0, 24)}`} className="whitespace-pre-wrap">
+          <BoldText text={block} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function AiIntakeChat() {
+  const { locale } = useI18n();
   const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -129,7 +165,7 @@ export function AiIntakeChat() {
         if (!audio.size) return;
         startTransition(async () => {
           try {
-            const turn = await sendAudioTurn(sessionId, audio);
+            const turn = await sendAudioTurn(sessionId, audio, 'intake.webm', locale);
             applyTurn(turn, turn.transcript_preview || 'Voice message');
           } catch (cause) {
             setError(cause instanceof Error ? cause.message : 'Unable to process the recording.');
@@ -325,7 +361,7 @@ export function AiIntakeChat() {
               <p className="text-muted-foreground text-xs">
                 {finalResult.physician_summary.disclaimer}
               </p>
-              <p className="text-sm leading-6">{finalResult.physician_summary.en}</p>
+              <DraftSummary text={finalResult.physician_summary.en} />
               {saveState === 'failed' && (
                 <Button
                   onClick={() => void persistFinalResult(finalResult)}

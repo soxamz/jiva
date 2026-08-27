@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { cache } from 'react';
-import { and, desc, eq, lt, or } from 'drizzle-orm';
+import { and, desc, eq, gte, lt, or } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 
 import { db } from '@/db/client';
@@ -409,6 +409,64 @@ export async function getPatientWorkspace() {
     auditLogs: audits,
     timeline,
   };
+}
+
+/** Past-N-day intakes, OCR documents, and profile for Clinical Overview. */
+export async function getPatientWeekClinicalContext(days = 7) {
+  const user = await requireUser(['patient']);
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  const [profile] = await db
+    .select()
+    .from(medicalProfiles)
+    .where(eq(medicalProfiles.userId, user.id))
+    .limit(1);
+
+  const weekDocuments = await db
+    .select({
+      document: documents,
+      structured: structuredData,
+    })
+    .from(documents)
+    .leftJoin(structuredData, eq(structuredData.docId, documents.id))
+    .where(and(eq(documents.userId, user.id), gte(documents.uploadedAt, since)))
+    .orderBy(desc(documents.uploadedAt));
+
+  const weekIntakes = await db
+    .select()
+    .from(intakeSessions)
+    .where(and(eq(intakeSessions.patientId, user.id), gte(intakeSessions.createdAt, since)))
+    .orderBy(desc(intakeSessions.createdAt));
+
+  return {
+    user: toSafeUser(user),
+    profile: profile ?? null,
+    since,
+    days,
+    weekIntakes,
+    weekDocuments,
+  };
+}
+
+export async function getOcrExtractionsSince(since: Date) {
+  const user = await requireUser(['patient']);
+  const rows = await db
+    .select({
+      documentId: documents.id,
+      title: documents.title,
+      docType: documents.docType,
+      uploadedAt: documents.uploadedAt,
+      extractedJson: structuredData.extractedJson,
+      abnormalValues: structuredData.abnormalValues,
+    })
+    .from(documents)
+    .innerJoin(structuredData, eq(structuredData.docId, documents.id))
+    .where(and(eq(documents.userId, user.id), gte(documents.uploadedAt, since)))
+    .orderBy(desc(documents.uploadedAt));
+
+  return rows.filter(
+    (row) => row.extractedJson && typeof row.extractedJson === 'object'
+  );
 }
 
 export async function createDocumentForCurrentPatient(input: DocumentInput) {

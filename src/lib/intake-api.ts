@@ -118,10 +118,14 @@ export async function sendTextTurn(sessionId: string, text: string): Promise<Tur
 export async function sendAudioTurn(
   sessionId: string,
   blob: Blob,
-  filename = 'intake.webm'
+  filename = 'intake.webm',
+  language?: string | null
 ): Promise<TurnResponse> {
   const form = new FormData();
   form.append('audio', blob, filename);
+  if (language) {
+    form.append('language', language);
+  }
   const res = await fetch(intakeApiPath(`/intake/sessions/${sessionId}/turn`), {
     method: 'POST',
     body: form,
