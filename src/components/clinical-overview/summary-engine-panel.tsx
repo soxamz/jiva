@@ -78,7 +78,7 @@ export function SummaryEnginePanel({
   );
 
   return (
-    <Card>
+    <Card className="rounded-2xl shadow-sm">
       <CardHeader className="gap-3 border-b">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">

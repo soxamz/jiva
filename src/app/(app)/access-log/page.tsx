@@ -1,6 +1,6 @@
-import { DashboardCard } from '@/components/dashboard-card';
-import { Badge } from '@/components/ui/badge';
-import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader } from '@/components/page-header';
+import { StatusPill } from '@/components/status-pill';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -19,13 +19,10 @@ export default async function AccessLogPage() {
   const { locale, t } = await getI18n();
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold">{t('accessLog.title')}</h1>
-        <p className="text-muted-foreground text-sm">{t('accessLog.description')}</p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader description={t('accessLog.description')} title={t('accessLog.title')} />
       <section className="grid grid-cols-1 gap-4">
-        <DashboardCard className="gap-0">
+        <Card className="rounded-2xl shadow-sm">
           <CardHeader>
             <CardTitle>{t('accessLog.recent')}</CardTitle>
             <CardDescription>{t('accessLog.recentDescription')}</CardDescription>
@@ -34,7 +31,7 @@ export default async function AccessLogPage() {
             <Table>
               <TableCaption className="sr-only">Recent audit activity.</TableCaption>
               <TableHeader>
-                <TableRow>
+                <TableRow className="hover:bg-transparent">
                   <TableHead className="ps-6">{t('accessLog.what')}</TableHead>
                   <TableHead>{t('accessLog.related')}</TableHead>
                   <TableHead className="pe-6 text-right">{t('accessLog.time')}</TableHead>
@@ -42,14 +39,14 @@ export default async function AccessLogPage() {
               </TableHeader>
               <TableBody>
                 {data.auditLogs.map((log) => (
-                  <TableRow className="h-12" key={log.id}>
+                  <TableRow className="h-14" key={log.id}>
                     <TableCell className="ps-6">
-                      <Badge variant={log.action === 'BREAK_GLASS' ? 'destructive' : 'secondary'}>
+                      <StatusPill tone={log.action === 'BREAK_GLASS' ? 'critical' : 'neutral'}>
                         {log.action.replaceAll('_', ' ').toLowerCase()}
-                      </Badge>
+                      </StatusPill>
                     </TableCell>
-                    <TableCell>{log.targetResourceType ?? 'system'}</TableCell>
-                    <TableCell className="text-muted-foreground pe-6 text-right">
+                    <TableCell className="font-medium">{log.targetResourceType ?? 'system'}</TableCell>
+                    <TableCell className="text-muted-foreground pe-6 text-right tabular-nums">
                       {formatDateTime(log.createdAt, locale)}
                     </TableCell>
                   </TableRow>
@@ -57,7 +54,7 @@ export default async function AccessLogPage() {
               </TableBody>
             </Table>
           </CardContent>
-        </DashboardCard>
+        </Card>
       </section>
     </div>
   );

@@ -7,7 +7,7 @@ import { OverviewActions } from "@/components/clinical-overview/overview-actions
 import { OverviewRangeSelector } from "@/components/clinical-overview/range-selector";
 import { SummaryEnginePanel } from "@/components/clinical-overview/summary-engine-panel";
 import { VitalsRow } from "@/components/clinical-overview/vitals-row";
-import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -36,7 +36,6 @@ export default async function ClinicalOverviewPage({
 
   const showEmpty = overview.source === "none";
   const clinical = overview.clinical;
-  const allergies = overview.profile?.allergies ?? [];
   const recordCount =
     overview.weekIntakes.length + overview.weekDocuments.length;
 
@@ -78,43 +77,22 @@ export default async function ClinicalOverviewPage({
           : null;
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t("overview.pageTitle")}
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            {t("overview.windowDescription", { count: overview.days })}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {allergies.length > 0 ? (
-            allergies.slice(0, 3).map((allergy) => (
-              <Badge
-                key={allergy}
-                variant="destructive"
-                className="rounded-full"
-              >
-                {allergy}
-              </Badge>
-            ))
-          ) : (
-            <Badge variant="outline" className="rounded-full">
-              {t("overview.noAllergies")}
-            </Badge>
-          )}
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        actions={
           <OverviewActions
             noteLabel={t("overview.addNote")}
             printLabel={t("overview.print")}
           />
-        </div>
-      </div>
+        }
+        description={t("overview.windowDescription", { count: overview.days })}
+        title={t("overview.pageTitle")}
+      />
 
       <OverviewRangeSelector days={days} labels={rangeLabels} />
 
       {showEmpty ? (
-        <Card>
+        <Card className="rounded-2xl shadow-sm">
           <CardHeader>
             <CardTitle>{t("overview.weekEmptyTitle")}</CardTitle>
             <CardDescription>

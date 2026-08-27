@@ -27,7 +27,7 @@ export async function AppShell({
         tabIndex={-1}
       >
         <AppHeader user={user} />
-        <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col p-4 focus:outline-none md:p-6">
+        <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-6 p-4 focus:outline-none md:p-6">
           {children}
         </div>
       </SidebarInset>

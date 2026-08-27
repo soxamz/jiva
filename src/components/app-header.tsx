@@ -5,7 +5,6 @@ import { signOutAction } from "@/lib/actions";
 import { AppBreadcrumbs } from "@/components/app-breadcrumbs";
 import { type AppShellUser } from "@/components/app-shared";
 import { CustomSidebarTrigger } from "@/components/custom-sidebar-trigger";
-import { DecorIcon } from "@/components/decor-icon";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ModeToggle } from "./mode-toggle";
@@ -19,10 +18,10 @@ export async function AppHeader({ user }: { user: AppShellUser }) {
   const activityLabel = isPatient
     ? t("header.openAccessLog")
     : t("header.openEmergencyAccess");
+  const profileId = user.doctorId ?? user.phoneMasked;
 
   return (
-    <header className="bg-background sticky top-0 z-50 flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4 md:px-6">
-      <DecorIcon className="hidden md:block" position="bottom-left" />
+    <header className="bg-card/90 sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4 backdrop-blur md:px-6">
       <div className="flex min-w-0 items-center gap-3">
         <CustomSidebarTrigger />
         <Separator
@@ -37,7 +36,7 @@ export async function AppHeader({ user }: { user: AppShellUser }) {
           }}
         />
       </div>
-      <div className="hidden items-center gap-2 lg:flex">
+      <div className="flex items-center gap-2 sm:gap-3">
         <Link
           aria-label={activityLabel}
           className={buttonVariants({ size: "icon-sm", variant: "outline" })}
@@ -48,7 +47,12 @@ export async function AppHeader({ user }: { user: AppShellUser }) {
         </Link>
         <LanguageToggle />
         <ModeToggle />
-        <form action={signOutAction}>
+        <Separator className="hidden h-6 sm:block" orientation="vertical" />
+        <div className="hidden min-w-0 text-right sm:block">
+          <p className="truncate text-sm font-medium">{user.name}</p>
+          <p className="text-muted-foreground truncate text-xs">{profileId}</p>
+        </div>
+        <form action={signOutAction} className="hidden lg:block">
           <Button size="sm" type="submit" variant="outline">
             {t("header.signOut")}
           </Button>

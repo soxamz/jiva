@@ -41,7 +41,7 @@ export function OverviewSectionCard({
   headerAside?: ReactNode;
 }) {
   return (
-    <Card className={cn('gap-0', className)}>
+    <Card className={cn('gap-0 rounded-2xl shadow-sm', className)}>
       <CardHeader className="border-b">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>

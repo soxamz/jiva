@@ -29,7 +29,7 @@ export function DoctorConsentForm() {
           <Input
             id="code"
             name="code"
-            className="font-mono uppercase"
+            className="h-12 font-mono text-lg uppercase tracking-widest"
             defaultValue="JIVA-DEMO"
             aria-describedby="code-error"
             aria-invalid={Boolean(state?.errors?.code)}
@@ -44,7 +44,7 @@ export function DoctorConsentForm() {
         </Field>
         {errorMessage && <FieldError>{errorMessage}</FieldError>}
         <Field>
-          <Button type="submit" disabled={pending}>
+          <Button className="h-11 w-full" type="submit" disabled={pending}>
             {pending ? t('doctor.checkingAccess') : t('doctor.accessSummary')}
           </Button>
         </Field>

@@ -73,7 +73,7 @@ export function VitalsRow({
       {metrics.map((metric) => {
         const Icon = icons[metric.kind];
         return (
-          <Card key={metric.kind} size="sm">
+          <Card className="rounded-2xl shadow-sm" key={metric.kind} size="sm">
             <CardContent className="flex flex-col gap-3">
               <div className="flex items-center justify-between gap-2">
                 <span className="bg-muted text-primary flex size-9 items-center justify-center rounded-md">

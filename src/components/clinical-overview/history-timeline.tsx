@@ -19,7 +19,7 @@ export function HistoryTimeline({
   items: HistoryTimelineItem[];
 }) {
   return (
-    <Card>
+    <Card className="rounded-2xl shadow-sm">
       <CardHeader className="border-b">
         <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>

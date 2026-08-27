@@ -37,8 +37,9 @@ export function AppSidebar({ user }: { user: AppShellUser }) {
 
   return (
     <Sidebar collapsible="icon" variant="sidebar">
-      <SidebarHeader className="h-14 justify-center border-b px-2">
+      <SidebarHeader className="h-16 justify-center border-b px-3">
         <SidebarMenuButton
+          className="h-auto flex-col items-start gap-1 px-2 py-2"
           render={<Link aria-label={t("sidebar.home")} href={homeHref} />}
           tooltip={t("sidebar.home")}
         >
@@ -56,6 +57,9 @@ export function AppSidebar({ user }: { user: AppShellUser }) {
             src="/logo-dark.svg"
             width={112}
           />
+          <span className="text-muted-foreground text-[10px] font-semibold tracking-[0.18em] uppercase group-data-[collapsible=icon]:hidden">
+            {t("sidebar.badge")}
+          </span>
         </SidebarMenuButton>
       </SidebarHeader>
       <SidebarContent>
@@ -65,7 +69,7 @@ export function AppSidebar({ user }: { user: AppShellUser }) {
       </SidebarContent>
       <SidebarFooter className="gap-0 p-0">
         {user.role === "patient" ? (
-          <div className="bg-sidebar-accent text-sidebar-accent-foreground mx-3 mb-3 rounded-lg border p-3 transition-opacity group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0">
+          <div className="bg-primary/10 text-primary mx-3 mb-3 rounded-2xl border border-primary/15 p-4 transition-opacity group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0">
             <HeartPulseIcon className="size-4" aria-hidden />
             <p className="mt-2 text-sm font-semibold">
               {t("dashboard.checkSymptoms")}

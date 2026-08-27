@@ -254,8 +254,8 @@ export function AiIntakeChat() {
 
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
-      <Card className="min-h-[560px] gap-0 overflow-hidden">
-        <CardHeader className="border-b">
+      <Card className="min-h-[560px] gap-0 overflow-hidden rounded-2xl shadow-sm">
+        <CardHeader className="border-b bg-card">
           <CardTitle className="text-base">Chat with Jiva</CardTitle>
           <CardDescription>
             Answer in your own words. Your completed check is saved to your
@@ -289,10 +289,10 @@ export function AiIntakeChat() {
             {messages.map((message) => (
               <div
                 className={cn(
-                  "max-w-[88%] rounded-lg px-3.5 py-2.5 text-sm leading-6",
+                  "max-w-[88%] rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm",
                   message.role === "patient"
-                    ? "bg-primary text-primary-foreground ml-auto"
-                    : "bg-muted text-foreground",
+                    ? "bg-primary text-primary-foreground ml-auto rounded-br-md"
+                    : "bg-muted text-foreground rounded-bl-md",
                 )}
                 key={message.id}
               >
@@ -336,6 +336,7 @@ export function AiIntakeChat() {
               </Button>
               <Button
                 aria-label={recording ? "Stop recording" : "Record response"}
+                className={cn(recording && "bg-clinical-critical/10 text-clinical-critical border-clinical-critical/30")}
                 disabled={inputDisabled}
                 onClick={recording ? stopRecording : startRecording}
                 size="icon"
@@ -374,7 +375,7 @@ export function AiIntakeChat() {
       </Card>
 
       <div className="space-y-4">
-        <Card>
+        <Card className="rounded-2xl shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Check progress</CardTitle>
             <CardDescription>
@@ -409,7 +410,7 @@ export function AiIntakeChat() {
         </Card>
 
         {finalResult && (
-          <Card>
+          <Card className="rounded-2xl shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Doctor review draft</CardTitle>
               <CardDescription>

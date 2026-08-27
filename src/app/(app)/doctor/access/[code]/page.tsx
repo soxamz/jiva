@@ -1,4 +1,7 @@
 import { DoctorNoteForm } from "@/components/forms/doctor-note-form";
+import { CriticalInfoBar } from "@/components/critical-info-bar";
+import { PatientProfileStrip } from "@/components/patient-profile-strip";
+import { StatusPill } from "@/components/status-pill";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -69,56 +72,47 @@ export default async function DoctorAccessPage({
   const { locale, t } = await getI18n();
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-muted-foreground text-sm">
-            {t("doctor.activeConsent", { code: data.consent.code })}
-          </p>
-          <h1 className="text-2xl font-semibold tracking-normal">
-            {data.patient.name}
-          </h1>
-        </div>
-        <Badge variant="secondary">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border bg-card p-5 shadow-sm">
+        <PatientProfileStrip
+          name={data.patient.name}
+          subtitle={t("doctor.activeConsent", { code: data.consent.code })}
+        />
+        <StatusPill tone="info">
           {t("doctor.remaining", {
             count: minutesUntil(data.consent.expiresAt),
           })}
-        </Badge>
+        </StatusPill>
       </div>
+
+      <CriticalInfoBar
+        items={[
+          {
+            label: t("emergencyCard.bloodType"),
+            value: data.profile?.bloodType ?? "NA",
+            tone: "warning",
+          },
+          {
+            label: t("dashboard.allergies"),
+            value:
+              (data.profile?.allergies ?? []).length > 0
+                ? (data.profile?.allergies ?? []).join(", ")
+                : t("emergencyCard.noAllergies"),
+            tone: "critical",
+          },
+          {
+            label: t("health.currentMedicines"),
+            value:
+              (data.profile?.currentMedications ?? []).length > 0
+                ? (data.profile?.currentMedications ?? []).join(", ")
+                : t("emergencyCard.noneListed"),
+            tone: "neutral",
+          },
+        ]}
+      />
+
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle>{t("doctor.criticalProfile")}</CardTitle>
-            <CardDescription>
-              {t("doctor.criticalProfileDescription")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div className="flex items-end justify-between">
-              <span className="text-muted-foreground text-sm">
-                {t("emergencyCard.bloodType")}
-              </span>
-              <strong className="text-3xl tabular-nums">
-                {data.profile?.bloodType ?? "NA"}
-              </strong>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {(data.profile?.allergies ?? []).map((allergy) => (
-                <Badge key={allergy} variant="destructive">
-                  {allergy}
-                </Badge>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {(data.profile?.currentMedications ?? []).map((medication) => (
-                <Badge key={medication} variant="secondary">
-                  {medication}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="xl:col-span-2">
+        <Card className="rounded-2xl shadow-sm xl:col-span-3">
           <CardHeader className="border-b">
             <CardTitle>{t("doctor.physicianSummary")}</CardTitle>
             <CardDescription>
@@ -148,17 +142,17 @@ export default async function DoctorAccessPage({
                   <li className="flex flex-col gap-2 px-6 py-4" key={intake.id}>
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="font-medium">{intake.chiefComplaint}</p>
-                      <Badge
-                        variant={
+                      <StatusPill
+                        tone={
                           intake.redFlag || clinical?.triage_alert
-                            ? "destructive"
-                            : "secondary"
+                            ? "critical"
+                            : "success"
                         }
                       >
                         {intake.redFlag || clinical?.triage_alert
                           ? t("doctor.redFlag")
                           : t("doctor.routine")}
-                      </Badge>
+                      </StatusPill>
                     </div>
                     <BoldSummary text={summaryText} />
                     {clinical?.detected_contradictions &&
@@ -194,7 +188,7 @@ export default async function DoctorAccessPage({
             </ul>
           </CardContent>
         </Card>
-        <Card className="xl:col-span-3">
+        <Card className="rounded-2xl shadow-sm xl:col-span-3">
           <CardHeader className="border-b">
             <CardTitle>{t("doctor.patientRecords")}</CardTitle>
             <CardDescription>
@@ -207,7 +201,7 @@ export default async function DoctorAccessPage({
                 Patient records accessible under the current consent.
               </TableCaption>
               <TableHeader>
-                <TableRow>
+                <TableRow className="hover:bg-transparent">
                   <TableHead className="ps-6">
                     {t("documents.document")}
                   </TableHead>
@@ -242,7 +236,7 @@ export default async function DoctorAccessPage({
             </Table>
           </CardContent>
         </Card>
-        <Card className="xl:col-span-3">
+        <Card className="rounded-2xl shadow-sm xl:col-span-3">
           <CardHeader className="border-b">
             <CardTitle>{t("doctor.addNote")}</CardTitle>
             <CardDescription>{t("doctor.addNoteDescription")}</CardDescription>

@@ -1,18 +1,10 @@
 import { revokeConsentAction } from '@/lib/actions';
-import { DashboardCard } from '@/components/dashboard-card';
 import { ConsentForm } from '@/components/forms/consent-form';
+import { PageHeader } from '@/components/page-header';
+import { StatusPill } from '@/components/status-pill';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getPatientWorkspace } from '@/lib/dal';
 import { formatDateTime, minutesUntil } from '@/lib/format';
 import { getI18n } from '@/lib/i18n';
@@ -22,13 +14,10 @@ export default async function SharePage() {
   const { locale, t } = await getI18n();
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold">{t('share.title')}</h1>
-        <p className="text-muted-foreground text-sm">{t('share.description')}</p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader description={t('share.description')} title={t('share.title')} />
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-[0.75fr_1.25fr]">
-        <DashboardCard className="gap-0">
+        <Card className="rounded-2xl shadow-sm">
           <CardHeader>
             <CardTitle>{t('share.create')}</CardTitle>
             <CardDescription>{t('share.createDescription')}</CardDescription>
@@ -36,62 +25,51 @@ export default async function SharePage() {
           <CardContent>
             <ConsentForm />
           </CardContent>
-        </DashboardCard>
-        <DashboardCard className="gap-0">
+        </Card>
+        <Card className="rounded-2xl shadow-sm">
           <CardHeader>
             <CardTitle>{t('share.people')}</CardTitle>
             <CardDescription>{t('share.peopleDescription')}</CardDescription>
           </CardHeader>
-          <CardContent className="px-0">
-            <Table>
-              <TableCaption className="sr-only">
-                Active access codes and expiry information.
-              </TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="ps-6">Code</TableHead>
-                  <TableHead>{t('share.granted')}</TableHead>
-                  <TableHead>{t('share.expires')}</TableHead>
-                  <TableHead className="pe-6 text-right">{t('share.action')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.activeConsents.map((consent) => (
-                  <TableRow className="h-12" key={consent.id}>
-                    <TableCell className="ps-6 font-mono font-medium">{consent.code}</TableCell>
-                    <TableCell>{formatDateTime(consent.grantedAt, locale)}</TableCell>
-                    <TableCell className="tabular-nums">
+          <CardContent className="flex flex-col gap-3">
+            {data.activeConsents.length ? (
+              data.activeConsents.map((consent) => (
+                <div
+                  className="flex flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+                  key={consent.id}
+                >
+                  <div className="min-w-0">
+                    <p className="font-mono text-lg font-semibold tracking-wide">{consent.code}</p>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                      {t('share.granted')}: {formatDateTime(consent.grantedAt, locale)}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusPill tone="info">
                       {t('dashboard.minutesLeft', { count: minutesUntil(consent.expiresAt) })}
-                    </TableCell>
-                    <TableCell className="pe-6 text-right">
-                      <form action={revokeConsentAction}>
-                        <input type="hidden" name="consentId" value={consent.id} />
-                        <Button type="submit" variant="destructive" size="sm">
-                          {t('share.stop')}
-                        </Button>
-                      </form>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {data.activeConsents.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-muted-foreground ps-6">
-                      {t('share.none')}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                    </StatusPill>
+                    <form action={revokeConsentAction}>
+                      <input type="hidden" name="consentId" value={consent.id} />
+                      <Button type="submit" variant="destructive" size="sm">
+                        {t('share.stop')}
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-muted-foreground text-sm">{t('share.none')}</p>
+            )}
           </CardContent>
-        </DashboardCard>
-        <DashboardCard className="gap-0 xl:col-span-2">
-          <CardContent className="flex items-center gap-2">
+        </Card>
+        <Card className="rounded-2xl shadow-sm xl:col-span-2">
+          <CardContent className="flex flex-wrap items-center gap-2 py-5">
             <Badge variant="secondary">Demo doctor ID: HPR-DEMO-1001</Badge>
             <p className="text-muted-foreground text-sm">
               The doctor can enter the active access code in their portal.
             </p>
           </CardContent>
-        </DashboardCard>
+        </Card>
       </section>
     </div>
   );

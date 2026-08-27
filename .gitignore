@@ -178,3 +178,5 @@ dist/
 *.db
 *.sqlite
 *.sqlite3
+
+.cursor/

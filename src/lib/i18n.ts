@@ -95,9 +95,9 @@ const english = {
   'dashboard.addMedicalRecord': 'Add a medical record',
   'dashboard.addMedicalRecordDescription': 'Add a report, prescription, or discharge summary.',
   'dashboard.add': 'Add',
-  'dashboard.checkSymptoms': 'Check symptoms',
+  'dashboard.checkSymptoms': 'Ask Arohi',
   'dashboard.checkSymptomsDescription': 'Tell us what you are feeling before a doctor visit.',
-  'dashboard.check': 'Check now',
+  'dashboard.check': 'Chat now',
   'dashboard.shareWithDoctor': 'Share with a doctor',
   'dashboard.shareWithDoctorDescription':
     'Give a doctor temporary access that you can stop anytime.',
@@ -408,9 +408,9 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.addMedicalRecord': 'मेडिकल रिकॉर्ड जोड़ें',
     'dashboard.addMedicalRecordDescription': 'रिपोर्ट, पर्ची या डिस्चार्ज सारांश जोड़ें।',
     'dashboard.add': 'जोड़ें',
-    'dashboard.checkSymptoms': 'लक्षण जांचें',
+    'dashboard.checkSymptoms': 'Ask Arohi',
     'dashboard.checkSymptomsDescription': 'डॉक्टर से मिलने से पहले हमें अपनी तकलीफ बताएं।',
-    'dashboard.check': 'जांचें',
+    'dashboard.check': 'चैट करें',
     'dashboard.shareWithDoctor': 'डॉक्टर के साथ साझा करें',
     'dashboard.shareWithDoctorDescription':
       'डॉक्टर को अस्थायी पहुंच दें, जिसे आप कभी भी रोक सकते हैं।',
@@ -492,10 +492,10 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.addMedicalRecordDescription':
       'ରିପୋର୍ଟ, ପ୍ରେସକ୍ରିପସନ କିମ୍ବା ଡିସଚାର୍ଜ ସାରାଂଶ ଯୋଡନ୍ତୁ।',
     'dashboard.add': 'ଯୋଡନ୍ତୁ',
-    'dashboard.checkSymptoms': 'ଲକ୍ଷଣ ଯାଞ୍ଚ କରନ୍ତୁ',
+    'dashboard.checkSymptoms': 'Ask Arohi',
     'dashboard.checkSymptomsDescription':
       'ଡାକ୍ତରଙ୍କୁ ଦେଖିବା ପୂର୍ବରୁ ଆପଣ କଣ ଅନୁଭବ କରୁଛନ୍ତି କୁହନ୍ତୁ।',
-    'dashboard.check': 'ଯାଞ୍ଚ କରନ୍ତୁ',
+    'dashboard.check': 'ଚାଟ୍ କରନ୍ତୁ',
     'dashboard.shareWithDoctor': 'ଡାକ୍ତରଙ୍କ ସହ ସେୟାର କରନ୍ତୁ',
     'dashboard.shareWithDoctorDescription':
       'ଡାକ୍ତରଙ୍କୁ ଅସ୍ଥାୟୀ ପ୍ରବେଶ ଦିଅନ୍ତୁ, ଯାହାକୁ ଆପଣ ଯେକୌଣସି ସମୟରେ ବନ୍ଦ କରିପାରିବେ।',
@@ -577,10 +577,10 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.addMedicalRecord': 'চিকিৎসার রেকর্ড যোগ করুন',
     'dashboard.addMedicalRecordDescription': 'রিপোর্ট, প্রেসক্রিপশন বা ছাড়পত্রের সারাংশ যোগ করুন।',
     'dashboard.add': 'যোগ করুন',
-    'dashboard.checkSymptoms': 'লক্ষণ পরীক্ষা করুন',
+    'dashboard.checkSymptoms': 'Ask Arohi',
     'dashboard.checkSymptomsDescription':
       'ডাক্তারের কাছে যাওয়ার আগে আপনি কেমন অনুভব করছেন তা জানান।',
-    'dashboard.check': 'পরীক্ষা করুন',
+    'dashboard.check': 'চ্যাট করুন',
     'dashboard.shareWithDoctor': 'ডাক্তারের সঙ্গে শেয়ার করুন',
     'dashboard.shareWithDoctorDescription':
       'ডাক্তারকে সাময়িক অ্যাক্সেস দিন, যা আপনি যেকোনও সময় বন্ধ করতে পারবেন।',
@@ -663,10 +663,10 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.addMedicalRecordDescription':
       'నివేదిక, ప్రిస్క్రిప్షన్ లేదా డిశ్చార్జ్ సారాంశాన్ని జోడించండి.',
     'dashboard.add': 'జోడించండి',
-    'dashboard.checkSymptoms': 'లక్షణాలను తనిఖీ చేయండి',
+    'dashboard.checkSymptoms': 'Ask Arohi',
     'dashboard.checkSymptomsDescription':
       'డాక్టర్‌ను కలవడానికి ముందు మీకు ఎలా అనిపిస్తుందో తెలియజేయండి.',
-    'dashboard.check': 'తనిఖీ చేయండి',
+    'dashboard.check': 'చాట్ చేయండి',
     'dashboard.shareWithDoctor': 'డాక్టర్‌తో పంచుకోండి',
     'dashboard.shareWithDoctorDescription':
       'డాక్టర్‌కు తాత్కాలిక ప్రవేశం ఇవ్వండి, దాన్ని మీరు ఎప్పుడైనా నిలిపివేయవచ్చు.',
@@ -751,10 +751,10 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.addMedicalRecordDescription':
       'அறிக்கை, மருந்துச்சீட்டு அல்லது டிஸ்சார்ஜ் சுருக்கத்தைச் சேர்க்கவும்.',
     'dashboard.add': 'சேர்க்கவும்',
-    'dashboard.checkSymptoms': 'அறிகுறிகளைச் சரிபார்க்கவும்',
+    'dashboard.checkSymptoms': 'Ask Arohi',
     'dashboard.checkSymptomsDescription':
       'மருத்துவரைச் சந்திப்பதற்கு முன் நீங்கள் எப்படி உணர்கிறீர்கள் என்பதைச் சொல்லுங்கள்.',
-    'dashboard.check': 'சரிபார்க்கவும்',
+    'dashboard.check': 'அரட்டையிடுங்கள்',
     'dashboard.shareWithDoctor': 'மருத்துவருடன் பகிரவும்',
     'dashboard.shareWithDoctorDescription':
       'மருத்துவருக்கு தற்காலிக அணுகலை வழங்குங்கள்; அதை எப்போது வேண்டுமானாலும் நிறுத்தலாம்.',

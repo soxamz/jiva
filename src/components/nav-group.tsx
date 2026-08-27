@@ -33,7 +33,14 @@ function NavGroupItem({ item }: { item: SidebarNavItem }) {
     >
       {item.subItems?.length ? (
         <>
-          <CollapsibleTrigger render={<SidebarMenuButton isActive={item.isActive} />}>
+          <CollapsibleTrigger
+            render={
+              <SidebarMenuButton
+                className="data-active:rounded-xl data-active:bg-sidebar-accent data-active:font-semibold data-active:text-sidebar-accent-foreground"
+                isActive={item.isActive}
+              />
+            }
+          >
             {item.icon}
             <span>{item.title}</span>
             <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -55,7 +62,11 @@ function NavGroupItem({ item }: { item: SidebarNavItem }) {
           </CollapsibleContent>
         </>
       ) : (
-        <SidebarMenuButton isActive={item.isActive} render={<Link href={item.path} />}>
+        <SidebarMenuButton
+          className="data-active:rounded-xl data-active:bg-sidebar-accent data-active:font-semibold data-active:text-sidebar-accent-foreground"
+          isActive={item.isActive}
+          render={<Link href={item.path} />}
+        >
           {item.icon}
           <span>{item.title}</span>
         </SidebarMenuButton>

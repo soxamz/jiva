@@ -1,16 +1,15 @@
 import {
   AlarmClockIcon,
-  AlertTriangleIcon,
-  HeartPulseIcon,
   PhoneIcon,
-  ShieldCheckIcon,
   ShieldAlertIcon,
-  StethoscopeIcon,
-  UserRoundIcon,
+  ShieldCheckIcon,
 } from "lucide-react";
 import { redirect } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
+import { ClinicalTimeline } from "@/components/clinical-timeline";
+import { CriticalInfoBar } from "@/components/critical-info-bar";
+import { PatientProfileStrip } from "@/components/patient-profile-strip";
+import { StatusPill } from "@/components/status-pill";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Card,
@@ -19,11 +18,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { getEmergencyAccessData, isConsentAccessError } from "@/lib/dal";
 import { formatDateTime, minutesUntil } from "@/lib/format";
 import { getI18n } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
 
 export default async function EmergencyAccessPage({
   params,
@@ -47,11 +44,20 @@ export default async function EmergencyAccessPage({
   const allergies = profile?.allergies ?? [];
   const conditions = profile?.criticalConditions ?? [];
   const medicines = profile?.currentMedications ?? [];
+  const timelineItems = data.recentIntakes.map((item) => ({
+    id: item.id,
+    title: item.chiefComplaint,
+    body: item.summary,
+    dateLabel: formatDateTime(item.createdAt, locale),
+    status: item.redFlag ? t("dashboard.needsAttention") : t("dashboard.saved"),
+    redFlag: item.redFlag,
+    type: "intake" as const,
+  }));
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
       <Alert
-        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+        className="flex flex-col gap-4 rounded-2xl sm:flex-row sm:items-center sm:justify-between"
         variant="destructive"
       >
         <div className="flex min-w-0 items-center gap-3">
@@ -67,7 +73,7 @@ export default async function EmergencyAccessPage({
             </AlertDescription>
           </div>
         </div>
-        <div className="border-destructive/30 flex shrink-0 items-center gap-3 rounded-md border px-3 py-2">
+        <div className="border-destructive/30 flex shrink-0 items-center gap-3 rounded-xl border bg-destructive/5 px-4 py-2">
           <AlarmClockIcon className="size-5" aria-hidden />
           <span className="font-mono text-lg font-semibold tabular-nums">
             {t("emergencyView.remaining", {
@@ -77,60 +83,39 @@ export default async function EmergencyAccessPage({
         </div>
       </Alert>
 
-      <section className="grid gap-4 lg:grid-cols-3">
-        <EmergencySummary
-          icon={HeartPulseIcon}
-          label={t("emergencyCard.bloodType")}
-        >
-          <p className="text-destructive text-4xl font-semibold tracking-normal">
-            {bloodType}
-          </p>
-        </EmergencySummary>
-        <EmergencySummary
-          icon={AlertTriangleIcon}
-          label={t("dashboard.allergies")}
-          urgent
-        >
-          <EmergencyValueList
-            empty={t("emergencyCard.noAllergies")}
-            values={allergies}
-          />
-        </EmergencySummary>
-        <EmergencySummary
-          icon={ShieldCheckIcon}
-          label={t("emergencyView.conditions")}
-        >
-          <EmergencyValueList
-            empty={t("emergencyCard.noneListed")}
-            values={conditions}
-          />
-          {medicines.length > 0 && (
-            <p className="text-muted-foreground mt-2 text-xs leading-5">
-              {medicines.join(", ")}
-            </p>
-          )}
-        </EmergencySummary>
-      </section>
+      <CriticalInfoBar
+        items={[
+          {
+            label: t("emergencyCard.bloodType"),
+            value: bloodType,
+            tone: "critical",
+          },
+          {
+            label: t("dashboard.allergies"),
+            value: allergies.length ? allergies.join(", ") : t("emergencyCard.noAllergies"),
+            tone: "critical",
+          },
+          {
+            label: t("emergencyView.conditions"),
+            value: conditions.length ? conditions.join(", ") : t("emergencyCard.noneListed"),
+            detail: medicines.length > 0 ? medicines.join(", ") : undefined,
+            tone: "warning",
+          },
+        ]}
+      />
 
       <section className="grid min-w-0 items-start gap-5 lg:grid-cols-[minmax(260px,0.55fr)_minmax(0,1.45fr)]">
         <aside className="flex min-w-0 flex-col gap-5">
-          <Card>
-            <CardContent className="flex items-center gap-3">
-              <span className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md">
-                <UserRoundIcon className="size-5" aria-hidden />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-lg font-semibold">
-                  {data.patient.name}
-                </p>
-                <p className="text-muted-foreground mt-0.5 text-sm">
-                  {t("emergencyView.criticalInformationDescription")}
-                </p>
-              </div>
+          <Card className="rounded-2xl shadow-sm">
+            <CardContent className="py-5">
+              <PatientProfileStrip
+                name={data.patient.name}
+                subtitle={t("emergencyView.criticalInformationDescription")}
+              />
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="rounded-2xl shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <PhoneIcon className="size-4" aria-hidden />
@@ -144,7 +129,7 @@ export default async function EmergencyAccessPage({
               {profile?.emergencyContacts.length ? (
                 <ul className="flex flex-col gap-3">
                   {profile.emergencyContacts.map((contact) => (
-                    <li className="bg-muted rounded-lg p-3" key={contact.phone}>
+                    <li className="rounded-xl border bg-muted/40 p-3" key={contact.phone}>
                       <p className="font-medium">{contact.name}</p>
                       <p className="text-muted-foreground mt-0.5 text-xs">
                         {contact.relation}
@@ -167,7 +152,7 @@ export default async function EmergencyAccessPage({
           </Card>
         </aside>
 
-        <Card className="min-w-0">
+        <Card className="min-w-0 rounded-2xl shadow-sm">
           <CardHeader className="flex flex-row items-start justify-between gap-4">
             <div>
               <CardTitle>{t("emergencyView.criticalInformation")}</CardTitle>
@@ -175,117 +160,19 @@ export default async function EmergencyAccessPage({
                 {t("emergencyView.recentAlertsDescription")}
               </CardDescription>
             </div>
-            <Badge className="hidden sm:inline-flex" variant="secondary">
-              <ShieldCheckIcon data-icon="inline-start" aria-hidden />
+            <StatusPill className="hidden sm:inline-flex" tone="success">
+              <ShieldCheckIcon className="size-3.5" aria-hidden />
               {t("dashboard.ready", { percent: 100 })}
-            </Badge>
+            </StatusPill>
           </CardHeader>
-          <Separator />
-          <CardContent className="pt-5">
-            {data.recentIntakes.length ? (
-              <ol className="before:bg-border relative flex flex-col gap-4 before:absolute before:top-6 before:bottom-6 before:left-5 before:w-px">
-                {data.recentIntakes.map((item) => {
-                  const isUrgent = item.redFlag;
-                  const Icon = StethoscopeIcon;
-
-                  return (
-                    <li
-                      className="relative flex min-w-0 items-start gap-3"
-                      key={item.id}
-                    >
-                      <span
-                        className={cn(
-                          "bg-muted relative z-10 flex size-10 shrink-0 items-center justify-center rounded-md",
-                          isUrgent && "bg-destructive/10 text-destructive",
-                        )}
-                      >
-                        <Icon className="size-4" aria-hidden />
-                      </span>
-                      <div
-                        className={cn(
-                          "border-border min-w-0 flex-1 rounded-lg border p-4",
-                          isUrgent && "border-destructive/30",
-                        )}
-                      >
-                        <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-                          <p className="min-w-0 flex-1 font-medium">
-                            {item.chiefComplaint}
-                          </p>
-                          <Badge
-                            variant={isUrgent ? "destructive" : "secondary"}
-                          >
-                            {isUrgent
-                              ? t("dashboard.needsAttention")
-                              : t("dashboard.saved")}
-                          </Badge>
-                        </div>
-                        <p className="text-muted-foreground mt-1 line-clamp-2 text-sm leading-5">
-                          {item.summary
-                            .replaceAll("**", "")
-                            .replaceAll("\n", " ")}
-                        </p>
-                        <p className="text-muted-foreground mt-2 text-xs font-medium">
-                          {formatDateTime(item.createdAt, locale)}
-                        </p>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ol>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                {t("emergencyView.noRecentAlerts")}
-              </p>
-            )}
+          <CardContent className="pt-2">
+            <ClinicalTimeline
+              emptyMessage={t("emergencyView.noRecentAlerts")}
+              items={timelineItems}
+            />
           </CardContent>
         </Card>
       </section>
     </div>
-  );
-}
-
-function EmergencySummary({
-  icon: Icon,
-  label,
-  urgent = false,
-  children,
-}: Readonly<{
-  icon: typeof HeartPulseIcon;
-  label: string;
-  urgent?: boolean;
-  children: React.ReactNode;
-}>) {
-  return (
-    <div
-      className={cn(
-        "bg-muted rounded-lg border p-4",
-        urgent && "border-destructive/30",
-      )}
-    >
-      <p
-        className={cn(
-          "text-muted-foreground flex items-center gap-2 text-xs font-medium",
-          urgent && "text-destructive",
-        )}
-      >
-        <Icon className="size-4" aria-hidden />
-        {label}
-      </p>
-      <div className="mt-2">{children}</div>
-    </div>
-  );
-}
-
-function EmergencyValueList({
-  values,
-  empty,
-}: {
-  values: string[];
-  empty: string;
-}) {
-  return values.length ? (
-    <p className="text-lg leading-6 font-semibold">{values.join(", ")}</p>
-  ) : (
-    <p className="text-muted-foreground text-sm">{empty}</p>
   );
 }

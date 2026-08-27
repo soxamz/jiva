@@ -76,7 +76,7 @@ export function MedicationsPanel({
   const parsed = medications.map(parseMedication);
 
   return (
-    <Card>
+    <Card className="rounded-2xl shadow-sm">
       <CardHeader className="border-b">
         <div className="flex items-center justify-between gap-3">
           <CardTitle className="flex items-center gap-2 text-base">

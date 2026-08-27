@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ShieldCheckIcon } from 'lucide-react';
 
+import { PageHeader } from '@/components/page-header';
 import { buttonVariants } from '@/components/ui/button';
 import { MedicalProfileForm } from '@/components/forms/medical-profile-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,21 +20,21 @@ export default async function HealthInformationPage() {
     .join('\n');
 
   return (
-    <div className="flex max-w-4xl flex-col gap-4">
-      <section className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-        <div>
-          <p className="text-muted-foreground text-sm">{t('health.record')}</p>
-          <h1 className="text-2xl font-semibold">{t('health.title')}</h1>
-          <p className="text-muted-foreground mt-1 text-sm">{t('health.description')}</p>
-        </div>
-        <Link href="/emergency-card" className={buttonVariants({ variant: 'outline' })}>
-          <ShieldCheckIcon data-icon="inline-start" aria-hidden />
-          {t('health.viewEmergencyCard')}
-        </Link>
-      </section>
+    <div className="flex max-w-4xl flex-col gap-6">
+      <PageHeader
+        actions={
+          <Link href="/emergency-card" className={buttonVariants({ variant: 'outline' })}>
+            <ShieldCheckIcon data-icon="inline-start" aria-hidden />
+            {t('health.viewEmergencyCard')}
+          </Link>
+        }
+        description={t('health.description')}
+        title={t('health.title')}
+      />
 
-      <Card>
+      <Card className="rounded-2xl shadow-sm">
         <CardHeader>
+          <p className="text-muted-foreground text-sm">{t('health.record')}</p>
           <CardTitle>{t('health.emergencyDetails')}</CardTitle>
           <CardDescription>{t('health.emergencyDetailsDescription')}</CardDescription>
         </CardHeader>

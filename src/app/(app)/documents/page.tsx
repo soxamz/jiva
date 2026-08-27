@@ -1,5 +1,6 @@
 import { DocumentUploadForm } from '@/components/forms/document-upload-form';
 import { DocumentsTable } from '@/components/documents/ocr-result-panel';
+import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getPatientWorkspace } from '@/lib/dal';
 import { formatBytes, formatDateTime } from '@/lib/format';
@@ -32,22 +33,21 @@ export default async function DocumentsPage() {
   });
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold">{t('documents.title')}</h1>
-        <p className="text-muted-foreground text-sm">{t('documents.description')}</p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader description={t('documents.description')} title={t('documents.title')} />
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-[0.75fr_1.25fr]">
-        <Card className="gap-0">
+        <Card className="rounded-2xl shadow-sm">
           <CardHeader>
             <CardTitle>{t('documents.upload')}</CardTitle>
             <CardDescription>{t('documents.uploadDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <DocumentUploadForm />
+            <div className="rounded-2xl border border-dashed bg-muted/30 p-4">
+              <DocumentUploadForm />
+            </div>
           </CardContent>
         </Card>
-        <Card className="gap-0">
+        <Card className="rounded-2xl shadow-sm">
           <CardHeader>
             <CardTitle>{t('documents.saved')}</CardTitle>
             <CardDescription>{t('documents.savedDescription')}</CardDescription>
