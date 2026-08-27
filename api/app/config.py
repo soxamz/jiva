@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     )
 
     api_host: str = "127.0.0.1"
-    api_port: int = 5329
+    api_port: int = 5328
 
     groq_api_key: str = ""
     gemini_api_key: str = ""

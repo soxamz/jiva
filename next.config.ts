@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   async rewrites() {
     // Vercel routes /api/* directly to api/index.py. Keep this proxy only for
     // `bun dev`, where the FastAPI server runs separately on port 5328.
+    // Note: port 5329 can black-hole on some Windows hosts (TCP connect timeout).
     if (process.env.VERCEL) {
       return [];
     }
@@ -11,7 +12,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://127.0.0.1:5329/api/:path*',
+        destination: 'http://127.0.0.1:5328/api/:path*',
       },
     ];
   },

@@ -80,7 +80,7 @@ export type ChatMessage = {
 
 // Local Windows development can reserve the former proxy port. Production is
 // always same-origin through Vercel's /api Python function.
-const intakeApiBase = process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:5329/api' : '/api';
+const intakeApiBase = process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:5328/api' : '/api';
 
 function intakeApiPath(path: string) {
   return `${intakeApiBase}${path}`;
