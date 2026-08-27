@@ -19,7 +19,7 @@ import {
   submitIntakeForCurrentPatient,
   updateMedicalProfileForCurrentPatient,
 } from '@/lib/dal';
-import { uploadAndProcessDocument } from '@/lib/document-api';
+import { extractAbnormalValuesFromOcr, uploadAndProcessDocument } from '@/lib/document-api';
 import { labReportsFromExtractions, synthesizeClinicalSummary } from '@/lib/ml3-api';
 import { normalizeIdentifier } from '@/lib/identity';
 import { clearSession, createSession } from '@/lib/session';
@@ -289,16 +289,20 @@ export async function uploadDocumentAction(
       status: 'processed',
       extraction: {
         extractedJson: aiResult as Record<string, unknown>,
-        abnormalValues: [],
+        abnormalValues: extractAbnormalValuesFromOcr(aiResult),
         aiConfidenceScore: finalConfidence,
       },
     });
   } catch (error) {
-    return { message: error instanceof Error ? error.message : 'Unable to save the document.' };
+    const detail = error instanceof Error ? error.message : 'Unable to save the document.';
+    return {
+      message: `Document AI could not process this file. ${detail}`,
+    };
   }
 
   revalidatePath('/documents');
   revalidatePath('/timeline');
+  revalidatePath('/clinical-overview');
   redirect('/documents');
 }
 
@@ -344,6 +348,7 @@ export async function updateMedicalProfileAction(
   revalidatePath('/emergency-card');
   revalidatePath('/health-information');
   revalidatePath('/access-log');
+  revalidatePath('/clinical-overview');
   redirect('/health-information');
 }
 
@@ -414,6 +419,7 @@ export async function saveAiIntakeAction(input: unknown) {
   revalidatePath('/intake');
   revalidatePath('/timeline');
   revalidatePath('/access-log');
+  revalidatePath('/clinical-overview');
 
   return { id: intake.id, hasClinicalSummary: Boolean(clinicalSummary) };
 }

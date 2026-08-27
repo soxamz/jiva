@@ -1,5 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+from pathlib import Path
+
+# Ensure Document AI env vars (MISTRAL_*, OCR_*, etc.) are in os.environ.
+_API_DIR = Path(__file__).resolve().parent
+_PROJECT_DIR = _API_DIR.parent
+load_dotenv(_API_DIR / ".env", override=False)
+load_dotenv(_PROJECT_DIR / ".env.local", override=False)
 
 from app.config import get_settings
 from app.routers import documents, health, intake, ml3

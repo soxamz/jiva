@@ -17,14 +17,12 @@ from .base import OCREngine, OCRResult
 # ============================================================
 
 # Project root:
-# D:\Randome shit\jiva
-PROJECT_ROOT = Path.cwd()
-ENV_FILE = PROJECT_ROOT / ".env"
-
-load_dotenv(
-    ENV_FILE,
-    override=True,
-)
+# Prefer api/.env (uvicorn cwd-independent), then repo .env.local
+_API_DIR = Path(__file__).resolve().parents[3]  # .../api/app/document_ai/ocr -> api
+_PROJECT_DIR = _API_DIR.parent
+for _env_path in (_API_DIR / ".env", _PROJECT_DIR / ".env.local", Path.cwd() / ".env"):
+    if _env_path.is_file():
+        load_dotenv(_env_path, override=False)
 
 
 class MistralOCREngine(OCREngine):
@@ -86,11 +84,7 @@ class MistralOCREngine(OCREngine):
                 f"Path is not a file: {image_path}"
             )
 
-        mime_type = self._get_mime_type(
-            image_path
-        )
-
-        image_base64 = self._encode_image(
+        document_payload = self._build_document_payload(
             image_path
         )
 
@@ -100,13 +94,7 @@ class MistralOCREngine(OCREngine):
 
             response = self.client.ocr.process(
                 model=self.model,
-                document={
-                    "type": "image_url",
-                    "image_url": (
-                        f"data:{mime_type};"
-                        f"base64,{image_base64}"
-                    ),
-                },
+                document=document_payload,
                 include_image_base64=False,
                 include_blocks=True,
                 confidence_scores_granularity="block",
@@ -135,6 +123,31 @@ class MistralOCREngine(OCREngine):
             image_path=image_path,
             elapsed_ms=elapsed_ms,
         )
+
+    def _build_document_payload(
+        self,
+        path: Path,
+    ) -> dict[str, str]:
+        """Build Mistral OCR document payload for images or PDFs."""
+
+        suffix = path.suffix.lower()
+        encoded = self._encode_image(path)
+
+        if suffix == ".pdf":
+            return {
+                "type": "document_url",
+                "document_url": (
+                    f"data:application/pdf;base64,{encoded}"
+                ),
+            }
+
+        mime_type = self._get_mime_type(path)
+        return {
+            "type": "image_url",
+            "image_url": (
+                f"data:{mime_type};base64,{encoded}"
+            ),
+        }
 
     # ========================================================
     # Response normalization

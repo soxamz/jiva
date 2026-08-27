@@ -92,10 +92,14 @@ export function DocumentUploadForm() {
           />
           <FieldError errors={notesError?.map((message) => ({ message }))} />
         </Field>
-        {state?.message && <FieldError>{state.message}</FieldError>}
+        {state?.message ? (
+          <p className="text-destructive text-sm" role="alert">
+            {state.message}
+          </p>
+        ) : null}
         <Field>
           <Button disabled={pending} type="submit">
-            {t('documents.add')}
+            {pending ? t('documents.uploading') : t('documents.add')}
           </Button>
         </Field>
       </FieldGroup>

@@ -11,6 +11,7 @@ import {
   QrCodeIcon,
   ShieldCheckIcon,
   StethoscopeIcon,
+  SparklesIcon,
 } from 'lucide-react';
 
 export type AppShellUser = {
@@ -40,6 +41,7 @@ function patientGroups(t: Translate): SidebarNavGroup[] {
     {
       label: t('nav.healthRecord'),
       items: [
+        { title: t('nav.overview'), path: '/clinical-overview', icon: <SparklesIcon /> },
         { title: t('nav.dashboard'), path: '/dashboard', icon: <LayoutDashboardIcon /> },
         { title: t('nav.timeline'), path: '/timeline', icon: <ActivityIcon /> },
         { title: t('nav.documents'), path: '/documents', icon: <FileTextIcon /> },

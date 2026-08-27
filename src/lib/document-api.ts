@@ -62,3 +62,46 @@ export async function uploadAndProcessDocument(file: File, patientId?: string) {
 
   return (await processRes.json()) as DocumentAiProcessResult;
 }
+
+export function extractAbnormalValuesFromOcr(result: DocumentAiProcessResult) {
+  const clinicalData =
+    result.clinical_data && typeof result.clinical_data === 'object'
+      ? (result.clinical_data as Record<string, unknown>)
+      : null;
+  const rows = Array.isArray(clinicalData?.clinical_results)
+    ? clinicalData.clinical_results
+    : Array.isArray(result.clinical_results)
+      ? result.clinical_results
+      : [];
+
+  const abnormal: Array<{ label: string; value: string; severity: 'low' | 'medium' | 'high' }> =
+    [];
+
+  for (const row of rows) {
+    if (!row || typeof row !== 'object') continue;
+    const item = row as Record<string, unknown>;
+    const flag =
+      typeof item.flag === 'string'
+        ? item.flag
+        : typeof item.abnormal_flag === 'string'
+          ? item.abnormal_flag
+          : null;
+    if (!flag || /normal|n\/a|none/i.test(flag)) continue;
+
+    const label =
+      (typeof item.test_name === 'string' && item.test_name) ||
+      (typeof item.name === 'string' && item.name) ||
+      (typeof item.test === 'string' && item.test) ||
+      'Lab value';
+    const value = [item.value, item.unit].filter(Boolean).join(' ').trim() || flag;
+    const severity = /h|high|critical/i.test(flag)
+      ? 'high'
+      : /l|low/i.test(flag)
+        ? 'medium'
+        : 'low';
+
+    abnormal.push({ label, value, severity });
+  }
+
+  return abnormal.slice(0, 12);
+}

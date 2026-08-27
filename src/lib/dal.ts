@@ -381,7 +381,9 @@ export async function getPatientWorkspace() {
       type: document.docType,
       title: document.title,
       date: document.uploadedAt,
-      body: document.notes ?? `${document.fileName} processed with mock AI extraction.`,
+      body:
+        document.notes ??
+        `${document.fileName} processed with Document AI (confidence ${structured?.aiConfidenceScore ?? 'n/a'}%).`,
       status: document.status,
       confidence: structured?.aiConfidenceScore ?? null,
       redFlag: false,
