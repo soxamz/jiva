@@ -97,10 +97,7 @@ export async function createIntakeSession(): Promise<{
   return res.json();
 }
 
-export async function sendTextTurn(
-  sessionId: string,
-  text: string
-): Promise<TurnResponse> {
+export async function sendTextTurn(sessionId: string, text: string): Promise<TurnResponse> {
   const res = await fetch(`/api/intake/sessions/${sessionId}/turn`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -125,9 +122,7 @@ export async function sendAudioTurn(
   return res.json();
 }
 
-export async function finalizeIntake(
-  sessionId: string
-): Promise<FinalizeResponse> {
+export async function finalizeIntake(sessionId: string): Promise<FinalizeResponse> {
   const res = await fetch(`/api/intake/sessions/${sessionId}/finalize`, {
     method: 'POST',
   });

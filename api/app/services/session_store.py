@@ -1,13 +1,22 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from threading import Lock
 
 from app.schemas.intake import SessionState
 
 # Keep outside app/ so uvicorn --reload does not restart on every persist.
-_RUNTIME_DIR = Path(__file__).resolve().parents[2] / "runtime"
+# Vercel only permits writes under /tmp; this demo store is therefore ephemeral
+# across cold starts in production.
+_LOCAL_RUNTIME_DIR = Path(__file__).resolve().parents[2] / "runtime"
+_RUNTIME_DIR = Path(
+    os.environ.get(
+        "JIVA_RUNTIME_DIR",
+        "/tmp/jivahq-intake" if os.environ.get("VERCEL") else _LOCAL_RUNTIME_DIR,
+    )
+)
 _STORE_PATH = _RUNTIME_DIR / "sessions_store.json"
 
 

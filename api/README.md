@@ -70,13 +70,13 @@ Next.js rewrites `/api/*` → `http://127.0.0.1:5328/api/*` (see `next.config.ts
 
 ## API surface
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| POST | `/api/intake/sessions` | Start session |
-| POST | `/api/intake/sessions/{id}/turn` | JSON `{text}` or multipart `audio`/`text` |
-| POST | `/api/intake/sessions/{id}/finalize` | CloseCrew → history + draft summary |
-| GET | `/api/intake/sessions/{id}` | Session state |
-| GET | `/api/health` | Health + model config |
+| Method | Path                                 | Purpose                                   |
+| ------ | ------------------------------------ | ----------------------------------------- |
+| POST   | `/api/intake/sessions`               | Start session                             |
+| POST   | `/api/intake/sessions/{id}/turn`     | JSON `{text}` or multipart `audio`/`text` |
+| POST   | `/api/intake/sessions/{id}/finalize` | CloseCrew → history + draft summary       |
+| GET    | `/api/intake/sessions/{id}`          | Session state                             |
+| GET    | `/api/health`                        | Health + model config                     |
 
 ## Notes
 

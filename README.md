@@ -26,16 +26,16 @@ bun install
 bun dev
 ```
 
-- Home: http://localhost:3000  
-- Intake UI: http://localhost:3000/intake  
+- Home: http://localhost:3000
+- Intake UI: http://localhost:3000/intake
 
 ## Stack (this module)
 
-| Piece | Tech |
-|-------|------|
-| Turn agents | Groq `llama-3.1-8b-instant` via CrewAI |
-| Close agents | Gemini `gemini-3.6-flash` via CrewAI |
-| ASR | Groq Whisper |
-| Red flags | Deterministic rules (+ LLM assist) |
-| API | FastAPI on `:5328` |
-| UI | Next.js App Router |
+| Piece        | Tech                                   |
+| ------------ | -------------------------------------- |
+| Turn agents  | Groq `llama-3.1-8b-instant` via CrewAI |
+| Close agents | Gemini `gemini-3.6-flash` via CrewAI   |
+| ASR          | Groq Whisper                           |
+| Red flags    | Deterministic rules (+ LLM assist)     |
+| API          | FastAPI on `:5328`                     |
+| UI           | Next.js App Router                     |

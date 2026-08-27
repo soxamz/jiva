@@ -9,8 +9,8 @@ settings = get_settings()
 app = FastAPI(
     title="JivaHQ Clinical Intake API",
     description=(
-        "Conversational multimodal history engine: Groq TurnCrew + rule red flags + "
-        "Gemini CloseCrew."
+        "Conversational multimodal history engine: Groq intake turns, "
+        "rule-based red flags, and deterministic clinical summaries."
     ),
     version="0.1.0",
 )

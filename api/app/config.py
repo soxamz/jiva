@@ -1,11 +1,18 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+_API_DIR = Path(__file__).resolve().parents[1]
+_PROJECT_DIR = _API_DIR.parent
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        # Vercel injects environment variables at runtime. The files are only
+        # convenience fallbacks for local development.
+        env_file=(_API_DIR / ".env", _PROJECT_DIR / ".env.local"),
         env_file_encoding="utf-8",
         extra="ignore",
     )

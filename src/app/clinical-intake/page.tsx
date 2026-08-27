@@ -154,14 +154,12 @@ export default function IntakePage() {
 
   return (
     <main className="mx-auto flex min-h-full w-full max-w-5xl flex-col gap-4 px-4 py-6">
-      <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
+      <header className="border-border flex flex-wrap items-end justify-between gap-3 border-b pb-4">
         <div>
-          <p className="text-sm text-muted-foreground">JivaHQ Clinical Intake</p>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Conversational History
-          </h1>
+          <p className="text-muted-foreground text-sm">JivaHQ Clinical Intake</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Conversational History</h1>
         </div>
-        <p className="font-mono text-xs text-muted-foreground">
+        <p className="text-muted-foreground font-mono text-xs">
           {sessionId ? `session ${sessionId.slice(0, 8)}…` : 'starting…'}
         </p>
       </header>
@@ -174,9 +172,7 @@ export default function IntakePage() {
           <p className="font-semibold">Triage bypass — urgent attention needed</p>
           <p className="mt-1 text-sm">{redFlagReason}</p>
           {matchedRules.length > 0 && (
-            <p className="mt-2 text-xs">
-              Matched rules: {matchedRules.join(', ')}
-            </p>
+            <p className="mt-2 text-xs">Matched rules: {matchedRules.join(', ')}</p>
           )}
         </div>
       )}
@@ -188,7 +184,7 @@ export default function IntakePage() {
       )}
 
       <section className="grid flex-1 gap-4 lg:grid-cols-[1fr_280px]">
-        <div className="flex min-h-[420px] flex-col rounded-xl border border-border bg-card">
+        <div className="border-border bg-card flex min-h-[420px] flex-col rounded-xl border">
           <div className="flex-1 space-y-3 overflow-y-auto p-4">
             {messages.map((message) => (
               <div
@@ -196,7 +192,7 @@ export default function IntakePage() {
                 className={cn(
                   'max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed',
                   message.role === 'patient'
-                    ? 'ml-auto bg-primary text-primary-foreground'
+                    ? 'bg-primary text-primary-foreground ml-auto'
                     : 'bg-muted text-foreground'
                 )}
               >
@@ -206,10 +202,10 @@ export default function IntakePage() {
             <div ref={bottomRef} />
           </div>
 
-          <div className="border-t border-border p-3">
+          <div className="border-border border-t p-3">
             <div className="flex gap-2">
               <input
-                className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+                className="border-input bg-background ring-offset-background focus-visible:ring-ring flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus-visible:ring-2"
                 placeholder="Describe your symptoms…"
                 value={input}
                 disabled={!sessionId || isPending || bypassQueue || !!finalResult}
@@ -238,11 +234,7 @@ export default function IntakePage() {
                 onClick={recording ? stopRecording : startRecording}
                 aria-label={recording ? 'Stop recording' : 'Start recording'}
               >
-                {recording ? (
-                  <Square className="size-4" />
-                ) : (
-                  <Mic className="size-4" />
-                )}
+                {recording ? <Square className="size-4" /> : <Mic className="size-4" />}
               </Button>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -259,20 +251,16 @@ export default function IntakePage() {
                   <MicOff className="size-3" /> Recording…
                 </span>
               )}
-              {isPending && (
-                <span className="text-xs text-muted-foreground">Working…</span>
-              )}
+              {isPending && <span className="text-muted-foreground text-xs">Working…</span>}
               {complete && !bypassQueue && (
-                <span className="text-xs text-muted-foreground">
-                  Intake marked complete
-                </span>
+                <span className="text-muted-foreground text-xs">Intake marked complete</span>
               )}
             </div>
           </div>
         </div>
 
         <aside className="space-y-4">
-          <div className="rounded-xl border border-border p-4">
+          <div className="border-border rounded-xl border p-4">
             <h2 className="text-sm font-semibold">Intake progress</h2>
             <ul className="mt-3 space-y-1.5 text-sm">
               {Object.entries(progress).length === 0 && (
@@ -280,10 +268,8 @@ export default function IntakePage() {
               )}
               {Object.entries(progress).map(([key, filled]) => (
                 <li key={key} className="flex items-center justify-between gap-2">
-                  <span className="capitalize text-muted-foreground">
-                    {key
-                      .replace(/^ayush_/, 'AYUSH ')
-                      .replaceAll('_', ' ')}
+                  <span className="text-muted-foreground capitalize">
+                    {key.replace(/^ayush_/, 'AYUSH ').replaceAll('_', ' ')}
                   </span>
                   <span className={filled ? 'text-emerald-700' : 'text-foreground/40'}>
                     {filled ? 'done' : '—'}
@@ -294,28 +280,24 @@ export default function IntakePage() {
           </div>
 
           {finalResult && (
-            <div className="space-y-3 rounded-xl border border-border p-4">
+            <div className="border-border space-y-3 rounded-xl border p-4">
               <h2 className="text-sm font-semibold">Physician draft summary</h2>
-              <p className="text-xs text-amber-800">
-                {finalResult.physician_summary.disclaimer}
-              </p>
+              <p className="text-xs text-amber-800">{finalResult.physician_summary.disclaimer}</p>
               <div>
-                <p className="text-xs font-medium text-muted-foreground">English</p>
+                <p className="text-muted-foreground text-xs font-medium">English</p>
                 <p className="mt-1 text-sm whitespace-pre-wrap">
                   {finalResult.physician_summary.en}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-medium text-muted-foreground">Hindi</p>
+                <p className="text-muted-foreground text-xs font-medium">Hindi</p>
                 <p className="mt-1 text-sm whitespace-pre-wrap">
                   {finalResult.physician_summary.hi}
                 </p>
               </div>
               <details className="text-xs">
-                <summary className="cursor-pointer font-medium">
-                  Structured history JSON
-                </summary>
-                <pre className="mt-2 max-h-64 overflow-auto rounded bg-muted p-2">
+                <summary className="cursor-pointer font-medium">Structured history JSON</summary>
+                <pre className="bg-muted mt-2 max-h-64 overflow-auto rounded p-2">
                   {JSON.stringify(finalResult.patient_history, null, 2)}
                 </pre>
               </details>
