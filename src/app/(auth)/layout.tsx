@@ -9,8 +9,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           alt="Image"
           className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2]"
         />
-        <Link href="/" className="relative z-20 inline-flex items-center text-2xl">
-          JIVA
+        <Link href="/" className="relative z-20 inline-flex items-center">
+          <img src="/logo.svg" alt="Jiva" className="h-auto w-32 dark:hidden" />
+          <img src="/logo-dark.svg" alt="Jiva" className="hidden h-auto w-32 dark:block" />
         </Link>
         <div className="relative z-20 mt-auto rounded-2xl p-4 shadow-xl backdrop-blur-sm">
           Welcome to Panery, where local food ecosystems thrive. Our mission is to empower local
@@ -21,7 +22,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="flex min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-contain">
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center-safe justify-center space-y-4 px-4 py-20 sm:px-6 lg:px-8">
           <Link href="/" className="lg:hidden">
-            JIVA
+            <img src="/logo.svg" alt="Jiva" className="h-auto w-28 dark:hidden" />
+            <img src="/logo-dark.svg" alt="Jiva" className="hidden h-auto w-28 dark:block" />
           </Link>
           {children}
 

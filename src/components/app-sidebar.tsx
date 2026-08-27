@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import { HeartPulseIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { LogoIcon } from '@/components/logo';
 import { getFooterNavLinks, getNavGroups, type AppShellUser } from '@/components/app-shared';
 import { LatestChange } from '@/components/latest-change';
 import { NavGroup } from '@/components/nav-group';
@@ -44,8 +43,12 @@ export function AppSidebar({ user }: { user: AppShellUser }) {
           render={<Link aria-label={t('sidebar.home')} href={homeHref} />}
           tooltip={t('sidebar.home')}
         >
-          <LogoIcon className="text-primary" />
-          <span className="text-foreground! font-medium">JivaHQ</span>
+          <img src="/logo.svg" alt="Jiva" className="h-auto w-28 max-w-none dark:hidden" />
+          <img
+            src="/logo-dark.svg"
+            alt="Jiva"
+            className="hidden h-auto w-28 max-w-none dark:block"
+          />
         </SidebarMenuButton>
       </SidebarHeader>
       <SidebarContent>

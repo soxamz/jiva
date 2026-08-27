@@ -66,3 +66,9 @@ INFO:     127.0.0.1:52200 - "POST /api/intake/sessions HTTP/1.1" 200 OK
 INFO:     127.0.0.1:58093 - "POST /api/intake/sessions HTTP/1.1" 200 OK
 INFO:     127.0.0.1:55621 - "POST /api/intake/sessions HTTP/1.1" 200 OK
 INFO:     127.0.0.1:50866 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57769 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52322 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56967 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65473 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54774 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64914 - "POST /api/intake/sessions HTTP/1.1" 200 OK

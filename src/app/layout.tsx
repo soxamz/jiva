@@ -7,7 +7,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { I18nProvider } from '@/components/i18n-provider';
 import { getI18n } from '@/lib/i18n';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: 'JivaHQ Clinical Intake',
@@ -21,7 +21,7 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html
       lang={language.intl}
-      className={cn('h-full', 'antialiased', 'font-sans', inter.variable, 'font-serif')}
+      className={cn('h-full', 'antialiased', 'font-sans', 'font-serif', "font-sans", inter.variable)}
     >
       <body className="flex min-h-full flex-col">
         <ThemeProvider
