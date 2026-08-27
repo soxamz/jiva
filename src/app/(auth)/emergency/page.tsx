@@ -1,13 +1,10 @@
 import Link from 'next/link';
 import { Fingerprint, ShieldAlert } from 'lucide-react';
 
-import { breakGlassAction } from '@/lib/actions';
+import { BreakGlassForm } from '@/components/forms/break-glass-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { getI18n } from '@/lib/i18n';
 
 export default async function EmergencyPage() {
@@ -33,24 +30,7 @@ export default async function EmergencyPage() {
           <CardDescription>{t('emergency.terminalDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={breakGlassAction} className="grid gap-4">
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="identifier">{t('emergency.patientIdentifier')}</FieldLabel>
-                <Input
-                  id="identifier"
-                  name="identifier"
-                  inputMode="numeric"
-                  defaultValue="9876543210"
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="reason">{t('emergency.reason')}</FieldLabel>
-                <Textarea id="reason" name="reason" defaultValue="Trauma/unconscious patient" />
-              </Field>
-              <Button type="submit">{t('emergency.initiate')}</Button>
-            </FieldGroup>
-          </form>
+          <BreakGlassForm />
         </CardContent>
       </Card>
       <Link

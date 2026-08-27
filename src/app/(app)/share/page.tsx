@@ -1,10 +1,9 @@
-import { grantConsentAction, revokeConsentAction } from '@/lib/actions';
+import { revokeConsentAction } from '@/lib/actions';
 import { DashboardCard } from '@/components/dashboard-card';
+import { ConsentForm } from '@/components/forms/consent-form';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -35,26 +34,7 @@ export default async function SharePage() {
             <CardDescription>{t('share.createDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <form action={grantConsentAction} className="flex flex-col gap-4">
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="doctorId">{t('share.doctorId')}</FieldLabel>
-                  <Input id="doctorId" name="doctorId" defaultValue="HPR-DEMO-1001" />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="durationMinutes">{t('share.duration')}</FieldLabel>
-                  <Input
-                    id="durationMinutes"
-                    name="durationMinutes"
-                    type="number"
-                    min={1}
-                    max={1440}
-                    defaultValue={120}
-                  />
-                </Field>
-                <Button type="submit">{t('share.createCode')}</Button>
-              </FieldGroup>
-            </form>
+            <ConsentForm />
           </CardContent>
         </DashboardCard>
         <DashboardCard className="gap-0">

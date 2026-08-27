@@ -50,9 +50,13 @@ const signUpSchema = z.object({
 });
 
 const documentSchema = z.object({
-  title: z.string().trim().min(2),
+  title: z
+    .string()
+    .trim()
+    .min(2, 'Enter a document title.')
+    .max(120, 'Use 120 characters or fewer.'),
   docType: z.enum(['lab', 'rx', 'note', 'discharge', 'other']),
-  notes: z.string().trim().optional(),
+  notes: z.string().trim().max(1_000, 'Use 1,000 characters or fewer.').optional(),
 });
 
 const intakeSchema = z.object({
@@ -86,8 +90,13 @@ const aiIntakeSchema = z.object({
 });
 
 const consentSchema = z.object({
-  doctorId: z.string().trim().optional(),
-  durationMinutes: z.coerce.number().int().min(1).max(1440).default(120),
+  doctorId: z.string().trim().max(80, 'Use 80 characters or fewer.').optional(),
+  durationMinutes: z.coerce
+    .number({ error: 'Choose a valid duration.' })
+    .int('Choose a whole number of minutes.')
+    .min(1, 'Access must last at least 1 minute.')
+    .max(1440, 'Access cannot exceed 24 hours.')
+    .default(120),
 });
 
 const codeSchema = z.object({
@@ -96,14 +105,24 @@ const codeSchema = z.object({
 
 const noteSchema = z.object({
   code: z.string().trim().min(4).max(24),
-  title: z.string().trim().min(2),
-  note: z.string().trim().min(5),
+  title: z.string().trim().min(2, 'Enter a note title.').max(120, 'Use 120 characters or fewer.'),
+  note: z
+    .string()
+    .trim()
+    .min(5, 'Enter at least 5 characters.')
+    .max(5_000, 'Use 5,000 characters or fewer.'),
 });
 
 const breakGlassSchema = z.object({
   identifier: z.string().regex(/^(\d{10}|\d{12})$/, 'Enter a 10-digit phone or 12-digit Aadhaar.'),
-  reason: z.string().trim().min(5),
+  reason: z
+    .string()
+    .trim()
+    .min(5, 'Explain why emergency access is needed.')
+    .max(500, 'Use 500 characters or fewer.'),
 });
+
+const consentIdSchema = z.string().uuid('Invalid access record.');
 
 const listItemSchema = z.string().trim().min(1).max(100);
 
@@ -219,50 +238,89 @@ export async function setLocaleAction(value: string) {
   await setLocale(value);
 }
 
-export async function uploadDocumentAction(formData: FormData) {
-  const parsed = documentSchema.parse({
+export async function uploadDocumentAction(
+  _state: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const parsed = documentSchema.safeParse({
     title: formData.get('title'),
     docType: formData.get('docType') || 'other',
     notes: formData.get('notes'),
   });
+
+  if (!parsed.success) {
+    return formErrors(parsed.error);
+  }
+
   const file = formData.get('file');
 
   if (!(file instanceof File) || file.size === 0) {
-    throw new Error('Choose a PDF, JPG, or PNG file.');
+    return { errors: { file: ['Choose a PDF, JPG, or PNG file.'] } };
   }
 
   const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
 
   if (!allowedTypes.includes(file.type)) {
-    throw new Error('Unsupported file type. Use PDF, JPG, or PNG.');
+    return { errors: { file: ['Unsupported file type. Use PDF, JPG, or PNG.'] } };
   }
 
   if (file.size > 10 * 1024 * 1024) {
-    throw new Error('File exceeds 10MB limit.');
+    return { errors: { file: ['File exceeds the 10MB limit.'] } };
   }
 
-  await createDocumentForCurrentPatient({
-    ...parsed,
-    fileName: file.name,
-    fileType: file.type,
-    fileSizeBytes: file.size,
-  });
+  try {
+    await createDocumentForCurrentPatient({
+      ...parsed.data,
+      fileName: file.name,
+      fileType: file.type,
+      fileSizeBytes: file.size,
+    });
+  } catch (error) {
+    return { message: error instanceof Error ? error.message : 'Unable to save the document.' };
+  }
 
   revalidatePath('/documents');
   revalidatePath('/timeline');
   redirect('/documents');
 }
 
-export async function updateMedicalProfileAction(formData: FormData) {
-  const profile = profileSchema.parse({
+export async function updateMedicalProfileAction(
+  _state: FormState,
+  formData: FormData
+): Promise<FormState> {
+  let emergencyContacts: Array<{ name: string; relation: string; phone: string }>;
+
+  try {
+    emergencyContacts = parseEmergencyContacts(formData.get('emergencyContacts'));
+  } catch (error) {
+    return {
+      errors: {
+        emergencyContacts: [
+          error instanceof Error ? error.message : 'Enter valid emergency contacts.',
+        ],
+      },
+    };
+  }
+
+  const parsed = profileSchema.safeParse({
     bloodType: formData.get('bloodType'),
     allergies: splitCommaSeparatedValues(formData.get('allergies')),
     criticalConditions: splitCommaSeparatedValues(formData.get('criticalConditions')),
     currentMedications: splitCommaSeparatedValues(formData.get('currentMedications')),
-    emergencyContacts: parseEmergencyContacts(formData.get('emergencyContacts')),
+    emergencyContacts,
   });
 
-  await updateMedicalProfileForCurrentPatient(profile);
+  if (!parsed.success) {
+    return formErrors(parsed.error);
+  }
+
+  try {
+    await updateMedicalProfileForCurrentPatient(parsed.data);
+  } catch (error) {
+    return {
+      message: error instanceof Error ? error.message : 'Unable to save health information.',
+    };
+  }
 
   revalidatePath('/dashboard');
   revalidatePath('/emergency-card');
@@ -301,21 +359,36 @@ export async function saveAiIntakeAction(input: unknown) {
   return { id: intake.id };
 }
 
-export async function grantConsentAction(formData: FormData) {
-  await grantConsentForCurrentPatient(
-    consentSchema.parse({
-      doctorId: formData.get('doctorId'),
-      durationMinutes: formData.get('durationMinutes') || 120,
-    })
-  );
+export async function grantConsentAction(
+  _state: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const parsed = consentSchema.safeParse({
+    doctorId: formData.get('doctorId'),
+    durationMinutes: formData.get('durationMinutes') || 120,
+  });
+
+  if (!parsed.success) {
+    return formErrors(parsed.error);
+  }
+
+  try {
+    await grantConsentForCurrentPatient(parsed.data);
+  } catch (error) {
+    return { message: error instanceof Error ? error.message : 'Unable to create access.' };
+  }
 
   revalidatePath('/share');
   redirect('/share');
 }
 
 export async function revokeConsentAction(formData: FormData) {
-  const consentId = String(formData.get('consentId') ?? '');
-  await revokeConsentForCurrentPatient(consentId);
+  const parsed = consentIdSchema.safeParse(formData.get('consentId'));
+  if (!parsed.success) {
+    throw new Error('Invalid access record.');
+  }
+
+  await revokeConsentForCurrentPatient(parsed.data);
   revalidatePath('/share');
   redirect('/share');
 }
@@ -347,28 +420,54 @@ export async function redeemConsentAction(
   redirect(`/doctor/access/${normalizedCode}`);
 }
 
-export async function addDoctorNoteAction(formData: FormData) {
-  const parsed = noteSchema.parse({
+export async function addDoctorNoteAction(
+  _state: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const parsed = noteSchema.safeParse({
     code: formData.get('code'),
     title: formData.get('title'),
     note: formData.get('note'),
   });
 
-  await addDoctorNoteForConsent(parsed.code, {
-    title: parsed.title,
-    note: parsed.note,
-  });
+  if (!parsed.success) {
+    return formErrors(parsed.error);
+  }
 
-  revalidatePath(`/doctor/access/${parsed.code}`);
-  redirect(`/doctor/access/${parsed.code}`);
+  try {
+    await addDoctorNoteForConsent(parsed.data.code, {
+      title: parsed.data.title,
+      note: parsed.data.note,
+    });
+  } catch (error) {
+    return {
+      message: error instanceof Error ? error.message : 'Unable to save the clinical note.',
+    };
+  }
+
+  revalidatePath(`/doctor/access/${parsed.data.code}`);
+  redirect(`/doctor/access/${parsed.data.code}`);
 }
 
-export async function breakGlassAction(formData: FormData) {
-  const parsed = breakGlassSchema.parse({
+export async function breakGlassAction(_state: FormState, formData: FormData): Promise<FormState> {
+  const parsed = breakGlassSchema.safeParse({
     identifier: normalizeIdentifier(formData.get('identifier')),
     reason: formData.get('reason'),
   });
-  const result = await createBreakGlassAccess(parsed);
+
+  if (!parsed.success) {
+    return formErrors(parsed.error);
+  }
+
+  let result: Awaited<ReturnType<typeof createBreakGlassAccess>>;
+
+  try {
+    result = await createBreakGlassAccess(parsed.data);
+  } catch (error) {
+    return {
+      message: error instanceof Error ? error.message : 'Unable to start emergency access.',
+    };
+  }
 
   await createSession({
     userId: result.responder.id,

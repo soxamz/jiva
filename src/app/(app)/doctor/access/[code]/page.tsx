@@ -1,10 +1,7 @@
-import { addDoctorNoteAction } from '@/lib/actions';
 import { DashboardCard } from '@/components/dashboard-card';
+import { DoctorNoteForm } from '@/components/forms/doctor-note-form';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -14,7 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
 import { getDoctorAccessData, isConsentAccessError } from '@/lib/dal';
 import { formatDateTime, minutesUntil } from '@/lib/format';
 import { getI18n } from '@/lib/i18n';
@@ -140,25 +136,7 @@ export default async function DoctorAccessPage({ params }: PageProps<'/doctor/ac
             <CardDescription>{t('doctor.addNoteDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <form action={addDoctorNoteAction} className="flex flex-col gap-4">
-              <input type="hidden" name="code" value={data.consent.code} />
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="title">{t('documents.document')}</FieldLabel>
-                  <Input id="title" name="title" defaultValue="Consultation note" required />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="note">{t('doctor.clinicalNote')}</FieldLabel>
-                  <Textarea
-                    id="note"
-                    name="note"
-                    defaultValue="Reviewed uploaded timeline. Continue current medications and follow up in 2 weeks."
-                    required
-                  />
-                </Field>
-                <Button type="submit">{t('doctor.saveNote')}</Button>
-              </FieldGroup>
-            </form>
+            <DoctorNoteForm code={data.consent.code} />
           </CardContent>
         </DashboardCard>
       </section>

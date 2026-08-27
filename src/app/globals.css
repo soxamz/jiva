@@ -221,6 +221,12 @@
     box-shadow: 0 6px 18px oklch(0.42 0.08 250 / 6%);
   }
 
+  .patient-primary-summary {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: var(--primary-foreground) !important;
+  }
+
   .patient-bento-action {
     background-color: color-mix(in oklch, var(--background) 76%, transparent);
   }

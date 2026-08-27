@@ -1,10 +1,6 @@
-import { uploadDocumentAction } from '@/lib/actions';
+import { DocumentUploadForm } from '@/components/forms/document-upload-form';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -14,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
 import { getPatientWorkspace } from '@/lib/dal';
 import { formatBytes, formatDateTime } from '@/lib/format';
 import { getI18n } from '@/lib/i18n';
@@ -36,33 +31,7 @@ export default async function DocumentsPage() {
             <CardDescription>{t('documents.uploadDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <form action={uploadDocumentAction} className="flex flex-col gap-4">
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="title">{t('documents.document')}</FieldLabel>
-                  <Input id="title" name="title" placeholder="CBC report" required />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="docType">{t('documents.documentType')}</FieldLabel>
-                  <Select id="docType" name="docType" defaultValue="lab">
-                    <option value="lab">Lab report</option>
-                    <option value="rx">Prescription</option>
-                    <option value="discharge">Discharge summary</option>
-                    <option value="note">Clinical note</option>
-                    <option value="other">Other</option>
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="file">{t('documents.file')}</FieldLabel>
-                  <Input id="file" name="file" type="file" accept=".pdf,.jpg,.jpeg,.png" required />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="notes">{t('documents.notes')}</FieldLabel>
-                  <Textarea id="notes" name="notes" placeholder="Optional context for the doctor" />
-                </Field>
-                <Button type="submit">{t('documents.add')}</Button>
-              </FieldGroup>
-            </form>
+            <DocumentUploadForm />
           </CardContent>
         </Card>
         <Card className="gap-0">

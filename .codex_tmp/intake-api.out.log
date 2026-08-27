@@ -38,3 +38,8 @@ INFO:     127.0.0.1:57819 - "POST /api/intake/sessions/4172f722-e411-4feb-bac9-9
 INFO:     127.0.0.1:61585 - "POST /api/intake/sessions/4172f722-e411-4feb-bac9-95d24abce0e7/turn HTTP/1.1" 200 OK
 INFO:     127.0.0.1:61585 - "POST /api/intake/sessions/4172f722-e411-4feb-bac9-95d24abce0e7/turn HTTP/1.1" 200 OK
 INFO:     127.0.0.1:49691 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55797 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54719 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54719 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54719 - "OPTIONS /api/intake/sessions/a55dafc2-5299-4227-898b-db3eb41bc7a0/turn HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54719 - "POST /api/intake/sessions/a55dafc2-5299-4227-898b-db3eb41bc7a0/turn HTTP/1.1" 200 OK

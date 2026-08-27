@@ -21,7 +21,7 @@ export function SignInForm({ className, ...props }: React.ComponentProps<'form'>
           <h1 className="text-2xl font-semibold tracking-tight">{t('auth.signInTitle')}</h1>
           <p className="text-muted-foreground mt-1 text-sm">{t('auth.signInDescription')}</p>
         </div>
-        <Field>
+        <Field data-invalid={Boolean(state?.errors?.identifier)}>
           <FieldLabel htmlFor="identifier">{t('auth.identifier')}</FieldLabel>
           <Input
             id="identifier"
@@ -29,6 +29,8 @@ export function SignInForm({ className, ...props }: React.ComponentProps<'form'>
             inputMode="numeric"
             defaultValue="9876543210"
             aria-describedby="identifier-error"
+            aria-invalid={Boolean(state?.errors?.identifier)}
+            pattern="[0-9]{10}|[0-9]{12}"
             required
           />
           <FieldError
@@ -36,9 +38,17 @@ export function SignInForm({ className, ...props }: React.ComponentProps<'form'>
             errors={state?.errors?.identifier?.map((message) => ({ message }))}
           />
         </Field>
-        <Field>
+        <Field data-invalid={Boolean(state?.errors?.otp)}>
           <FieldLabel htmlFor="otp">{t('auth.otp')}</FieldLabel>
-          <Input id="otp" name="otp" inputMode="numeric" defaultValue="123456" required />
+          <Input
+            aria-invalid={Boolean(state?.errors?.otp)}
+            defaultValue="123456"
+            id="otp"
+            inputMode="numeric"
+            name="otp"
+            pattern="[0-9]{6}"
+            required
+          />
           <FieldError errors={state?.errors?.otp?.map((message) => ({ message }))} />
         </Field>
         {state?.message && <FieldError>{state.message}</FieldError>}

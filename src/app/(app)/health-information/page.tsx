@@ -1,24 +1,11 @@
 import Link from 'next/link';
-import { SaveIcon, ShieldCheckIcon } from 'lucide-react';
+import { ShieldCheckIcon } from 'lucide-react';
 
-import { updateMedicalProfileAction } from '@/lib/actions';
-import { Button, buttonVariants } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { buttonVariants } from '@/components/ui/button';
+import { MedicalProfileForm } from '@/components/forms/medical-profile-form';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getPatientWorkspace } from '@/lib/dal';
 import { getI18n } from '@/lib/i18n';
-
-const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'] as const;
 
 function displayList(values: string[] | undefined) {
   return values?.join(', ') ?? '';
@@ -45,86 +32,21 @@ export default async function HealthInformationPage() {
         </Link>
       </section>
 
-      <form action={updateMedicalProfileAction} className="contents">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('health.emergencyDetails')}</CardTitle>
-            <CardDescription>{t('health.emergencyDetailsDescription')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="bloodType">{t('dashboard.bloodGroup')}</FieldLabel>
-                <Select id="bloodType" name="bloodType" defaultValue={profile?.bloodType ?? 'O+'}>
-                  {bloodTypes.map((bloodType) => (
-                    <option key={bloodType} value={bloodType}>
-                      {bloodType}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-
-              <FieldGroup className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor="allergies">{t('dashboard.allergies')}</FieldLabel>
-                  <Input
-                    id="allergies"
-                    name="allergies"
-                    defaultValue={displayList(profile?.allergies)}
-                    placeholder="For example: Penicillin, Peanuts"
-                  />
-                  <FieldDescription>{t('health.separateComma')}</FieldDescription>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="criticalConditions">
-                    {t('health.criticalConditions')}
-                  </FieldLabel>
-                  <Input
-                    id="criticalConditions"
-                    name="criticalConditions"
-                    defaultValue={displayList(profile?.criticalConditions)}
-                    placeholder="For example: Diabetes, Asthma"
-                  />
-                  <FieldDescription>{t('health.separateComma')}</FieldDescription>
-                </Field>
-              </FieldGroup>
-
-              <Field>
-                <FieldLabel htmlFor="currentMedications">{t('health.currentMedicines')}</FieldLabel>
-                <Input
-                  id="currentMedications"
-                  name="currentMedications"
-                  defaultValue={displayList(profile?.currentMedications)}
-                  placeholder="For example: Metformin 500mg, Vitamin D"
-                />
-                <FieldDescription>{t('health.separateComma')}</FieldDescription>
-              </Field>
-
-              <Field>
-                <FieldLabel htmlFor="emergencyContacts">
-                  {t('dashboard.emergencyContacts')}
-                </FieldLabel>
-                <Textarea
-                  id="emergencyContacts"
-                  name="emergencyContacts"
-                  defaultValue={emergencyContacts}
-                  placeholder={
-                    'Asha Sharma | Mother | 9876543210\nRohan Sharma | Brother | 9876543211'
-                  }
-                  rows={4}
-                />
-                <FieldDescription>{t('health.contactsFormat')}</FieldDescription>
-              </Field>
-            </FieldGroup>
-          </CardContent>
-          <CardFooter className="justify-end">
-            <Button type="submit">
-              <SaveIcon data-icon="inline-start" aria-hidden />
-              {t('health.save')}
-            </Button>
-          </CardFooter>
-        </Card>
-      </form>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('health.emergencyDetails')}</CardTitle>
+          <CardDescription>{t('health.emergencyDetailsDescription')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <MedicalProfileForm
+            allergies={displayList(profile?.allergies)}
+            bloodType={profile?.bloodType ?? 'O+'}
+            criticalConditions={displayList(profile?.criticalConditions)}
+            currentMedications={displayList(profile?.currentMedications)}
+            emergencyContacts={emergencyContacts}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -24,7 +24,7 @@ export function DoctorConsentForm() {
   return (
     <form action={action} className="flex flex-col gap-4">
       <FieldGroup>
-        <Field>
+        <Field data-invalid={Boolean(state?.errors?.code)}>
           <FieldLabel htmlFor="code">{t('doctor.consentCode')}</FieldLabel>
           <Input
             id="code"
@@ -32,6 +32,9 @@ export function DoctorConsentForm() {
             className="font-mono uppercase"
             defaultValue="JIVA-DEMO"
             aria-describedby="code-error"
+            aria-invalid={Boolean(state?.errors?.code)}
+            maxLength={24}
+            minLength={4}
             required
           />
           <FieldError

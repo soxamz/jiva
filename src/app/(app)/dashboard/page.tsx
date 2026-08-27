@@ -1,5 +1,13 @@
 import Link from 'next/link';
-import { ActivityIcon, FileTextIcon, PillIcon, QrCodeIcon, ShieldCheckIcon } from 'lucide-react';
+import {
+  ActivityIcon,
+  ArrowRightIcon,
+  FileTextIcon,
+  HeartPulseIcon,
+  PillIcon,
+  QrCodeIcon,
+  ShieldCheckIcon,
+} from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
@@ -36,7 +44,7 @@ function DashboardLinkCard({
   return (
     <Link
       href={href}
-      className="patient-bento-action group focus-visible:ring-ring/30 border-border/70 flex min-w-0 items-center gap-3 rounded-xl border px-3 py-3 transition-[background-color,color] focus-visible:ring-3 focus-visible:outline-none"
+      className="patient-bento-action group focus-visible:ring-ring/30 border-border/70 flex min-w-0 items-center gap-3 rounded-2xl border px-3 py-3.5 transition-[background-color,color] focus-visible:ring-3 focus-visible:outline-none"
     >
       <span
         className={cn(
@@ -50,8 +58,9 @@ function DashboardLinkCard({
         <span className="block truncate font-medium">{title}</span>
         <span className="text-muted-foreground mt-0.5 block truncate text-xs">{description}</span>
       </span>
-      <span className="text-primary shrink-0 text-xs font-medium group-hover:underline">
+      <span className="text-primary flex shrink-0 items-center gap-1 text-xs font-medium group-hover:underline">
         {actionLabel}
+        <ArrowRightIcon className="size-3" aria-hidden />
       </span>
     </Link>
   );
@@ -79,7 +88,7 @@ function SummaryCard({
   return (
     <Card
       className={cn(
-        'patient-glass-card min-h-36 min-w-0 overflow-hidden rounded-2xl py-4 [--card-spacing:--spacing(4)]',
+        'patient-glass-card min-h-40 min-w-0 overflow-hidden rounded-3xl py-5 [--card-spacing:--spacing(5)]',
         className
       )}
     >
@@ -87,16 +96,16 @@ function SummaryCard({
         <span className={cn('flex size-9 items-center justify-center rounded-xl', iconClassName)}>
           <Icon className="size-4" aria-hidden />
         </span>
-        <p className="text-muted-foreground mt-3 text-xs font-medium">{label}</p>
+        <p className="text-muted-foreground mt-3 text-sm">{label}</p>
         {value !== undefined && (
-          <p className="mt-1 text-2xl font-semibold tracking-normal">{value}</p>
+          <p className="mt-1 text-2xl font-semibold tracking-normal text-balance">{value}</p>
         )}
         {children}
         <Link
           href={href}
           className={cn(
             buttonVariants({ size: 'xs', variant: 'secondary' }),
-            'mt-auto w-full justify-center rounded-xl'
+            'mt-auto h-8 w-full justify-center rounded-xl'
           )}
         >
           {actionLabel}
@@ -112,18 +121,32 @@ export default async function DashboardPage() {
   const medications = data.profile?.currentMedications ?? [];
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
-      <section>
-        <h1 className="text-3xl font-semibold tracking-normal text-balance sm:text-4xl">
-          {t('dashboard.hello', { name: data.user.name })}
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm">{t('dashboard.readyForVisit')}</p>
+    <div className="mx-auto flex w-full max-w-[1240px] min-w-0 flex-col gap-6">
+      <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-normal text-balance sm:text-4xl">
+            {t('dashboard.hello', { name: data.user.name })}
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">{t('dashboard.readyForVisit')}</p>
+        </div>
+        <Link
+          href="/health-information"
+          className={cn(
+            buttonVariants({ size: 'sm', variant: 'outline' }),
+            'w-full rounded-xl sm:w-auto'
+          )}
+        >
+          {t('dashboard.editHealthInformation')}
+        </Link>
       </section>
 
-      <section className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card className="!border-primary !bg-primary !text-primary-foreground min-h-36 min-w-0 rounded-2xl py-4 shadow-none [--card-spacing:--spacing(4)]">
+      <section className="grid min-w-0 grid-cols-1 items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Card className="patient-primary-summary min-h-40 min-w-0 rounded-3xl py-5 shadow-none [--card-spacing:--spacing(5)]">
           <CardContent className="flex h-full flex-col">
-            <p className="text-lg font-semibold">{t('dashboard.checkSymptoms')}</p>
+            <span className="bg-primary-foreground/15 flex size-10 items-center justify-center rounded-2xl">
+              <HeartPulseIcon className="size-5" aria-hidden />
+            </span>
+            <p className="mt-3 text-lg font-semibold">{t('dashboard.checkSymptoms')}</p>
             <p className="text-primary-foreground/80 mt-1 text-xs leading-5">
               {t('dashboard.checkSymptomsDescription')}
             </p>
@@ -176,9 +199,9 @@ export default async function DashboardPage() {
         </SummaryCard>
       </section>
 
-      <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(300px,0.75fr)]">
-        <Card className="patient-glass-card rounded-2xl">
-          <CardHeader>
+      <section className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(300px,0.75fr)]">
+        <Card className="patient-glass-card min-w-0 rounded-3xl">
+          <CardHeader className="pt-5">
             <CardTitle>{t('dashboard.recentUpdates')}</CardTitle>
             <CardDescription>{t('dashboard.recentUpdatesDescription')}</CardDescription>
           </CardHeader>
@@ -211,7 +234,7 @@ export default async function DashboardPage() {
                         )}
                       </div>
                       <p className="text-muted-foreground mt-1 line-clamp-2 text-sm leading-5">
-                        {item.body}
+                        {item.body.replaceAll('**', '').replaceAll('\n', ' ')}
                       </p>
                       <p className="text-primary mt-1.5 text-xs font-medium">
                         {formatDateTime(item.date, locale)}
@@ -224,7 +247,7 @@ export default async function DashboardPage() {
               <p className="text-muted-foreground px-5 text-sm">{t('dashboard.noUpdates')}</p>
             )}
           </CardContent>
-          <CardFooter>
+          <CardFooter className="pb-5">
             <Link
               href="/timeline"
               className={cn(
@@ -233,12 +256,13 @@ export default async function DashboardPage() {
               )}
             >
               {t('dashboard.viewUpdates')}
+              <ArrowRightIcon data-icon="inline-end" aria-hidden />
             </Link>
           </CardFooter>
         </Card>
 
         <aside className="flex min-w-0 flex-col gap-4" aria-label={t('dashboard.quickActions')}>
-          <Card className="patient-glass-card rounded-2xl py-4 [--card-spacing:--spacing(4)]">
+          <Card className="patient-glass-card rounded-3xl py-5 [--card-spacing:--spacing(5)]">
             <CardHeader>
               <CardTitle>{t('dashboard.quickActions')}</CardTitle>
               <CardDescription>{t('dashboard.quickActionsDescription')}</CardDescription>
