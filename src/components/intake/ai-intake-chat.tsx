@@ -44,11 +44,14 @@ export function AiIntakeChat() {
   const [isPending, startTransition] = useTransition();
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const transcriptRef = useRef<HTMLDivElement | null>(null);
   const bootstrapped = useRef(false);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const transcript = transcriptRef.current;
+    if (!transcript) return;
+
+    transcript.scrollTo({ top: transcript.scrollHeight, behavior: 'smooth' });
   }, [messages, finalResult]);
 
   useEffect(() => {
@@ -196,7 +199,11 @@ export function AiIntakeChat() {
               <span>{error}</span>
             </div>
           )}
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4" aria-live="polite">
+          <div
+            aria-live="polite"
+            className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4"
+            ref={transcriptRef}
+          >
             {messages.map((message) => (
               <div
                 className={cn(
@@ -215,7 +222,6 @@ export function AiIntakeChat() {
                 <LoaderCircleIcon className="size-3 animate-spin" /> Thinking...
               </div>
             )}
-            <div ref={bottomRef} />
           </div>
           <div className="border-t p-3">
             <div className="flex items-end gap-2">
