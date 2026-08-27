@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import health, intake
+from app.routers import documents, health, intake
 
 settings = get_settings()
 
@@ -10,7 +10,8 @@ app = FastAPI(
     title="JivaHQ Clinical Intake API",
     description=(
         "Conversational multimodal history engine: Groq intake turns, "
-        "rule-based red flags, and deterministic clinical summaries."
+        "rule-based red flags, deterministic clinical summaries, "
+        "and Document AI OCR extraction."
     ),
     version="0.1.0",
 )
@@ -25,6 +26,7 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(intake.router)
+app.include_router(documents.router)
 
 
 def run() -> None:

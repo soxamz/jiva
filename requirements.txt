@@ -1,6 +1,7 @@
 # Production dependencies for Vercel's Python runtime. Local-only tooling
 # (uvicorn, python-dotenv, and the Windows-only pywin32 package) stays in
 # api/requirements.txt and is not bundled into the serverless function.
+# Heavy Document AI / OCR deps: pip install -r api/requirements-document-ai.txt
 fastapi>=0.115.0
 python-multipart>=0.0.12
 pydantic>=2.11.9,<2.13

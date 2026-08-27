@@ -33,6 +33,13 @@ type DocumentInput = {
   fileType: string;
   fileSizeBytes: number;
   notes?: string;
+  apiDocumentId?: string;
+  extraction?: {
+    extractedJson: Record<string, unknown>;
+    abnormalValues: Array<{ label: string; value: string; severity: 'low' | 'medium' | 'high' }>;
+    aiConfidenceScore: number;
+  };
+  status?: 'processing' | 'processed' | 'failed';
 };
 
 type IntakeInput = {
@@ -403,6 +410,9 @@ export async function getPatientWorkspace() {
 
 export async function createDocumentForCurrentPatient(input: DocumentInput) {
   const user = await requireUser(['patient']);
+  const extraction = input.extraction ?? createMockExtraction(input);
+  const status = input.status ?? 'processed';
+
   const [document] = await db
     .insert(documents)
     .values({
@@ -414,19 +424,23 @@ export async function createDocumentForCurrentPatient(input: DocumentInput) {
       fileType: input.fileType,
       fileSizeBytes: input.fileSizeBytes,
       notes: input.notes,
-      mockFileUri: `neon://mock/${input.fileName}`,
-      status: 'processed',
+      mockFileUri: input.apiDocumentId
+        ? `document-ai://${input.apiDocumentId}`
+        : `neon://mock/${input.fileName}`,
+      status,
     })
     .returning();
 
   await db.insert(structuredData).values({
     docId: document.id,
-    ...createMockExtraction(input),
+    ...extraction,
   });
 
   await logAudit(user.id, 'UPLOAD', 'document', document.id, {
     title: document.title,
     patientId: user.id,
+    apiDocumentId: input.apiDocumentId ?? null,
+    source: input.extraction ? 'document_ai' : 'mock',
   });
 
   return document;

@@ -18,6 +18,7 @@ import {
   submitIntakeForCurrentPatient,
   updateMedicalProfileForCurrentPatient,
 } from '@/lib/dal';
+import { uploadAndProcessDocument } from '@/lib/document-api';
 import { normalizeIdentifier } from '@/lib/identity';
 import { clearSession, createSession } from '@/lib/session';
 import { isLocale, setLocale } from '@/lib/i18n';
@@ -269,11 +270,25 @@ export async function uploadDocumentAction(
   }
 
   try {
+    const aiResult = await uploadAndProcessDocument(file);
+    const confidence = aiResult.confidence ?? {};
+    const finalConfidence =
+      typeof confidence.final === 'number'
+        ? Math.round(Math.min(100, Math.max(0, confidence.final * (confidence.final <= 1 ? 100 : 1))))
+        : 80;
+
     await createDocumentForCurrentPatient({
       ...parsed.data,
       fileName: file.name,
       fileType: file.type,
       fileSizeBytes: file.size,
+      apiDocumentId: aiResult.document_id,
+      status: 'processed',
+      extraction: {
+        extractedJson: aiResult as Record<string, unknown>,
+        abnormalValues: [],
+        aiConfidenceScore: finalConfidence,
+      },
     });
   } catch (error) {
     return { message: error instanceof Error ? error.message : 'Unable to save the document.' };
