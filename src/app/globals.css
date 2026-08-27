@@ -1,8 +1,6 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
-@import 'shadcn/tailwind.css';
-@import 'tw-animate-css';
-@import 'shadcn/tailwind.css';
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -10,10 +8,10 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
-    monospace;
   --font-heading: var(--font-sans);
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -47,10 +45,6 @@
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
-  --font-serif: Georgia, Cambria, 'Times New Roman', Times, serif;
 }
 
 :root {
@@ -78,13 +72,6 @@
   --chart-5: oklch(0.437 0.078 188.216);
   --radius: 0.625rem;
   --sidebar: oklch(0.987 0.002 197.1);
-  --sidebar-foreground: oklch(0.148 0.004 228.8);
-  --sidebar-primary: oklch(0.6 0.118 184.704);
-  --sidebar-primary-foreground: oklch(0.984 0.014 180.72);
-  --sidebar-accent: oklch(0.963 0.002 197.1);
-  --sidebar-accent-foreground: oklch(0.218 0.008 223.9);
-  --sidebar-border: oklch(0.925 0.005 214.3);
-  --sidebar-ring: oklch(0.723 0.014 214.4);
   --sidebar-foreground: oklch(0.141 0.005 285.823);
   --sidebar-primary: oklch(0.546 0.245 262.881);
   --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
@@ -145,86 +132,18 @@
     color-scheme: dark;
   }
   html:lang(hi) {
-    font-family: var(--font-sans), 'Noto Sans Devanagari', sans-serif;
+    font-family: var(--font-sans), "Noto Sans Devanagari", sans-serif;
   }
   html:lang(or) {
-    font-family: var(--font-sans), 'Noto Sans Oriya', sans-serif;
+    font-family: var(--font-sans), "Noto Sans Oriya", sans-serif;
   }
   html:lang(bn) {
-    font-family: var(--font-sans), 'Noto Sans Bengali', sans-serif;
+    font-family: var(--font-sans), "Noto Sans Bengali", sans-serif;
   }
   html:lang(te) {
-    font-family: var(--font-sans), 'Noto Sans Telugu', sans-serif;
+    font-family: var(--font-sans), "Noto Sans Telugu", sans-serif;
   }
   html:lang(ta) {
-    font-family: var(--font-sans), 'Noto Sans Tamil', sans-serif;
-  }
-}
-
-@layer utilities {
-  .patient-shell {
-    background-color: color-mix(in oklch, var(--background) 96%, var(--primary));
-    font-family: var(--font-sans);
-  }
-
-  .patient-inset {
-    background-color: transparent;
-  }
-
-  .patient-content {
-    position: relative;
-  }
-
-  .patient-glass-header {
-    background-color: var(--background);
-    border-color: color-mix(in oklch, var(--border) 92%, var(--primary));
-  }
-
-  .patient-glass-sidebar [data-slot='sidebar-inner'] {
-    background-color: var(--background);
-    border-color: color-mix(in oklch, var(--border) 88%, var(--primary));
-  }
-
-  .patient-glass-card,
-  .patient-shell [data-slot='card'] {
-    background-color: var(--card);
-    border-color: color-mix(in oklch, var(--border) 88%, white);
-    box-shadow: 0 6px 18px oklch(0.42 0.08 250 / 6%);
-  }
-
-  .patient-primary-summary {
-    background-color: var(--primary) !important;
-    border-color: var(--primary) !important;
-    color: var(--primary-foreground) !important;
-  }
-
-  .patient-bento-action {
-    background-color: color-mix(in oklch, var(--background) 76%, transparent);
-  }
-
-  .patient-bento-action:hover,
-  .patient-bento-action:focus-visible {
-    background-color: color-mix(in oklch, var(--primary) 10%, var(--background));
-  }
-
-  .dark .patient-glass-header,
-  .dark .patient-glass-sidebar [data-slot='sidebar-inner'] {
-    box-shadow: 0 1px 0 oklch(1 0 0 / 8%);
-  }
-
-  .dark .patient-glass-card {
-    border-color: color-mix(in oklch, var(--border) 82%, var(--primary));
-    box-shadow:
-      inset 0 1px 0 oklch(1 0 0 / 8%),
-      0 16px 36px oklch(0 0 0 / 22%);
-  }
-
-  @media (prefers-reduced-transparency: reduce) {
-    .patient-glass-header,
-    .patient-glass-sidebar [data-slot='sidebar-inner'],
-    .patient-glass-card {
-      background-color: var(--card);
-      backdrop-filter: none;
-    }
+    font-family: var(--font-sans), "Noto Sans Tamil", sans-serif;
   }
 }

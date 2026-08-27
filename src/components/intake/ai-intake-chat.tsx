@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertCircleIcon,
   CheckCircle2Icon,
@@ -10,9 +10,9 @@ import {
   SendIcon,
   ShieldAlertIcon,
   SquareIcon,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { saveAiIntakeAction } from '@/lib/actions';
+import { saveAiIntakeAction } from "@/lib/actions";
 import {
   type ChatMessage,
   type FinalizeResponse,
@@ -21,23 +21,33 @@ import {
   finalizeIntake,
   sendAudioTurn,
   sendTextTurn,
-} from '@/lib/intake-api';
-import { cn } from '@/lib/utils';
-import { useI18n } from '@/components/i18n-provider';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/lib/intake-api";
+import { cn } from "@/lib/utils";
+import { useI18n } from "@/components/i18n-provider";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 
-type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
+type SaveState = "idle" | "saving" | "saved" | "failed";
 
 function BoldText({ text }: { text: string }) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return (
     <>
       {parts.map((part, index) => {
-        if (part.startsWith('**') && part.endsWith('**')) {
+        if (part.startsWith("**") && part.endsWith("**")) {
           return (
-            <strong key={`${part}-${index}`} className="text-foreground font-semibold">
+            <strong
+              key={`${part}-${index}`}
+              className="text-foreground font-semibold"
+            >
               {part.slice(2, -2)}
             </strong>
           );
@@ -56,7 +66,10 @@ function DraftSummary({ text }: { text: string }) {
   return (
     <div className="space-y-3 text-sm leading-6">
       {blocks.map((block, index) => (
-        <div key={`${index}-${block.slice(0, 24)}`} className="whitespace-pre-wrap">
+        <div
+          key={`${index}-${block.slice(0, 24)}`}
+          className="whitespace-pre-wrap"
+        >
           <BoldText text={block} />
         </div>
       ))}
@@ -69,13 +82,13 @@ export function AiIntakeChat() {
   const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [progress, setProgress] = useState<Record<string, boolean>>({});
   const [bypassQueue, setBypassQueue] = useState(false);
   const [complete, setComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [finalResult, setFinalResult] = useState<FinalizeResponse | null>(null);
-  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [saveState, setSaveState] = useState<SaveState>("idle");
   const [recording, setRecording] = useState(false);
   const [isPending, startTransition] = useTransition();
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -87,7 +100,7 @@ export function AiIntakeChat() {
     const transcript = transcriptRef.current;
     if (!transcript) return;
 
-    transcript.scrollTo({ top: transcript.scrollHeight, behavior: 'smooth' });
+    transcript.scrollTo({ top: transcript.scrollHeight, behavior: "smooth" });
   }, [messages, finalResult]);
 
   useEffect(() => {
@@ -99,10 +112,18 @@ export function AiIntakeChat() {
         const session = await createIntakeSession();
         setSessionId(session.session_id);
         setMessages([
-          { id: crypto.randomUUID(), role: 'assistant', content: session.assistant_message },
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: session.assistant_message,
+          },
         ]);
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : 'Unable to start the symptom check.');
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "Unable to start the symptom check.",
+        );
       }
     });
   }, []);
@@ -110,8 +131,12 @@ export function AiIntakeChat() {
   function applyTurn(turn: TurnResponse, patientText: string) {
     setMessages((current) => [
       ...current,
-      { id: crypto.randomUUID(), role: 'patient', content: patientText },
-      { id: crypto.randomUUID(), role: 'assistant', content: turn.assistant_message },
+      { id: crypto.randomUUID(), role: "patient", content: patientText },
+      {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: turn.assistant_message,
+      },
     ]);
     setProgress(turn.socrates_progress);
     setComplete(turn.complete);
@@ -119,7 +144,7 @@ export function AiIntakeChat() {
   }
 
   async function persistFinalResult(result: FinalizeResponse) {
-    setSaveState('saving');
+    setSaveState("saving");
     try {
       await saveAiIntakeAction({
         apiSessionId: result.session_id,
@@ -127,24 +152,33 @@ export function AiIntakeChat() {
         physicianSummary: result.physician_summary,
         bypassQueue: result.bypass_queue,
       });
-      setSaveState('saved');
+      setSaveState("saved");
       router.refresh();
     } catch (cause) {
-      setSaveState('failed');
-      setError(cause instanceof Error ? cause.message : 'Your symptom check could not be saved.');
+      setSaveState("failed");
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Your symptom check could not be saved.",
+      );
     }
   }
 
   function handleSend() {
-    if (!sessionId || !input.trim() || isPending || finalResult || bypassQueue) return;
+    if (!sessionId || !input.trim() || isPending || finalResult || bypassQueue)
+      return;
     const patientText = input.trim();
-    setInput('');
+    setInput("");
     startTransition(async () => {
       try {
         setError(null);
         applyTurn(await sendTextTurn(sessionId, patientText), patientText);
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : 'Unable to send your response.');
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "Unable to send your response.",
+        );
       }
     });
   }
@@ -161,14 +195,23 @@ export function AiIntakeChat() {
       };
       recorder.onstop = () => {
         stream.getTracks().forEach((track) => track.stop());
-        const audio = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const audio = new Blob(chunksRef.current, { type: "audio/webm" });
         if (!audio.size) return;
         startTransition(async () => {
           try {
-            const turn = await sendAudioTurn(sessionId, audio, 'intake.webm', locale);
-            applyTurn(turn, turn.transcript_preview || 'Voice message');
+            const turn = await sendAudioTurn(
+              sessionId,
+              audio,
+              "intake.webm",
+              locale,
+            );
+            applyTurn(turn, turn.transcript_preview || "Voice message");
           } catch (cause) {
-            setError(cause instanceof Error ? cause.message : 'Unable to process the recording.');
+            setError(
+              cause instanceof Error
+                ? cause.message
+                : "Unable to process the recording.",
+            );
           }
         });
       };
@@ -176,7 +219,9 @@ export function AiIntakeChat() {
       recorder.start();
       setRecording(true);
     } catch {
-      setError('Microphone access is unavailable. You can type your response instead.');
+      setError(
+        "Microphone access is unavailable. You can type your response instead.",
+      );
     }
   }
 
@@ -195,45 +240,46 @@ export function AiIntakeChat() {
         setComplete(true);
         await persistFinalResult(result);
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : 'Unable to finish the symptom check.');
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "Unable to finish the symptom check.",
+        );
       }
     });
   }
 
-  const inputDisabled = !sessionId || isPending || Boolean(finalResult) || bypassQueue;
+  const inputDisabled =
+    !sessionId || isPending || Boolean(finalResult) || bypassQueue;
 
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
-      <Card className="min-h-[560px] gap-0 overflow-hidden rounded-2xl">
+      <Card className="min-h-[560px] gap-0 overflow-hidden">
         <CardHeader className="border-b">
           <CardTitle className="text-base">Chat with Jiva</CardTitle>
           <CardDescription>
-            Answer in your own words. Your completed check is saved to your health record.
+            Answer in your own words. Your completed check is saved to your
+            health record.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex min-h-0 flex-1 flex-col p-0">
           {bypassQueue && (
-            <div
-              className="m-4 flex gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950"
-              role="alert"
-            >
+            <Alert className="m-4" variant="destructive">
               <ShieldAlertIcon className="mt-0.5 size-5 shrink-0" />
               <div>
-                <p className="font-medium">Urgent symptoms need attention</p>
-                <p className="mt-1 text-sm">
-                  Please seek urgent medical help. You can still finish to save this symptom check.
-                </p>
+                <AlertTitle>Urgent symptoms need attention</AlertTitle>
+                <AlertDescription>
+                  Please seek urgent medical help. You can still finish to save
+                  this symptom check.
+                </AlertDescription>
               </div>
-            </div>
+            </Alert>
           )}
           {error && (
-            <div
-              className="mx-4 mt-4 flex gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
-              role="alert"
-            >
+            <Alert className="mx-4 mt-4" variant="destructive">
               <AlertCircleIcon className="size-4 shrink-0" />
-              <span>{error}</span>
-            </div>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
           <div
             aria-live="polite"
@@ -243,10 +289,10 @@ export function AiIntakeChat() {
             {messages.map((message) => (
               <div
                 className={cn(
-                  'max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-6',
-                  message.role === 'patient'
-                    ? 'ml-auto bg-sky-600 text-white'
-                    : 'bg-muted text-foreground'
+                  "max-w-[88%] rounded-lg px-3.5 py-2.5 text-sm leading-6",
+                  message.role === "patient"
+                    ? "bg-primary text-primary-foreground ml-auto"
+                    : "bg-muted text-foreground",
                 )}
                 key={message.id}
               >
@@ -263,16 +309,20 @@ export function AiIntakeChat() {
             <div className="flex items-end gap-2">
               <Textarea
                 aria-label="Your response"
-                className="max-h-28 min-h-11 rounded-xl"
+                className="max-h-28 min-h-11"
                 disabled={inputDisabled}
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === 'Enter' && !event.shiftKey) {
+                  if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
                     handleSend();
                   }
                 }}
-                placeholder={sessionId ? 'Type your response...' : 'Starting your symptom check...'}
+                placeholder={
+                  sessionId
+                    ? "Type your response..."
+                    : "Starting your symptom check..."
+                }
                 value={input}
               />
               <Button
@@ -285,14 +335,18 @@ export function AiIntakeChat() {
                 <SendIcon className="size-4" />
               </Button>
               <Button
-                aria-label={recording ? 'Stop recording' : 'Record response'}
+                aria-label={recording ? "Stop recording" : "Record response"}
                 disabled={inputDisabled}
                 onClick={recording ? stopRecording : startRecording}
                 size="icon"
                 type="button"
-                variant={recording ? 'secondary' : 'outline'}
+                variant={recording ? "secondary" : "outline"}
               >
-                {recording ? <SquareIcon className="size-4" /> : <MicIcon className="size-4" />}
+                {recording ? (
+                  <SquareIcon className="size-4" />
+                ) : (
+                  <MicIcon className="size-4" />
+                )}
               </Button>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -305,7 +359,9 @@ export function AiIntakeChat() {
                 Finish and save
               </Button>
               {recording && (
-                <span className="text-muted-foreground text-xs">Recording response...</span>
+                <span className="text-muted-foreground text-xs">
+                  Recording response...
+                </span>
               )}
               {complete && !finalResult && (
                 <span className="text-muted-foreground text-xs">
@@ -318,10 +374,12 @@ export function AiIntakeChat() {
       </Card>
 
       <div className="space-y-4">
-        <Card className="rounded-2xl">
+        <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Check progress</CardTitle>
-            <CardDescription>Jiva asks only what is useful for a doctor visit.</CardDescription>
+            <CardDescription>
+              Jiva asks only what is useful for a doctor visit.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm">
@@ -331,12 +389,15 @@ export function AiIntakeChat() {
                 </li>
               ) : (
                 Object.entries(progress).map(([field, filled]) => (
-                  <li className="flex items-center justify-between gap-3" key={field}>
+                  <li
+                    className="flex items-center justify-between gap-3"
+                    key={field}
+                  >
                     <span className="text-muted-foreground capitalize">
-                      {field.replace(/^ayush_/, '').replaceAll('_', ' ')}
+                      {field.replace(/^ayush_/, "").replaceAll("_", " ")}
                     </span>
                     {filled ? (
-                      <CheckCircle2Icon className="size-4 text-emerald-600" />
+                      <CheckCircle2Icon className="text-primary size-4" />
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}
@@ -348,13 +409,13 @@ export function AiIntakeChat() {
         </Card>
 
         {finalResult && (
-          <Card className="rounded-2xl">
+          <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Doctor review draft</CardTitle>
               <CardDescription>
-                {saveState === 'saved'
-                  ? 'Saved to your health record.'
-                  : 'Preparing your health record.'}
+                {saveState === "saved"
+                  ? "Saved to your health record."
+                  : "Preparing your health record."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -362,7 +423,7 @@ export function AiIntakeChat() {
                 {finalResult.physician_summary.disclaimer}
               </p>
               <DraftSummary text={finalResult.physician_summary.en} />
-              {saveState === 'failed' && (
+              {saveState === "failed" && (
                 <Button
                   onClick={() => void persistFinalResult(finalResult)}
                   size="sm"
