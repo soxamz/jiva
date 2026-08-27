@@ -86,10 +86,10 @@ export function SummaryEnginePanel({
               <SparklesIcon className="size-4" aria-hidden />
             </span>
             <div className="min-w-0">
-              <CardTitle className="text-base tracking-wide uppercase">
+              <CardTitle className="type-section-title tracking-wide uppercase">
                 {title}
               </CardTitle>
-              <p className="text-muted-foreground mt-1 text-xs leading-5">
+              <p className="type-meta mt-1 leading-5">
                 {generatedLabel}
                 {recordsLabel ? ` ${recordsLabel}` : null}
               </p>

@@ -68,7 +68,7 @@ export default async function DashboardPage() {
           icon={HeartPulseIcon}
           label={t("dashboard.checkSymptoms")}
         >
-          <p className="mt-1 text-sm leading-5 opacity-90">
+          <p className="mt-1 text-xs leading-5 text-primary-foreground/80">
             {t("dashboard.checkSymptomsDescription")}
           </p>
         </StatCard>

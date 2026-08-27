@@ -47,8 +47,8 @@ export function StatCard({
         </span>
         <p
           className={cn(
-            'mt-3 text-sm font-medium',
-            highlight ? 'text-primary-foreground/90' : 'text-muted-foreground',
+            'mt-3',
+            highlight ? 'type-card-title text-primary-foreground' : 'type-stat-label',
           )}
         >
           {label}
@@ -56,7 +56,7 @@ export function StatCard({
         {value !== undefined ? (
           <p
             className={cn(
-              'mt-1 text-2xl font-semibold tracking-tight',
+              'type-stat-value mt-1',
               highlight && 'text-primary-foreground',
             )}
           >
@@ -72,7 +72,7 @@ export function StatCard({
                 size: 'sm',
                 variant: highlight ? 'secondary' : 'secondary',
               }),
-              'mt-auto w-full justify-center',
+              'mt-auto w-full justify-center text-sm font-semibold',
               highlight && 'bg-primary-foreground text-primary hover:bg-primary-foreground/90',
             )}
           >

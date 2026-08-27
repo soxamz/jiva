@@ -87,14 +87,14 @@ export function VitalsRow({
                 </Badge>
               </div>
               <div>
-                <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                <p className="type-eyebrow text-muted-foreground">
                   {labels[metric.kind]}
                 </p>
                 <p
                   className={cn(
-                    "mt-1 text-2xl font-semibold tabular-nums tracking-tight",
+                    "type-stat-value mt-1",
                     metric.status === "not_recorded" &&
-                      "text-muted-foreground text-lg font-medium",
+                      "text-muted-foreground text-base font-medium",
                   )}
                 >
                   {metric.status === "not_recorded"

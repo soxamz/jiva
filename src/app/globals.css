@@ -162,3 +162,33 @@
     font-family: var(--font-sans), "Noto Sans Tamil", sans-serif;
   }
 }
+
+@layer components {
+  .type-page-title {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+  .type-page-lead {
+    @apply text-muted-foreground text-sm leading-6;
+  }
+  .type-card-title {
+    @apply text-base leading-snug font-semibold;
+  }
+  .type-card-body {
+    @apply text-muted-foreground text-xs leading-5;
+  }
+  .type-section-title {
+    @apply text-sm font-semibold;
+  }
+  .type-stat-value {
+    @apply text-xl font-semibold tracking-tight tabular-nums;
+  }
+  .type-stat-label {
+    @apply text-muted-foreground text-xs font-medium;
+  }
+  .type-eyebrow {
+    @apply text-xs font-semibold tracking-wide uppercase;
+  }
+  .type-meta {
+    @apply text-muted-foreground text-xs;
+  }
+}

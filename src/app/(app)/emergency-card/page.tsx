@@ -73,7 +73,7 @@ export default async function EmergencyCardPage() {
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card className="rounded-2xl shadow-sm">
           <CardHeader>
-            <CardTitle>{t('health.currentMedicines')}</CardTitle>
+            <CardTitle className="type-section-title">{t('health.currentMedicines')}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             {(profile?.currentMedications ?? []).length ? (
@@ -91,7 +91,7 @@ export default async function EmergencyCardPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <PhoneIcon aria-hidden />
-              <CardTitle>{t('dashboard.emergencyContacts')}</CardTitle>
+              <CardTitle className="type-section-title">{t('dashboard.emergencyContacts')}</CardTitle>
             </div>
             <CardDescription>{t('dashboard.emergencyContactsDescription')}</CardDescription>
           </CardHeader>
@@ -99,9 +99,9 @@ export default async function EmergencyCardPage() {
             <ul className="divide-border grid grid-cols-1 divide-y md:grid-cols-2 md:divide-x md:divide-y-0">
               {(profile?.emergencyContacts ?? []).map((contact) => (
                 <li key={contact.phone} className="flex flex-col gap-1 px-6 py-4">
-                  <p className="font-medium">{contact.name}</p>
-                  <p className="text-muted-foreground text-sm">{contact.relation}</p>
-                  <a className="font-mono text-sm text-primary hover:underline" href={`tel:${contact.phone}`}>
+                  <p className="type-section-title">{contact.name}</p>
+                  <p className="type-meta">{contact.relation}</p>
+                  <a className="type-meta font-mono text-primary hover:underline" href={`tel:${contact.phone}`}>
                     {contact.phone}
                   </a>
                 </li>

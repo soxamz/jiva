@@ -37,9 +37,9 @@ export function PatientProfileStrip({
         </span>
       )}
       <div className="min-w-0">
-        <p className="truncate text-lg font-semibold">{name}</p>
+        <p className="type-card-title truncate">{name}</p>
         {subtitle ? (
-          <p className="text-muted-foreground truncate text-sm">{subtitle}</p>
+          <p className="type-meta truncate">{subtitle}</p>
         ) : null}
       </div>
     </div>

@@ -79,7 +79,7 @@ export function MedicationsPanel({
     <Card className="rounded-2xl shadow-sm">
       <CardHeader className="border-b">
         <div className="flex items-center justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle className="type-section-title flex items-center gap-2">
             <PillIcon className="text-primary size-4" aria-hidden />
             {title}
           </CardTitle>

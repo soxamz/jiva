@@ -35,7 +35,7 @@ export function QuickActionCard({
         <Icon className="size-5" aria-hidden />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-medium">{title}</span>
+        <span className="block truncate text-sm font-medium">{title}</span>
         <span className="text-muted-foreground mt-0.5 block truncate text-xs">{description}</span>
       </span>
       <span className="text-primary flex shrink-0 items-center gap-1 text-xs font-medium group-hover:underline">

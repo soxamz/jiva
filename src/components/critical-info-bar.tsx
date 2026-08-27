@@ -44,13 +44,13 @@ export function CriticalInfoBar({ items, className }: CriticalInfoBarProps) {
             className={cn('rounded-2xl border p-4 shadow-sm', toneClasses[tone])}
             key={`${item.label}-${item.value}`}
           >
-            <div className="text-muted-foreground flex items-center gap-2 text-xs font-semibold tracking-wide uppercase">
+            <div className="text-muted-foreground type-eyebrow flex items-center gap-2">
               <Icon className="size-4 shrink-0" aria-hidden />
               <span>{item.label}</span>
             </div>
-            <p className="mt-2 text-xl font-semibold tracking-tight">{item.value}</p>
+            <p className="mt-2 text-lg font-semibold tracking-tight">{item.value}</p>
             {item.detail ? (
-              <p className="text-muted-foreground mt-1 text-sm">{item.detail}</p>
+              <p className="type-card-body mt-1">{item.detail}</p>
             ) : null}
           </div>
         );

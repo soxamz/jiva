@@ -21,11 +21,11 @@ export function HistoryTimeline({
   return (
     <Card className="rounded-2xl shadow-sm">
       <CardHeader className="border-b">
-        <CardTitle className="text-base">{title}</CardTitle>
+        <CardTitle className="type-section-title">{title}</CardTitle>
       </CardHeader>
       <CardContent className="pt-4">
         {items.length === 0 ? (
-          <p className="text-muted-foreground text-sm">{emptyLabel}</p>
+          <p className="type-card-body">{emptyLabel}</p>
         ) : (
           <ol className="relative ms-2 flex flex-col gap-5 border-s border-border ps-5">
             {items.map((item, index) => (
@@ -37,13 +37,13 @@ export function HistoryTimeline({
                   )}
                   aria-hidden
                 />
-                <p className="text-muted-foreground text-xs tabular-nums">
+                <p className="type-meta tabular-nums">
                   {item.dateLabel}
                 </p>
-                <p className="text-primary mt-0.5 text-xs font-semibold tracking-wide uppercase">
+                <p className="text-primary type-eyebrow mt-0.5">
                   {item.type}
                 </p>
-                <p className="text-muted-foreground mt-1 text-sm leading-5">
+                <p className="type-card-body mt-1">
                   {item.title}
                 </p>
               </li>

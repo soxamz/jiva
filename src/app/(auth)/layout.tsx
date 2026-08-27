@@ -21,7 +21,7 @@ export default function AuthLayout({
           <span className="text-xl font-semibold tracking-tight">JivaHQ</span>
         </Link>
         <div className="relative mt-auto max-w-md">
-          <p className="text-3xl font-semibold leading-tight tracking-tight">
+          <p className="text-2xl font-semibold leading-tight tracking-tight">
             Your Lifetime Digital Health Vault
           </p>
           <p className="mt-4 text-sm leading-7 text-teal-100/80">

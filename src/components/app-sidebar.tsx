@@ -71,14 +71,14 @@ export function AppSidebar({ user }: { user: AppShellUser }) {
         {user.role === "patient" ? (
           <div className="bg-primary/10 text-primary mx-3 mb-3 rounded-2xl border border-primary/15 p-4 transition-opacity group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0">
             <HeartPulseIcon className="size-4" aria-hidden />
-            <p className="mt-2 text-sm font-semibold">
+            <p className="type-section-title mt-2">
               {t("dashboard.checkSymptoms")}
             </p>
-            <p className="text-muted-foreground mt-1 text-xs leading-4">
+            <p className="type-card-body mt-1">
               {t("dashboard.checkSymptomsDescription")}
             </p>
             <Link
-              className="bg-primary text-primary-foreground mt-3 inline-flex h-8 w-full items-center justify-center rounded-md px-3 text-xs font-medium transition-colors hover:bg-primary/90 focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none"
+              className="bg-primary text-primary-foreground mt-3 inline-flex h-8 w-full items-center justify-center rounded-md px-3 text-sm font-semibold transition-colors hover:bg-primary/90 focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none"
               href="/intake"
             >
               {t("dashboard.check")}

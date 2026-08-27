@@ -40,7 +40,7 @@ export function ClinicalTimeline({
 }: ClinicalTimelineProps) {
   if (!items.length) {
     return emptyMessage ? (
-      <p className="text-muted-foreground px-1 text-sm">{emptyMessage}</p>
+      <p className="type-card-body px-1">{emptyMessage}</p>
     ) : null;
   }
 
@@ -77,17 +77,17 @@ export function ClinicalTimeline({
               )}
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <h3 className="font-semibold leading-snug">{item.title}</h3>
+                <h3 className="type-section-title leading-snug">{item.title}</h3>
                 {item.status ? (
                   <StatusPill tone={tone}>{item.status}</StatusPill>
                 ) : item.redFlag ? (
                   <StatusPill tone="critical">Needs attention</StatusPill>
                 ) : null}
               </div>
-              <p className="text-muted-foreground mt-2 line-clamp-3 text-sm leading-6">
+              <p className="type-card-body mt-2 line-clamp-3">
                 {item.body.replaceAll('**', '').replaceAll('\n', ' ')}
               </p>
-              <p className="text-primary mt-2 text-xs font-medium">{item.dateLabel}</p>
+              <p className="text-primary type-meta mt-2 font-medium">{item.dateLabel}</p>
             </article>
           </li>
         );

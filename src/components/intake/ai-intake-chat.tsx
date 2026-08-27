@@ -256,7 +256,7 @@ export function AiIntakeChat() {
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
       <Card className="min-h-[560px] gap-0 overflow-hidden rounded-2xl shadow-sm">
         <CardHeader className="border-b bg-card">
-          <CardTitle className="text-base">Chat with Jiva</CardTitle>
+          <CardTitle className="type-section-title">Chat with Jiva</CardTitle>
           <CardDescription>
             Answer in your own words. Your completed check is saved to your
             health record.
@@ -377,7 +377,7 @@ export function AiIntakeChat() {
       <div className="space-y-4">
         <Card className="rounded-2xl shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Check progress</CardTitle>
+            <CardTitle className="type-section-title">Check progress</CardTitle>
             <CardDescription>
               Jiva asks only what is useful for a doctor visit.
             </CardDescription>
@@ -412,7 +412,7 @@ export function AiIntakeChat() {
         {finalResult && (
           <Card className="rounded-2xl shadow-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Doctor review draft</CardTitle>
+              <CardTitle className="type-section-title">Doctor review draft</CardTitle>
               <CardDescription>
                 {saveState === "saved"
                   ? "Saved to your health record."
