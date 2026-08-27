@@ -49,7 +49,7 @@ def run_synthesis_crew(
     from crewai import Agent, Crew, LLM, Process, Task
 
     gemini_llm = LLM(
-        model=os.getenv("ML3_LLM_MODEL", "openai/gemini-2.0-flash"),
+        model=os.getenv("ML3_LLM_MODEL", "openai/gemini-3.6-flash"),
         base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
         api_key=os.getenv("GEMINI_API_KEY"),
         temperature=0.0,
