@@ -11,6 +11,7 @@ import {
   createBreakGlassAccess,
   createDocumentForCurrentPatient,
   createMockUser,
+  getRecentOcrExtractionsForCurrentPatient,
   grantConsentForCurrentPatient,
   redeemConsentForCurrentUser,
   revokeConsentForCurrentPatient,
@@ -19,6 +20,7 @@ import {
   updateMedicalProfileForCurrentPatient,
 } from '@/lib/dal';
 import { uploadAndProcessDocument } from '@/lib/document-api';
+import { labReportsFromExtractions, synthesizeClinicalSummary } from '@/lib/ml3-api';
 import { normalizeIdentifier } from '@/lib/identity';
 import { clearSession, createSession } from '@/lib/session';
 import { isLocale, setLocale } from '@/lib/i18n';
@@ -88,6 +90,7 @@ const aiIntakeSchema = z.object({
     red_flags: z.array(z.string().max(500)).max(20),
   }),
   bypassQueue: z.boolean(),
+  clinicalSummary: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
 const consentSchema = z.object({
@@ -364,14 +367,55 @@ export async function submitIntakeAction(formData: FormData) {
 }
 
 export async function saveAiIntakeAction(input: unknown) {
-  const intake = await saveAiIntakeForCurrentPatient(aiIntakeSchema.parse(input));
+  const parsed = aiIntakeSchema.parse(input);
+  const history = parsed.patientHistory as Record<string, unknown>;
+
+  let clinicalSummary: Record<string, unknown> | null = parsed.clinicalSummary ?? null;
+
+  if (!clinicalSummary) {
+    try {
+      const extractions = await getRecentOcrExtractionsForCurrentPatient(5);
+      const medications = Array.isArray(history.medications)
+        ? history.medications
+        : history.prior_medications
+          ? [history.prior_medications]
+          : [];
+
+      clinicalSummary = (await synthesizeClinicalSummary({
+        intake_session_id: parsed.apiSessionId,
+        chief_complaint:
+          typeof history.chief_complaint === 'string' ? history.chief_complaint : null,
+        hpi: (history.hpi as Record<string, unknown> | null) ?? null,
+        allergies: Array.isArray(history.allergies) ? history.allergies : [],
+        medications,
+        comorbidities: Array.isArray(history.comorbidities) ? history.comorbidities : [],
+        review_of_systems:
+          (history.review_of_systems as Record<string, unknown> | null) ?? null,
+        ayush: (history.ayush as Record<string, unknown> | null) ?? null,
+        source_transcript_refs: Array.isArray(history.source_transcript_refs)
+          ? (history.source_transcript_refs as string[])
+          : [],
+        red_flags: parsed.physicianSummary.red_flags,
+        lab_reports: labReportsFromExtractions(extractions),
+        ocr_documents: extractions,
+      })) as Record<string, unknown>;
+    } catch {
+      // CloseCrew patient draft still saves if ML3 is unavailable.
+      clinicalSummary = null;
+    }
+  }
+
+  const intake = await saveAiIntakeForCurrentPatient({
+    ...parsed,
+    clinicalSummary,
+  });
 
   revalidatePath('/dashboard');
   revalidatePath('/intake');
   revalidatePath('/timeline');
   revalidatePath('/access-log');
 
-  return { id: intake.id };
+  return { id: intake.id, hasClinicalSummary: Boolean(clinicalSummary) };
 }
 
 export async function grantConsentAction(

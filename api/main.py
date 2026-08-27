@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import documents, health, intake
+from app.routers import documents, health, intake, ml3
 
 settings = get_settings()
 
@@ -11,7 +11,7 @@ app = FastAPI(
     description=(
         "Conversational multimodal history engine: Groq intake turns, "
         "rule-based red flags, deterministic clinical summaries, "
-        "and Document AI OCR extraction."
+        "Document AI OCR extraction, and ML3 clinical synthesis."
     ),
     version="0.1.0",
 )
@@ -27,6 +27,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(intake.router)
 app.include_router(documents.router)
+app.include_router(ml3.router)
 
 
 def run() -> None:

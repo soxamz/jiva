@@ -169,6 +169,7 @@ export const intakeSessions = pgTable(
     aiSessionId: varchar('ai_session_id', { length: 64 }),
     patientHistory: jsonb('patient_history').$type<Record<string, unknown>>(),
     physicianSummary: jsonb('physician_summary').$type<Record<string, unknown>>(),
+    clinicalSummary: jsonb('clinical_summary').$type<Record<string, unknown>>(),
     redFlagDetails: jsonb('red_flag_details')
       .$type<string[]>()
       .notNull()

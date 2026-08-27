@@ -65,6 +65,7 @@ type AiIntakeInput = {
     red_flags: string[];
   };
   bypassQueue: boolean;
+  clinicalSummary?: Record<string, unknown> | null;
 };
 
 export type MedicalProfileInput = {
@@ -551,6 +552,7 @@ export async function saveAiIntakeForCurrentPatient(input: AiIntakeInput) {
       aiSessionId: input.apiSessionId,
       patientHistory: input.patientHistory,
       physicianSummary: input.physicianSummary,
+      clinicalSummary: input.clinicalSummary ?? null,
       redFlagDetails: redFlags,
     })
     .onConflictDoNothing({ target: intakeSessions.aiSessionId })
@@ -567,6 +569,13 @@ export async function saveAiIntakeForCurrentPatient(input: AiIntakeInput) {
       throw new Error('Could not save the symptom check. Please try again.');
     }
 
+    if (input.clinicalSummary) {
+      await db
+        .update(intakeSessions)
+        .set({ clinicalSummary: input.clinicalSummary })
+        .where(eq(intakeSessions.id, existing.id));
+    }
+
     return existing;
   }
 
@@ -578,6 +587,26 @@ export async function saveAiIntakeForCurrentPatient(input: AiIntakeInput) {
   });
 
   return intake;
+}
+
+export async function getRecentOcrExtractionsForCurrentPatient(limit = 5) {
+  const user = await requireUser(['patient']);
+  const rows = await db
+    .select({
+      documentId: documents.id,
+      title: documents.title,
+      docType: documents.docType,
+      extractedJson: structuredData.extractedJson,
+    })
+    .from(documents)
+    .innerJoin(structuredData, eq(structuredData.docId, documents.id))
+    .where(eq(documents.userId, user.id))
+    .orderBy(desc(documents.uploadedAt))
+    .limit(limit);
+
+  return rows
+    .map((row) => row.extractedJson)
+    .filter((value): value is Record<string, unknown> => Boolean(value) && typeof value === 'object');
 }
 
 export async function grantConsentForCurrentPatient(input: {

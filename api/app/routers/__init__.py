@@ -1,3 +1,3 @@
-from app.routers import documents, health, intake
+from app.routers import documents, health, intake, ml3
 
-__all__ = ["documents", "health", "intake"]
+__all__ = ["documents", "health", "intake", "ml3"]
