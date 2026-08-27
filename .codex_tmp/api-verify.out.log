@@ -1,0 +1,7 @@
+INFO:     127.0.0.1:54022 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54022 - "POST /api/intake/sessions/a830e774-8bac-4a17-ac77-bd76aab829c6/turn HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54023 - "POST /api/intake/sessions/edee1b4a-640d-4803-a545-acba9b57f3e9/finalize HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54022 - "POST /api/intake/sessions/a830e774-8bac-4a17-ac77-bd76aab829c6/finalize HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51633 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51633 - "POST /api/intake/sessions/0916091a-b889-47c1-a9d4-09bc47107497/turn HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64338 - "POST /api/intake/sessions/0916091a-b889-47c1-a9d4-09bc47107497/turn HTTP/1.1" 200 OK

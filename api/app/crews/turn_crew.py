@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from typing import Any
 
@@ -11,6 +12,8 @@ from app.config import get_settings
 from app.schemas.intake import RedFlagResult, SessionState
 from app.schemas.socrates import SocratesSlots
 from app.services.llm import redact_pii
+
+logger = logging.getLogger(__name__)
 
 
 class InterpreterOutput(BaseModel):
@@ -125,6 +128,7 @@ def _interpret_with_groq(prompt: str) -> InterpreterOutput:
         return _coerce_pydantic(None, InterpreterOutput, content)
     except Exception:
         # The deterministic intake flow still captures the active probe answer.
+        logger.exception("Groq turn interpretation failed; using deterministic intake flow")
         return InterpreterOutput()
 
 

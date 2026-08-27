@@ -18,14 +18,15 @@ class Settings(BaseSettings):
     )
 
     api_host: str = "127.0.0.1"
-    api_port: int = 5328
+    api_port: int = 5329
 
     groq_api_key: str = ""
     gemini_api_key: str = ""
 
     groq_llm_turn: str = "openai/gpt-oss-20b"
-    gemini_llm_close: str = "gemini-3.6-flash"
+    gemini_llm_close: str = "gemini-3.5-flash-lite"
     groq_whisper_model: str = "whisper-large-v3"
+    ai_timeout_ms: int = 15_000
 
     max_intake_turns: int = 24
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"

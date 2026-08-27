@@ -1,0 +1,14 @@
+INFO:     127.0.0.1:53884 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58486 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53110 - "OPTIONS /api/intake/sessions/303dbd78-2715-4801-83f0-041587f78572/turn HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53110 - "POST /api/intake/sessions/303dbd78-2715-4801-83f0-041587f78572/turn HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49858 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54608 - "POST /api/intake/sessions/303dbd78-2715-4801-83f0-041587f78572/turn HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64094 - "POST /api/intake/sessions/303dbd78-2715-4801-83f0-041587f78572/turn HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64094 - "POST /api/intake/sessions/303dbd78-2715-4801-83f0-041587f78572/finalize HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57305 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52831 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57779 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55116 - "POST /api/intake/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55116 - "OPTIONS /api/intake/sessions/e348a625-4c9f-451c-a2bd-6a7cefa0e14e/turn HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55116 - "POST /api/intake/sessions/e348a625-4c9f-451c-a2bd-6a7cefa0e14e/turn HTTP/1.1" 200 OK

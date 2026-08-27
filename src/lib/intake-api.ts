@@ -78,6 +78,14 @@ export type ChatMessage = {
   content: string;
 };
 
+// Local Windows development can reserve the former proxy port. Production is
+// always same-origin through Vercel's /api Python function.
+const intakeApiBase = process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:5329/api' : '/api';
+
+function intakeApiPath(path: string) {
+  return `${intakeApiBase}${path}`;
+}
+
 async function parseError(res: Response): Promise<string> {
   try {
     const data = await res.json();
@@ -92,13 +100,13 @@ export async function createIntakeSession(): Promise<{
   session_id: string;
   assistant_message: string;
 }> {
-  const res = await fetch('/api/intake/sessions', { method: 'POST' });
+  const res = await fetch(intakeApiPath('/intake/sessions'), { method: 'POST' });
   if (!res.ok) throw new Error(await parseError(res));
   return res.json();
 }
 
 export async function sendTextTurn(sessionId: string, text: string): Promise<TurnResponse> {
-  const res = await fetch(`/api/intake/sessions/${sessionId}/turn`, {
+  const res = await fetch(intakeApiPath(`/intake/sessions/${sessionId}/turn`), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text }),
@@ -114,7 +122,7 @@ export async function sendAudioTurn(
 ): Promise<TurnResponse> {
   const form = new FormData();
   form.append('audio', blob, filename);
-  const res = await fetch(`/api/intake/sessions/${sessionId}/turn`, {
+  const res = await fetch(intakeApiPath(`/intake/sessions/${sessionId}/turn`), {
     method: 'POST',
     body: form,
   });
@@ -123,7 +131,7 @@ export async function sendAudioTurn(
 }
 
 export async function finalizeIntake(sessionId: string): Promise<FinalizeResponse> {
-  const res = await fetch(`/api/intake/sessions/${sessionId}/finalize`, {
+  const res = await fetch(intakeApiPath(`/intake/sessions/${sessionId}/finalize`), {
     method: 'POST',
   });
   if (!res.ok) throw new Error(await parseError(res));

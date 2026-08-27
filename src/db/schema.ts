@@ -166,10 +166,20 @@ export const intakeSessions = pgTable(
     redFlag: boolean('red_flag').notNull().default(false),
     redFlagReason: text('red_flag_reason'),
     summary: text('summary').notNull(),
+    aiSessionId: varchar('ai_session_id', { length: 64 }),
+    patientHistory: jsonb('patient_history').$type<Record<string, unknown>>(),
+    physicianSummary: jsonb('physician_summary').$type<Record<string, unknown>>(),
+    redFlagDetails: jsonb('red_flag_details')
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
     status: intakeStatus('status').notNull().default('submitted'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
-  (table) => [index('intake_sessions_patient_idx').on(table.patientId)]
+  (table) => [
+    index('intake_sessions_patient_idx').on(table.patientId),
+    uniqueIndex('intake_sessions_ai_session_idx').on(table.aiSessionId),
+  ]
 );
 
 export const usersRelations = relations(users, ({ many, one }) => ({

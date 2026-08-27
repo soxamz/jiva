@@ -39,14 +39,14 @@ copy .env.example .env   # then fill API keys (Windows)
 # cp .env.example .env   # macOS / Linux
 ```
 
-Run the API (port **5328**, matches Next rewrite):
+Run the API (port **5329**, matches Next rewrite):
 
 ```bash
 cd api
-uvicorn main:app --host 127.0.0.1 --port 5328 --reload --reload-exclude "runtime/*" --reload-exclude "*.json"
+uvicorn main:app --host 127.0.0.1 --port 5329 --reload --reload-exclude "runtime/*" --reload-exclude "*.json"
 ```
 
-Health check: [http://127.0.0.1:5328/api/health](http://127.0.0.1:5328/api/health)
+Health check: [http://127.0.0.1:5329/api/health](http://127.0.0.1:5329/api/health)
 
 Red-flag unit tests (no API keys needed):
 
@@ -66,7 +66,7 @@ bun dev
 
 Open [http://localhost:3000/intake](http://localhost:3000/intake).
 
-Next.js rewrites `/api/*` → `http://127.0.0.1:5328/api/*` (see `next.config.ts`).
+Next.js rewrites `/api/*` → `http://127.0.0.1:5329/api/*` (see `next.config.ts`).
 
 ## API surface
 

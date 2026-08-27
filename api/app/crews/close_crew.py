@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+import json
+import re
+from typing import Any
+
 from app.schemas.intake import PatientHistory, PhysicianSummary, SessionState
 from app.services.ayush_analysis import build_ayush_block
+from app.services.gemini import draft_physician_summary
 from app.services.llm import redact_pii
 
 
@@ -334,9 +339,10 @@ def run_close_crew(session: SessionState) -> CloseCrewResult:
     history = _bind_history_to_session(
         _fallback_history(session, red_flags, transcript), session, red_flags
     )
+    fallback_summary = _fallback_summary(session, history, red_flags)
     return CloseCrewResult(
         patient_history=history,
-        physician_summary=_fallback_summary(session, history, red_flags),
+        physician_summary=draft_physician_summary(session, history, fallback_summary),
     )
 
     seed_en = compose_hpi_en(session)

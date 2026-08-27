@@ -14,6 +14,7 @@ import {
   grantConsentForCurrentPatient,
   redeemConsentForCurrentUser,
   revokeConsentForCurrentPatient,
+  saveAiIntakeForCurrentPatient,
   submitIntakeForCurrentPatient,
   updateMedicalProfileForCurrentPatient,
 } from '@/lib/dal';
@@ -63,6 +64,25 @@ const intakeSchema = z.object({
   aggravatingFactors: z.string().trim().optional(),
   relievingFactors: z.string().trim().optional(),
   associatedSymptoms: z.string().trim().optional(),
+});
+
+const aiIntakeSchema = z.object({
+  apiSessionId: z.string().uuid(),
+  patientHistory: z
+    .object({
+      chief_complaint: z.string().nullable(),
+      hpi: z.record(z.string(), z.unknown()),
+    })
+    .passthrough(),
+  physicianSummary: z.object({
+    en: z.string().trim().min(1).max(12_000),
+    hi: z.string().trim().min(1).max(12_000),
+    is_draft: z.boolean(),
+    disclaimer: z.string().trim().min(1).max(1_000),
+    highlights: z.array(z.string().max(500)).max(20),
+    red_flags: z.array(z.string().max(500)).max(20),
+  }),
+  bypassQueue: z.boolean(),
 });
 
 const consentSchema = z.object({
@@ -268,6 +288,17 @@ export async function submitIntakeAction(formData: FormData) {
   revalidatePath('/intake');
   revalidatePath('/timeline');
   redirect('/intake');
+}
+
+export async function saveAiIntakeAction(input: unknown) {
+  const intake = await saveAiIntakeForCurrentPatient(aiIntakeSchema.parse(input));
+
+  revalidatePath('/dashboard');
+  revalidatePath('/intake');
+  revalidatePath('/timeline');
+  revalidatePath('/access-log');
+
+  return { id: intake.id };
 }
 
 export async function grantConsentAction(formData: FormData) {

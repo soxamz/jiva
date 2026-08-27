@@ -46,6 +46,20 @@ type IntakeInput = {
   associatedSymptoms?: string;
 };
 
+type AiIntakeInput = {
+  apiSessionId: string;
+  patientHistory: Record<string, unknown>;
+  physicianSummary: {
+    en: string;
+    hi: string;
+    is_draft: boolean;
+    disclaimer: string;
+    highlights: string[];
+    red_flags: string[];
+  };
+  bypassQueue: boolean;
+};
+
 export type MedicalProfileInput = {
   bloodType: string;
   allergies: string[];
@@ -133,6 +147,21 @@ function createIntakeSummary(input: IntakeInput, redFlagReason: string | null) {
   ]
     .filter(Boolean)
     .join(' ');
+}
+
+function getTextValue(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+function getObjectValue(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function getSeverityValue(value: unknown) {
+  const severity = typeof value === 'number' ? value : Number(value);
+  return Number.isInteger(severity) && severity >= 1 && severity <= 10 ? severity : 5;
 }
 
 function createMockExtraction(input: DocumentInput) {
@@ -476,6 +505,63 @@ export async function submitIntakeForCurrentPatient(input: IntakeInput) {
       patientId: user.id,
     }
   );
+
+  return intake;
+}
+
+export async function saveAiIntakeForCurrentPatient(input: AiIntakeInput) {
+  const user = await requireUser(['patient']);
+  const history = getObjectValue(input.patientHistory);
+  const hpi = getObjectValue(history.hpi);
+  const redFlags = input.physicianSummary.red_flags.filter(Boolean);
+  const redFlag = input.bypassQueue || redFlags.length > 0;
+  const chiefComplaint = getTextValue(history.chief_complaint) ?? 'Symptom check';
+  const redFlagReason = redFlag
+    ? redFlags.join(', ') || 'Urgent triage triggered during AI symptom check.'
+    : null;
+
+  const [intake] = await db
+    .insert(intakeSessions)
+    .values({
+      patientId: user.id,
+      chiefComplaint,
+      symptomDuration: getTextValue(hpi.onset) ?? 'Not recorded',
+      location: getTextValue(hpi.site),
+      character: getTextValue(hpi.character),
+      severity: getSeverityValue(hpi.severity),
+      aggravatingFactors: getTextValue(hpi.exacerbating_relieving),
+      associatedSymptoms: getTextValue(hpi.associations),
+      redFlag,
+      redFlagReason,
+      summary: input.physicianSummary.en,
+      aiSessionId: input.apiSessionId,
+      patientHistory: input.patientHistory,
+      physicianSummary: input.physicianSummary,
+      redFlagDetails: redFlags,
+    })
+    .onConflictDoNothing({ target: intakeSessions.aiSessionId })
+    .returning();
+
+  if (!intake) {
+    const [existing] = await db
+      .select({ id: intakeSessions.id })
+      .from(intakeSessions)
+      .where(eq(intakeSessions.aiSessionId, input.apiSessionId))
+      .limit(1);
+
+    if (!existing) {
+      throw new Error('Could not save the symptom check. Please try again.');
+    }
+
+    return existing;
+  }
+
+  await logAudit(user.id, redFlag ? 'INTAKE_RED_FLAG' : 'INTAKE_SUBMITTED', 'intake', intake.id, {
+    patientId: user.id,
+    aiSessionId: input.apiSessionId,
+    redFlags,
+    source: 'ai_chat',
+  });
 
   return intake;
 }
