@@ -31,7 +31,9 @@ export default async function ShareScanPage({
 
   const viewer = await getCurrentUser();
   if (!viewer) {
-    redirect(`/sign-in?next=${encodeURIComponent(`/share/scan/${token}`)}`);
+    redirect(
+      `/sign-in/doctor?next=${encodeURIComponent(`/share/scan/${token}`)}`,
+    );
   }
 
   const { t } = await getI18n();

@@ -315,7 +315,11 @@ export async function getAppShellUser() {
   return toSafeUser(user);
 }
 
-export async function authenticateMockUser(identifier: string, otp: string) {
+export async function authenticateMockUser(
+  identifier: string,
+  otp: string,
+  expectedRole?: "patient" | "doctor",
+) {
   if (otp !== "123456") {
     throw new Error("Use demo OTP 123456.");
   }
@@ -333,6 +337,10 @@ export async function authenticateMockUser(identifier: string, otp: string) {
 
   if (!user || user.status !== "active") {
     throw new Error("No active demo account found for that identifier.");
+  }
+
+  if (expectedRole && user.role !== expectedRole) {
+    throw new Error(`This account is not registered as a ${expectedRole}.`);
   }
 
   await logAudit(user.id, "LOGIN", "user", user.id);

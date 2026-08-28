@@ -46,6 +46,7 @@ const signInSchema = z.object({
     .regex(/^(\d{10}|\d{12})$/, "Enter a 10-digit phone or 12-digit Aadhaar."),
   otp: z.string().regex(/^\d{6}$/, "Enter the 6-digit demo OTP."),
   returnTo: z.string().optional(),
+  expectedRole: z.enum(["patient", "doctor"]).optional(),
 });
 
 const signUpSchema = z.object({
@@ -202,6 +203,7 @@ export async function signInAction(
     identifier: normalizeIdentifier(formData.get("identifier")),
     otp: String(formData.get("otp") ?? ""),
     returnTo: String(formData.get("returnTo") ?? "") || undefined,
+    expectedRole: String(formData.get("expectedRole") ?? "") || undefined,
   });
 
   if (!parsed.success) {
@@ -214,6 +216,7 @@ export async function signInAction(
     const user = await authenticateMockUser(
       parsed.data.identifier,
       parsed.data.otp,
+      parsed.data.expectedRole,
     );
     await createSession({ userId: user.id, role: user.role });
     const returnTo = getSafeQrScanPath(parsed.data.returnTo);

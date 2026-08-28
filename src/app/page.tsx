@@ -123,13 +123,13 @@ export default async function Page() {
             <div className="grid gap-4 sm:grid-cols-2">
               <PortalLink
                 description="Access your health records and manage sharing."
-                href="/sign-in"
+                href="/sign-in/patient"
                 icon={UserRoundIcon}
                 title={t("auth.patient")}
               />
               <PortalLink
                 description="Open patient records shared with your care team."
-                href="/sign-in"
+                href="/sign-in/doctor"
                 icon={StethoscopeIcon}
                 title={t("auth.doctor")}
               />
