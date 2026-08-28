@@ -34,13 +34,13 @@ python -m venv .venv
 # macOS / Linux
 # source .venv/bin/activate
 
-pip install -r requirements.txt
+pip install -r requirements-local.txt
 # Includes ML2 Document AI (Mistral OCR/extraction).
 copy .env.example .env   # then fill API keys (Windows)
 # cp .env.example .env   # macOS / Linux
 ```
 
-For document uploads, set `MISTRAL_API_KEY` in `api/.env`. The root `requirements.txt` remains intentionally lean for Vercel's intake function; use `api/requirements.txt` for the local Python API.
+For document uploads, set `MISTRAL_API_KEY` in `api/.env`. Vercel installs the lean `api/requirements.txt`; use `api/requirements-local.txt` for the local Python API.
 
 ML3's optional CrewAI auditor requires Python 3.10-3.13:
 

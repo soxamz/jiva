@@ -1,14 +1,9 @@
+# Dependencies installed by Vercel for api/index.py. Keep this list small:
+# Document AI and CrewAI are installed locally from requirements-local.txt.
 fastapi>=0.115.0
-uvicorn[standard]>=0.32.0
 python-multipart>=0.0.12
 pydantic>=2.11.9,<2.13
 pydantic-settings>=2.6.0
 python-dotenv>=1.0.1
 groq>=0.11.0
 google-genai>=1.0.0
-# ML2 Document AI: Mistral OCR and structured extraction.
-# Kept out of the root requirements.txt so Vercel's intake function stays small.
-mistralai>=2.9.0,<3.0.0
-# Intake interview crew + optional ML3 synthesis (Python 3.10–3.13; not 3.14).
-crewai>=0.28.8,<1.0.0; python_version < "3.14"
-pywin32>=310; sys_platform == "win32"

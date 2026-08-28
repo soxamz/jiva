@@ -12,7 +12,7 @@ Requires **Python 3.10–3.13** (not 3.14). On this machine, Anaconda 3.13 works
 cd api
 C:\Users\KIIT\anaconda3\python.exe -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+pip install -r requirements-local.txt
 copy .env.example .env                # add GROQ_API_KEY and GEMINI_API_KEY
 uvicorn main:app --host 127.0.0.1 --port 5328 --reload --reload-exclude "runtime/*" --reload-exclude "*.json"
 ```
