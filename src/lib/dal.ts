@@ -1,10 +1,10 @@
-import 'server-only';
+import "server-only";
 
-import { cache } from 'react';
-import { and, desc, eq, gte, lt, or } from 'drizzle-orm';
-import { redirect } from 'next/navigation';
+import { cache } from "react";
+import { and, desc, eq, gte, lt, or } from "drizzle-orm";
+import { redirect } from "next/navigation";
 
-import { db } from '@/db/client';
+import { db } from "@/db/client";
 import {
   auditLogs,
   consents,
@@ -13,9 +13,15 @@ import {
   medicalProfiles,
   structuredData,
   users,
-} from '@/db/schema';
-import { createConsentCode, hashIdentifier, maskPhone } from '@/lib/identity';
-import { readSession, type UserRole } from '@/lib/session';
+} from "@/db/schema";
+import { createConsentCode, hashIdentifier, maskPhone } from "@/lib/identity";
+import {
+  createEmergencyPreview,
+  readEmergencyPreview,
+  readSession,
+  type EmergencyPreviewPayload,
+  type UserRole,
+} from "@/lib/session";
 
 type SafeUser = {
   id: string;
@@ -23,7 +29,7 @@ type SafeUser = {
   role: UserRole;
   phoneMasked: string;
   doctorId: string | null;
-  status: 'active' | 'deceased';
+  status: "active" | "deceased";
 };
 
 type DocumentInput = {
@@ -36,10 +42,14 @@ type DocumentInput = {
   apiDocumentId?: string;
   extraction?: {
     extractedJson: Record<string, unknown>;
-    abnormalValues: Array<{ label: string; value: string; severity: 'low' | 'medium' | 'high' }>;
+    abnormalValues: Array<{
+      label: string;
+      value: string;
+      severity: "low" | "medium" | "high";
+    }>;
     aiConfidenceScore: number;
   };
-  status?: 'processing' | 'processed' | 'failed';
+  status?: "processing" | "processed" | "failed";
 };
 
 type IntakeInput = {
@@ -80,16 +90,19 @@ export type MedicalProfileInput = {
   }>;
 };
 
-export type ConsentAccessErrorCode = 'access_unavailable' | 'assigned_to_another_clinician';
+export type ConsentAccessErrorCode =
+  "access_unavailable" | "assigned_to_another_clinician";
 
 export class ConsentAccessError extends Error {
   constructor(public readonly code: ConsentAccessErrorCode) {
     super(code);
-    this.name = 'ConsentAccessError';
+    this.name = "ConsentAccessError";
   }
 }
 
-export function isConsentAccessError(error: unknown): error is ConsentAccessError {
+export function isConsentAccessError(
+  error: unknown,
+): error is ConsentAccessError {
   return error instanceof ConsentAccessError;
 }
 
@@ -116,19 +129,19 @@ function computeRedFlag(input: IntakeInput) {
     input.aggravatingFactors,
   ]
     .filter(Boolean)
-    .join(' ')
+    .join(" ")
     .toLowerCase();
 
   const triggers = [
-    'chest pain',
-    'breathless',
-    'shortness of breath',
-    'unconscious',
-    'seizure',
-    'stroke',
-    'facial droop',
-    'severe bleeding',
-    'blue lips',
+    "chest pain",
+    "breathless",
+    "shortness of breath",
+    "unconscious",
+    "seizure",
+    "stroke",
+    "facial droop",
+    "severe bleeding",
+    "blue lips",
   ];
 
   const reason = triggers.find((trigger) => text.includes(trigger));
@@ -138,7 +151,7 @@ function computeRedFlag(input: IntakeInput) {
     redFlagReason: reason
       ? `Matched red-flag symptom: ${reason}`
       : input.severity >= 9
-        ? 'Severity score is 9 or higher'
+        ? "Severity score is 9 or higher"
         : null,
   };
 }
@@ -150,52 +163,62 @@ function createIntakeSummary(input: IntakeInput, redFlagReason: string | null) {
     `Severity: ${input.severity}/10.`,
     input.location ? `Location: ${input.location}.` : null,
     input.character ? `Character: ${input.character}.` : null,
-    input.associatedSymptoms ? `Associated symptoms: ${input.associatedSymptoms}.` : null,
-    redFlagReason ? `Red flag: ${redFlagReason}.` : 'No red-flag trigger detected in demo rules.',
+    input.associatedSymptoms
+      ? `Associated symptoms: ${input.associatedSymptoms}.`
+      : null,
+    redFlagReason
+      ? `Red flag: ${redFlagReason}.`
+      : "No red-flag trigger detected in demo rules.",
   ]
     .filter(Boolean)
-    .join(' ');
+    .join(" ");
 }
 
 function getTextValue(value: unknown) {
-  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
 function getObjectValue(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value)
+  return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {};
 }
 
 function getSeverityValue(value: unknown) {
-  const severity = typeof value === 'number' ? value : Number(value);
-  return Number.isInteger(severity) && severity >= 1 && severity <= 10 ? severity : 5;
+  const severity = typeof value === "number" ? value : Number(value);
+  return Number.isInteger(severity) && severity >= 1 && severity <= 10
+    ? severity
+    : 5;
 }
 
 function createMockExtraction(input: DocumentInput) {
-  if (input.docType === 'lab') {
+  if (input.docType === "lab") {
     return {
       extractedJson: {
-        kind: 'lab',
+        kind: "lab",
         source: input.fileName,
         values: [
-          { label: 'Hemoglobin', value: '11.2 g/dL', range: '12-16' },
-          { label: 'Fasting glucose', value: '152 mg/dL', range: '70-99' },
+          { label: "Hemoglobin", value: "11.2 g/dL", range: "12-16" },
+          { label: "Fasting glucose", value: "152 mg/dL", range: "70-99" },
         ],
       },
       abnormalValues: [
-        { label: 'Fasting glucose', value: '152 mg/dL', severity: 'medium' as const },
+        {
+          label: "Fasting glucose",
+          value: "152 mg/dL",
+          severity: "medium" as const,
+        },
       ],
       aiConfidenceScore: 84,
     };
   }
 
-  if (input.docType === 'rx') {
+  if (input.docType === "rx") {
     return {
       extractedJson: {
-        kind: 'prescription',
+        kind: "prescription",
         source: input.fileName,
-        medications: ['Metformin 500mg', 'Pantoprazole 40mg'],
+        medications: ["Metformin 500mg", "Pantoprazole 40mg"],
       },
       abnormalValues: [],
       aiConfidenceScore: 81,
@@ -206,7 +229,7 @@ function createMockExtraction(input: DocumentInput) {
     extractedJson: {
       kind: input.docType,
       source: input.fileName,
-      summary: input.notes || 'Demo extraction queued for manual review.',
+      summary: input.notes || "Demo extraction queued for manual review.",
     },
     abnormalValues: [],
     aiConfidenceScore: 76,
@@ -218,7 +241,7 @@ export async function logAudit(
   action: string,
   targetResourceType: string,
   targetResourceId: string | null,
-  metadata: Record<string, unknown> = {}
+  metadata: Record<string, unknown> = {},
 ) {
   await db.insert(auditLogs).values({
     actorId,
@@ -237,9 +260,13 @@ export const getCurrentUser = cache(async () => {
     return null;
   }
 
-  const [user] = await db.select().from(users).where(eq(users.id, session.userId)).limit(1);
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, session.userId))
+    .limit(1);
 
-  if (!user || user.status !== 'active') {
+  if (!user || user.status !== "active") {
     return null;
   }
 
@@ -250,12 +277,16 @@ export async function requireUser(roles?: UserRole[]) {
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect('/sign-in');
+    redirect("/sign-in");
   }
 
   if (roles && !roles.includes(user.role)) {
     redirect(
-      user.role === 'patient' ? '/dashboard' : user.role === 'responder' ? '/emergency' : '/doctor'
+      user.role === "patient"
+        ? "/dashboard"
+        : user.role === "responder"
+          ? "/emergency"
+          : "/doctor",
     );
   }
 
@@ -268,21 +299,26 @@ export async function getAppShellUser() {
 }
 
 export async function authenticateMockUser(identifier: string, otp: string) {
-  if (otp !== '123456') {
-    throw new Error('Use demo OTP 123456.');
+  if (otp !== "123456") {
+    throw new Error("Use demo OTP 123456.");
   }
 
   const [user] = await db
     .select()
     .from(users)
-    .where(or(eq(users.phone, identifier), eq(users.aadhaarHash, hashIdentifier(identifier))))
+    .where(
+      or(
+        eq(users.phone, identifier),
+        eq(users.aadhaarHash, hashIdentifier(identifier)),
+      ),
+    )
     .limit(1);
 
-  if (!user || user.status !== 'active') {
-    throw new Error('No active demo account found for that identifier.');
+  if (!user || user.status !== "active") {
+    throw new Error("No active demo account found for that identifier.");
   }
 
-  await logAudit(user.id, 'LOGIN', 'user', user.id);
+  await logAudit(user.id, "LOGIN", "user", user.id);
 
   return user;
 }
@@ -293,10 +329,14 @@ export async function createMockUser(input: {
   aadhaar?: string;
   role: UserRole;
 }) {
-  const [existing] = await db.select().from(users).where(eq(users.phone, input.phone)).limit(1);
+  const [existing] = await db
+    .select()
+    .from(users)
+    .where(eq(users.phone, input.phone))
+    .limit(1);
 
   if (existing) {
-    throw new Error('A demo account already exists for this phone number.');
+    throw new Error("A demo account already exists for this phone number.");
   }
 
   const [user] = await db
@@ -306,14 +346,15 @@ export async function createMockUser(input: {
       phone: input.phone,
       role: input.role,
       aadhaarHash: input.aadhaar ? hashIdentifier(input.aadhaar) : null,
-      doctorId: input.role === 'doctor' ? `HPR-DEMO-${input.phone.slice(-4)}` : null,
+      doctorId:
+        input.role === "doctor" ? `HPR-DEMO-${input.phone.slice(-4)}` : null,
     })
     .returning();
 
-  if (user.role === 'patient') {
+  if (user.role === "patient") {
     await db.insert(medicalProfiles).values({
       userId: user.id,
-      bloodType: 'O+',
+      bloodType: "O+",
       allergies: [],
       criticalConditions: [],
       currentMedications: [],
@@ -321,23 +362,30 @@ export async function createMockUser(input: {
     });
   }
 
-  await logAudit(user.id, 'SIGN_UP', 'user', user.id);
+  await logAudit(user.id, "SIGN_UP", "user", user.id);
 
   return user;
 }
 
 async function expireOldConsents(patientId?: string) {
   const now = new Date();
-  const baseFilter = and(eq(consents.status, 'active'), lt(consents.expiresAt, now));
+  const baseFilter = and(
+    eq(consents.status, "active"),
+    lt(consents.expiresAt, now),
+  );
 
   await db
     .update(consents)
-    .set({ status: 'expired' })
-    .where(patientId ? and(baseFilter, eq(consents.patientId, patientId)) : baseFilter);
+    .set({ status: "expired" })
+    .where(
+      patientId
+        ? and(baseFilter, eq(consents.patientId, patientId))
+        : baseFilter,
+    );
 }
 
 export async function getPatientWorkspace() {
-  const user = await requireUser(['patient']);
+  const user = await requireUser(["patient"]);
   await expireOldConsents(user.id);
 
   const [profile] = await db
@@ -359,7 +407,7 @@ export async function getPatientWorkspace() {
   const activeConsents = await db
     .select()
     .from(consents)
-    .where(and(eq(consents.patientId, user.id), eq(consents.status, 'active')))
+    .where(and(eq(consents.patientId, user.id), eq(consents.status, "active")))
     .orderBy(desc(consents.grantedAt));
 
   const intakes = await db
@@ -371,7 +419,12 @@ export async function getPatientWorkspace() {
   const audits = await db
     .select()
     .from(auditLogs)
-    .where(or(eq(auditLogs.actorId, user.id), eq(auditLogs.targetResourceId, user.id)))
+    .where(
+      or(
+        eq(auditLogs.actorId, user.id),
+        eq(auditLogs.targetResourceId, user.id),
+      ),
+    )
     .orderBy(desc(auditLogs.createdAt))
     .limit(30);
 
@@ -383,18 +436,18 @@ export async function getPatientWorkspace() {
       date: document.uploadedAt,
       body:
         document.notes ??
-        `${document.fileName} processed with Document AI (confidence ${structured?.aiConfidenceScore ?? 'n/a'}%).`,
+        `${document.fileName} processed with Document AI (confidence ${structured?.aiConfidenceScore ?? "n/a"}%).`,
       status: document.status,
       confidence: structured?.aiConfidenceScore ?? null,
       redFlag: false,
     })),
     ...intakes.map((intake) => ({
       id: intake.id,
-      type: 'intake',
+      type: "intake",
       title: intake.chiefComplaint,
       date: intake.createdAt,
       body: intake.summary,
-      status: intake.redFlag ? 'urgent' : intake.status,
+      status: intake.redFlag ? "urgent" : intake.status,
       confidence: null,
       redFlag: intake.redFlag,
     })),
@@ -411,9 +464,88 @@ export async function getPatientWorkspace() {
   };
 }
 
+export async function startEmergencyPreview(
+  method: EmergencyPreviewPayload["method"],
+) {
+  const [patient] = await db
+    .select()
+    .from(users)
+    .where(and(eq(users.role, "patient"), eq(users.status, "active")))
+    .orderBy(users.createdAt)
+    .limit(1);
+
+  if (!patient) {
+    return null;
+  }
+
+  await createEmergencyPreview({ patientId: patient.id, method });
+  await logAudit(null, "BREAK_GLASS_AUTHENTICATED", "patient", patient.id, {
+    method,
+    source: "emergency_gateway",
+    temporaryAccessMinutes: 15,
+  });
+
+  return toSafeUser(patient);
+}
+
+/**
+ * Resolves only the patient selected by the signed, short-lived break-glass
+ * cookie. It never falls back to an arbitrary account.
+ */
+export async function getEmergencyPreviewData() {
+  const preview = await readEmergencyPreview();
+
+  if (!preview) {
+    return null;
+  }
+
+  const [patient] = await db
+    .select()
+    .from(users)
+    .where(
+      and(
+        eq(users.id, preview.patientId),
+        eq(users.role, "patient"),
+        eq(users.status, "active"),
+      ),
+    )
+    .limit(1);
+
+  if (!patient) {
+    return null;
+  }
+
+  const [profile] = await db
+    .select()
+    .from(medicalProfiles)
+    .where(eq(medicalProfiles.userId, patient.id))
+    .limit(1);
+
+  const patientDocuments = await db
+    .select()
+    .from(documents)
+    .where(eq(documents.userId, patient.id))
+    .orderBy(desc(documents.uploadedAt))
+    .limit(10);
+
+  const symptomChecks = await db
+    .select()
+    .from(intakeSessions)
+    .where(eq(intakeSessions.patientId, patient.id))
+    .orderBy(desc(intakeSessions.createdAt))
+    .limit(5);
+
+  return {
+    patient: toSafeUser(patient),
+    profile: profile ?? null,
+    documents: patientDocuments,
+    symptomChecks,
+  };
+}
+
 /** Past-N-day intakes, OCR documents, and profile for Clinical Overview. */
 export async function getPatientWeekClinicalContext(days = 7) {
-  const user = await requireUser(['patient']);
+  const user = await requireUser(["patient"]);
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
   const [profile] = await db
@@ -435,7 +567,12 @@ export async function getPatientWeekClinicalContext(days = 7) {
   const weekIntakes = await db
     .select()
     .from(intakeSessions)
-    .where(and(eq(intakeSessions.patientId, user.id), gte(intakeSessions.createdAt, since)))
+    .where(
+      and(
+        eq(intakeSessions.patientId, user.id),
+        gte(intakeSessions.createdAt, since),
+      ),
+    )
     .orderBy(desc(intakeSessions.createdAt));
 
   return {
@@ -449,7 +586,7 @@ export async function getPatientWeekClinicalContext(days = 7) {
 }
 
 export async function getOcrExtractionsSince(since: Date) {
-  const user = await requireUser(['patient']);
+  const user = await requireUser(["patient"]);
   const rows = await db
     .select({
       documentId: documents.id,
@@ -465,14 +602,14 @@ export async function getOcrExtractionsSince(since: Date) {
     .orderBy(desc(documents.uploadedAt));
 
   return rows.filter(
-    (row) => row.extractedJson && typeof row.extractedJson === 'object'
+    (row) => row.extractedJson && typeof row.extractedJson === "object",
   );
 }
 
 export async function createDocumentForCurrentPatient(input: DocumentInput) {
-  const user = await requireUser(['patient']);
+  const user = await requireUser(["patient"]);
   const extraction = input.extraction ?? createMockExtraction(input);
-  const status = input.status ?? 'processed';
+  const status = input.status ?? "processed";
 
   const [document] = await db
     .insert(documents)
@@ -497,18 +634,20 @@ export async function createDocumentForCurrentPatient(input: DocumentInput) {
     ...extraction,
   });
 
-  await logAudit(user.id, 'UPLOAD', 'document', document.id, {
+  await logAudit(user.id, "UPLOAD", "document", document.id, {
     title: document.title,
     patientId: user.id,
     apiDocumentId: input.apiDocumentId ?? null,
-    source: input.extraction ? 'document_ai' : 'mock',
+    source: input.extraction ? "document_ai" : "mock",
   });
 
   return document;
 }
 
-export async function updateMedicalProfileForCurrentPatient(input: MedicalProfileInput) {
-  const user = await requireUser(['patient']);
+export async function updateMedicalProfileForCurrentPatient(
+  input: MedicalProfileInput,
+) {
+  const user = await requireUser(["patient"]);
   const [existingProfile] = await db
     .select({ id: medicalProfiles.id })
     .from(medicalProfiles)
@@ -535,14 +674,14 @@ export async function updateMedicalProfileForCurrentPatient(input: MedicalProfil
         .values({ userId: user.id, ...profileValues })
         .returning();
 
-  await logAudit(user.id, 'PROFILE_UPDATED', 'medical_profile', profile.id, {
+  await logAudit(user.id, "PROFILE_UPDATED", "medical_profile", profile.id, {
     patientId: user.id,
     fields: [
-      'bloodType',
-      'allergies',
-      'criticalConditions',
-      'currentMedications',
-      'emergencyContacts',
+      "bloodType",
+      "allergies",
+      "criticalConditions",
+      "currentMedications",
+      "emergencyContacts",
     ],
     emergencyContactCount: input.emergencyContacts.length,
   });
@@ -551,7 +690,7 @@ export async function updateMedicalProfileForCurrentPatient(input: MedicalProfil
 }
 
 export async function submitIntakeForCurrentPatient(input: IntakeInput) {
-  const user = await requireUser(['patient']);
+  const user = await requireUser(["patient"]);
   const redFlag = computeRedFlag(input);
   const [intake] = await db
     .insert(intakeSessions)
@@ -573,26 +712,27 @@ export async function submitIntakeForCurrentPatient(input: IntakeInput) {
 
   await logAudit(
     user.id,
-    redFlag.redFlag ? 'INTAKE_RED_FLAG' : 'INTAKE_SUBMITTED',
-    'intake',
+    redFlag.redFlag ? "INTAKE_RED_FLAG" : "INTAKE_SUBMITTED",
+    "intake",
     intake.id,
     {
       patientId: user.id,
-    }
+    },
   );
 
   return intake;
 }
 
 export async function saveAiIntakeForCurrentPatient(input: AiIntakeInput) {
-  const user = await requireUser(['patient']);
+  const user = await requireUser(["patient"]);
   const history = getObjectValue(input.patientHistory);
   const hpi = getObjectValue(history.hpi);
   const redFlags = input.physicianSummary.red_flags.filter(Boolean);
   const redFlag = input.bypassQueue || redFlags.length > 0;
-  const chiefComplaint = getTextValue(history.chief_complaint) ?? 'Symptom check';
+  const chiefComplaint =
+    getTextValue(history.chief_complaint) ?? "Symptom check";
   const redFlagReason = redFlag
-    ? redFlags.join(', ') || 'Urgent triage triggered during AI symptom check.'
+    ? redFlags.join(", ") || "Urgent triage triggered during AI symptom check."
     : null;
 
   const [intake] = await db
@@ -600,7 +740,7 @@ export async function saveAiIntakeForCurrentPatient(input: AiIntakeInput) {
     .values({
       patientId: user.id,
       chiefComplaint,
-      symptomDuration: getTextValue(hpi.onset) ?? 'Not recorded',
+      symptomDuration: getTextValue(hpi.onset) ?? "Not recorded",
       location: getTextValue(hpi.site),
       character: getTextValue(hpi.character),
       severity: getSeverityValue(hpi.severity),
@@ -626,7 +766,7 @@ export async function saveAiIntakeForCurrentPatient(input: AiIntakeInput) {
       .limit(1);
 
     if (!existing) {
-      throw new Error('Could not save the symptom check. Please try again.');
+      throw new Error("Could not save the symptom check. Please try again.");
     }
 
     if (input.clinicalSummary) {
@@ -639,18 +779,24 @@ export async function saveAiIntakeForCurrentPatient(input: AiIntakeInput) {
     return existing;
   }
 
-  await logAudit(user.id, redFlag ? 'INTAKE_RED_FLAG' : 'INTAKE_SUBMITTED', 'intake', intake.id, {
-    patientId: user.id,
-    aiSessionId: input.apiSessionId,
-    redFlags,
-    source: 'ai_chat',
-  });
+  await logAudit(
+    user.id,
+    redFlag ? "INTAKE_RED_FLAG" : "INTAKE_SUBMITTED",
+    "intake",
+    intake.id,
+    {
+      patientId: user.id,
+      aiSessionId: input.apiSessionId,
+      redFlags,
+      source: "ai_chat",
+    },
+  );
 
   return intake;
 }
 
 export async function getRecentOcrExtractionsForCurrentPatient(limit = 5) {
-  const user = await requireUser(['patient']);
+  const user = await requireUser(["patient"]);
   const rows = await db
     .select({
       documentId: documents.id,
@@ -666,14 +812,17 @@ export async function getRecentOcrExtractionsForCurrentPatient(limit = 5) {
 
   return rows
     .map((row) => row.extractedJson)
-    .filter((value): value is Record<string, unknown> => Boolean(value) && typeof value === 'object');
+    .filter(
+      (value): value is Record<string, unknown> =>
+        Boolean(value) && typeof value === "object",
+    );
 }
 
 export async function grantConsentForCurrentPatient(input: {
   doctorId?: string;
   durationMinutes: number;
 }) {
-  const user = await requireUser(['patient']);
+  const user = await requireUser(["patient"]);
   const expiresAt = new Date(Date.now() + input.durationMinutes * 60 * 1000);
   let granteeId: string | null = null;
 
@@ -681,7 +830,7 @@ export async function grantConsentForCurrentPatient(input: {
     const [doctor] = await db
       .select({ id: users.id })
       .from(users)
-      .where(and(eq(users.role, 'doctor'), eq(users.doctorId, input.doctorId)))
+      .where(and(eq(users.role, "doctor"), eq(users.doctorId, input.doctorId)))
       .limit(1);
 
     granteeId = doctor?.id ?? null;
@@ -698,7 +847,7 @@ export async function grantConsentForCurrentPatient(input: {
     })
     .returning();
 
-  await logAudit(user.id, 'CONSENT_GRANTED', 'consent', consent.id, {
+  await logAudit(user.id, "CONSENT_GRANTED", "consent", consent.id, {
     patientId: user.id,
     code: consent.code,
     durationMinutes: consent.durationMinutes,
@@ -708,21 +857,21 @@ export async function grantConsentForCurrentPatient(input: {
 }
 
 export async function revokeConsentForCurrentPatient(consentId: string) {
-  const user = await requireUser(['patient']);
+  const user = await requireUser(["patient"]);
   const [consent] = await db
     .update(consents)
-    .set({ status: 'revoked', revokedAt: new Date() })
+    .set({ status: "revoked", revokedAt: new Date() })
     .where(
       and(
         eq(consents.id, consentId),
         eq(consents.patientId, user.id),
-        eq(consents.status, 'active')
-      )
+        eq(consents.status, "active"),
+      ),
     )
     .returning();
 
   if (consent) {
-    await logAudit(user.id, 'CONSENT_REVOKED', 'consent', consent.id, {
+    await logAudit(user.id, "CONSENT_REVOKED", "consent", consent.id, {
       patientId: user.id,
       code: consent.code,
     });
@@ -733,31 +882,42 @@ async function getValidConsent(code: string, viewerId: string) {
   await expireOldConsents();
 
   const normalized = normalizeCode(code);
-  const [consent] = await db.select().from(consents).where(eq(consents.code, normalized)).limit(1);
+  const [consent] = await db
+    .select()
+    .from(consents)
+    .where(eq(consents.code, normalized))
+    .limit(1);
 
-  if (!consent || consent.status !== 'active' || consent.expiresAt <= new Date()) {
-    throw new ConsentAccessError('access_unavailable');
+  if (
+    !consent ||
+    consent.status !== "active" ||
+    consent.expiresAt <= new Date()
+  ) {
+    throw new ConsentAccessError("access_unavailable");
   }
 
   if (consent.granteeId && consent.granteeId !== viewerId) {
-    await logAudit(viewerId, 'CONSENT_ACCESS_DENIED', 'consent', consent.id, {
-      reason: 'assigned_to_another_clinician',
+    await logAudit(viewerId, "CONSENT_ACCESS_DENIED", "consent", consent.id, {
+      reason: "assigned_to_another_clinician",
     });
-    throw new ConsentAccessError('assigned_to_another_clinician');
+    throw new ConsentAccessError("assigned_to_another_clinician");
   }
 
   return consent;
 }
 
 export async function redeemConsentForCurrentUser(code: string) {
-  const viewer = await requireUser(['doctor']);
+  const viewer = await requireUser(["doctor"]);
   const consent = await getValidConsent(code, viewer.id);
 
   if (!consent.granteeId) {
-    await db.update(consents).set({ granteeId: viewer.id }).where(eq(consents.id, consent.id));
+    await db
+      .update(consents)
+      .set({ granteeId: viewer.id })
+      .where(eq(consents.id, consent.id));
   }
 
-  await logAudit(viewer.id, 'VIEW', 'patient', consent.patientId, {
+  await logAudit(viewer.id, "VIEW", "patient", consent.patientId, {
     code: consent.code,
     consentId: consent.id,
   });
@@ -766,12 +926,16 @@ export async function redeemConsentForCurrentUser(code: string) {
 }
 
 export async function getDoctorAccessData(code: string) {
-  const viewer = await requireUser(['doctor']);
+  const viewer = await requireUser(["doctor"]);
   const consent = await getValidConsent(code, viewer.id);
-  const [patient] = await db.select().from(users).where(eq(users.id, consent.patientId)).limit(1);
+  const [patient] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, consent.patientId))
+    .limit(1);
 
   if (!patient) {
-    throw new Error('Patient not found.');
+    throw new Error("Patient not found.");
   }
 
   const [profile] = await db
@@ -806,9 +970,9 @@ export async function getDoctorAccessData(code: string) {
 
 export async function addDoctorNoteForConsent(
   code: string,
-  input: { title: string; note: string }
+  input: { title: string; note: string },
 ) {
-  const viewer = await requireUser(['doctor']);
+  const viewer = await requireUser(["doctor"]);
   const consent = await getValidConsent(code, viewer.id);
   const [document] = await db
     .insert(documents)
@@ -816,19 +980,19 @@ export async function addDoctorNoteForConsent(
       userId: consent.patientId,
       uploadedById: viewer.id,
       title: input.title,
-      docType: 'note',
-      fileName: `${input.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.txt`,
-      fileType: 'text/plain',
+      docType: "note",
+      fileName: `${input.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.txt`,
+      fileType: "text/plain",
       fileSizeBytes: input.note.length,
       notes: input.note,
-      status: 'processed',
+      status: "processed",
     })
     .returning();
 
   await db.insert(structuredData).values({
     docId: document.id,
     extractedJson: {
-      kind: 'clinical-note',
+      kind: "clinical-note",
       summary: input.note,
       authorRole: viewer.role,
     },
@@ -836,7 +1000,7 @@ export async function addDoctorNoteForConsent(
     aiConfidenceScore: 100,
   });
 
-  await logAudit(viewer.id, 'DOCUMENT_ADDED', 'patient', consent.patientId, {
+  await logAudit(viewer.id, "DOCUMENT_ADDED", "patient", consent.patientId, {
     documentId: document.id,
     consentId: consent.id,
   });
@@ -845,17 +1009,21 @@ export async function addDoctorNoteForConsent(
 }
 
 export async function getEmergencyAccessData(code: string) {
-  const viewer = await requireUser(['responder']);
+  const viewer = await requireUser(["responder"]);
   const consent = await getValidConsent(code, viewer.id);
 
   if (consent.granteeId !== viewer.id) {
-    throw new ConsentAccessError('access_unavailable');
+    throw new ConsentAccessError("access_unavailable");
   }
 
-  const [patient] = await db.select().from(users).where(eq(users.id, consent.patientId)).limit(1);
+  const [patient] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, consent.patientId))
+    .limit(1);
 
   if (!patient) {
-    throw new ConsentAccessError('access_unavailable');
+    throw new ConsentAccessError("access_unavailable");
   }
 
   const [profile] = await db
@@ -871,16 +1039,28 @@ export async function getEmergencyAccessData(code: string) {
     .orderBy(desc(intakeSessions.createdAt))
     .limit(3);
 
+  const patientDocuments = await db
+    .select({ document: documents, structured: structuredData })
+    .from(documents)
+    .leftJoin(structuredData, eq(structuredData.docId, documents.id))
+    .where(eq(documents.userId, patient.id))
+    .orderBy(desc(documents.uploadedAt))
+    .limit(5);
+
   return {
     viewer: toSafeUser(viewer),
     patient: toSafeUser(patient),
     profile,
     recentIntakes,
+    documents: patientDocuments,
     consent,
   };
 }
 
-export async function createBreakGlassAccess(input: { identifier: string; reason: string }) {
+export async function createBreakGlassAccess(input: {
+  identifier: string;
+  reason: string;
+}) {
   const patientIdentifier = input.identifier;
   const [patient] = await db
     .select()
@@ -888,24 +1068,26 @@ export async function createBreakGlassAccess(input: { identifier: string; reason
     .where(
       or(
         eq(users.phone, patientIdentifier),
-        eq(users.aadhaarHash, hashIdentifier(patientIdentifier))
-      )
+        eq(users.aadhaarHash, hashIdentifier(patientIdentifier)),
+      ),
     )
     .limit(1);
 
-  if (!patient || patient.role !== 'patient') {
-    throw new Error('No patient profile found for emergency access.');
+  if (!patient || patient.role !== "patient") {
+    throw new Error("No patient profile found for emergency access.");
   }
 
   const [responder] = await db
     .select()
     .from(users)
-    .where(eq(users.role, 'responder'))
+    .where(eq(users.role, "responder"))
     .orderBy(users.createdAt)
     .limit(1);
 
   if (!responder) {
-    throw new Error('Seed the demo database to create an emergency responder account.');
+    throw new Error(
+      "Seed the demo database to create an emergency responder account.",
+    );
   }
 
   const [consent] = await db
@@ -919,10 +1101,10 @@ export async function createBreakGlassAccess(input: { identifier: string; reason
     })
     .returning();
 
-  await logAudit(responder.id, 'BREAK_GLASS', 'patient', patient.id, {
+  await logAudit(responder.id, "BREAK_GLASS", "patient", patient.id, {
     reason: input.reason,
     code: consent.code,
-    alert: 'Mock SMS/email sent to emergency contacts',
+    alert: "Mock SMS/email sent to emergency contacts",
   });
 
   return {

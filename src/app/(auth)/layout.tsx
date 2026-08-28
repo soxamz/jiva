@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ShieldCheckIcon } from "lucide-react";
 
 export default function AuthLayout({
   children,
@@ -14,19 +13,23 @@ export default function AuthLayout({
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.18),transparent_45%)]"
         />
-        <Link href="/" className="relative inline-flex items-center gap-3">
-          <span className="bg-primary flex size-10 items-center justify-center rounded-xl">
-            <ShieldCheckIcon className="size-5 text-white" aria-hidden />
-          </span>
-          <span className="text-xl font-semibold tracking-tight">JivaHQ</span>
+        <Link href="/" className="relative inline-flex items-center">
+          <Image
+            alt="JivaHQ"
+            className="h-auto w-32"
+            height={32}
+            src="/logo-dark.svg"
+            width={128}
+          />
         </Link>
         <div className="relative mt-auto max-w-md">
           <p className="text-2xl font-semibold leading-tight tracking-tight">
             Your Lifetime Digital Health Vault
           </p>
           <p className="mt-4 text-sm leading-7 text-teal-100/80">
-            Securely access, manage, and share your comprehensive medical records across
-            the healthcare ecosystem with military-grade encryption.
+            Securely access, manage, and share your comprehensive medical
+            records across the healthcare ecosystem with military-grade
+            encryption.
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
             <span className="rounded-full border border-teal-300/20 bg-teal-400/10 px-3 py-1 text-xs font-medium text-teal-50">
@@ -56,7 +59,9 @@ export default function AuthLayout({
               width={112}
             />
           </Link>
-          <div className="w-full rounded-2xl border bg-card p-6 shadow-sm sm:p-8">{children}</div>
+          <div className="w-full rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
+            {children}
+          </div>
 
           <p className="text-muted-foreground px-8 text-center text-sm">
             By clicking continue, you agree to our{" "}

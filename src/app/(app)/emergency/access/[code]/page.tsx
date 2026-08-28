@@ -1,5 +1,6 @@
 import {
   AlarmClockIcon,
+  FileTextIcon,
   PhoneIcon,
   ShieldAlertIcon,
   ShieldCheckIcon,
@@ -92,12 +93,16 @@ export default async function EmergencyAccessPage({
           },
           {
             label: t("dashboard.allergies"),
-            value: allergies.length ? allergies.join(", ") : t("emergencyCard.noAllergies"),
+            value: allergies.length
+              ? allergies.join(", ")
+              : t("emergencyCard.noAllergies"),
             tone: "critical",
           },
           {
             label: t("emergencyView.conditions"),
-            value: conditions.length ? conditions.join(", ") : t("emergencyCard.noneListed"),
+            value: conditions.length
+              ? conditions.join(", ")
+              : t("emergencyCard.noneListed"),
             detail: medicines.length > 0 ? medicines.join(", ") : undefined,
             tone: "warning",
           },
@@ -129,7 +134,10 @@ export default async function EmergencyAccessPage({
               {profile?.emergencyContacts.length ? (
                 <ul className="flex flex-col gap-3">
                   {profile.emergencyContacts.map((contact) => (
-                    <li className="rounded-xl border bg-muted/40 p-3" key={contact.phone}>
+                    <li
+                      className="rounded-xl border bg-muted/40 p-3"
+                      key={contact.phone}
+                    >
                       <p className="font-medium">{contact.name}</p>
                       <p className="text-muted-foreground mt-0.5 text-xs">
                         {contact.relation}
@@ -146,6 +154,49 @@ export default async function EmergencyAccessPage({
               ) : (
                 <p className="text-muted-foreground text-sm">
                   {t("dashboard.noEmergencyContacts")}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl shadow-sm">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <FileTextIcon className="size-4" aria-hidden />
+                <CardTitle className="type-section-title">
+                  Patient Documents
+                </CardTitle>
+              </div>
+              <CardDescription>
+                Recent records available for emergency care.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0">
+              {data.documents.length ? (
+                <ul className="divide-y border-y">
+                  {data.documents.map(({ document }) => (
+                    <li
+                      className="flex min-w-0 items-center gap-3 px-6 py-3"
+                      key={document.id}
+                    >
+                      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                        <FileTextIcon className="size-4" aria-hidden />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {document.title}
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          {document.docType} |{" "}
+                          {formatDateTime(document.uploadedAt, locale)}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-muted-foreground px-6 text-sm">
+                  No documents are available.
                 </p>
               )}
             </CardContent>

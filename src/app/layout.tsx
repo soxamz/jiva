@@ -1,33 +1,40 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import './globals.css';
-import { cn } from '@/lib/utils';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { ThemeProvider } from '@/components/theme-provider';
-import { I18nProvider } from '@/components/i18n-provider';
-import { getI18n } from '@/lib/i18n';
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { cn } from "@/lib/utils";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme-provider";
+import { I18nProvider } from "@/components/i18n-provider";
+import { getI18n } from "@/lib/i18n";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: 'JivaHQ Clinical Intake',
+  title: "JivaHQ Clinical Intake",
   description:
-    'Conversational clinical intake with adaptive SOCRATES questioning and draft physician summaries.',
+    "Conversational clinical intake with adaptive SOCRATES questioning and draft physician summaries.",
 };
 
-export default async function RootLayout({ children }: LayoutProps<'/'>) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
   const { language, locale, messages } = await getI18n();
 
   return (
     <html
       lang={language.intl}
       suppressHydrationWarning
-      className={cn('h-full', 'antialiased', 'font-sans', 'font-serif', "font-sans", inter.variable)}
+      className={cn(
+        "h-full",
+        "antialiased",
+        "font-sans",
+        "font-serif",
+        "font-sans",
+        inter.variable,
+      )}
     >
       <body className="flex min-h-full flex-col">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
