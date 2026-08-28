@@ -120,9 +120,9 @@ export function AiIntakeChat() {
         ]);
       } catch (cause) {
         setError(
-          cause instanceof Error
-            ? cause.message
-            : "Unable to start the symptom check.",
+          cause instanceof Error ?
+            cause.message
+          : "Unable to start the symptom check.",
         );
       }
     });
@@ -157,9 +157,9 @@ export function AiIntakeChat() {
     } catch (cause) {
       setSaveState("failed");
       setError(
-        cause instanceof Error
-          ? cause.message
-          : "Your symptom check could not be saved.",
+        cause instanceof Error ?
+          cause.message
+        : "Your symptom check could not be saved.",
       );
     }
   }
@@ -175,9 +175,9 @@ export function AiIntakeChat() {
         applyTurn(await sendTextTurn(sessionId, patientText), patientText);
       } catch (cause) {
         setError(
-          cause instanceof Error
-            ? cause.message
-            : "Unable to send your response.",
+          cause instanceof Error ?
+            cause.message
+          : "Unable to send your response.",
         );
       }
     });
@@ -208,9 +208,9 @@ export function AiIntakeChat() {
             applyTurn(turn, turn.transcript_preview || "Voice message");
           } catch (cause) {
             setError(
-              cause instanceof Error
-                ? cause.message
-                : "Unable to process the recording.",
+              cause instanceof Error ?
+                cause.message
+              : "Unable to process the recording.",
             );
           }
         });
@@ -241,9 +241,9 @@ export function AiIntakeChat() {
         await persistFinalResult(result);
       } catch (cause) {
         setError(
-          cause instanceof Error
-            ? cause.message
-            : "Unable to finish the symptom check.",
+          cause instanceof Error ?
+            cause.message
+          : "Unable to finish the symptom check.",
         );
       }
     });
@@ -256,7 +256,7 @@ export function AiIntakeChat() {
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
       <Card className="min-h-[560px] gap-0 overflow-hidden rounded-2xl shadow-sm">
         <CardHeader className="border-b bg-card">
-          <CardTitle className="type-section-title">Chat with Jiva</CardTitle>
+          <CardTitle className="type-section-title">Chat with Arohi</CardTitle>
           <CardDescription>
             Answer in your own words. Your completed check is saved to your
             health record.
@@ -290,9 +290,9 @@ export function AiIntakeChat() {
               <div
                 className={cn(
                   "max-w-[88%] rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm",
-                  message.role === "patient"
-                    ? "bg-primary text-primary-foreground ml-auto rounded-br-md"
-                    : "bg-muted text-foreground rounded-bl-md",
+                  message.role === "patient" ?
+                    "bg-primary text-primary-foreground ml-auto rounded-br-md"
+                  : "bg-muted text-foreground rounded-bl-md",
                 )}
                 key={message.id}
               >
@@ -319,9 +319,9 @@ export function AiIntakeChat() {
                   }
                 }}
                 placeholder={
-                  sessionId
-                    ? "Type your response..."
-                    : "Starting your symptom check..."
+                  sessionId ?
+                    "Type your response..."
+                  : "Starting your symptom check..."
                 }
                 value={input}
               />
@@ -336,18 +336,19 @@ export function AiIntakeChat() {
               </Button>
               <Button
                 aria-label={recording ? "Stop recording" : "Record response"}
-                className={cn(recording && "bg-clinical-critical/10 text-clinical-critical border-clinical-critical/30")}
+                className={cn(
+                  recording &&
+                    "bg-clinical-critical/10 text-clinical-critical border-clinical-critical/30",
+                )}
                 disabled={inputDisabled}
                 onClick={recording ? stopRecording : startRecording}
                 size="icon"
                 type="button"
                 variant={recording ? "secondary" : "outline"}
               >
-                {recording ? (
+                {recording ?
                   <SquareIcon className="size-4" />
-                ) : (
-                  <MicIcon className="size-4" />
-                )}
+                : <MicIcon className="size-4" />}
               </Button>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -384,12 +385,11 @@ export function AiIntakeChat() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm">
-              {Object.entries(progress).length === 0 ? (
+              {Object.entries(progress).length === 0 ?
                 <li className="text-muted-foreground">
                   Your answers will appear here as they are recorded.
                 </li>
-              ) : (
-                Object.entries(progress).map(([field, filled]) => (
+              : Object.entries(progress).map(([field, filled]) => (
                   <li
                     className="flex items-center justify-between gap-3"
                     key={field}
@@ -397,14 +397,12 @@ export function AiIntakeChat() {
                     <span className="text-muted-foreground capitalize">
                       {field.replace(/^ayush_/, "").replaceAll("_", " ")}
                     </span>
-                    {filled ? (
+                    {filled ?
                       <CheckCircle2Icon className="text-primary size-4" />
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
+                    : <span className="text-muted-foreground">-</span>}
                   </li>
                 ))
-              )}
+              }
             </ul>
           </CardContent>
         </Card>
@@ -412,11 +410,13 @@ export function AiIntakeChat() {
         {finalResult && (
           <Card className="rounded-2xl shadow-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="type-section-title">Doctor review draft</CardTitle>
+              <CardTitle className="type-section-title">
+                Doctor review draft
+              </CardTitle>
               <CardDescription>
-                {saveState === "saved"
-                  ? "Saved to your health record."
-                  : "Preparing your health record."}
+                {saveState === "saved" ?
+                  "Saved to your health record."
+                : "Preparing your health record."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">

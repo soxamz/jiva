@@ -2,11 +2,11 @@ import Link from "next/link";
 import { FileTextIcon, StethoscopeIcon } from "lucide-react";
 
 import { HistoryTimeline } from "@/components/clinical-overview/history-timeline";
+import { ClinicalRecordSummary } from "@/components/clinical-overview/clinical-record-summary";
 import { MedicationsPanel } from "@/components/clinical-overview/medications-panel";
 import { OverviewActions } from "@/components/clinical-overview/overview-actions";
 import { OverviewRangeSelector } from "@/components/clinical-overview/range-selector";
 import { SummaryEnginePanel } from "@/components/clinical-overview/summary-engine-panel";
-// import { VitalsRow } from "@/components/clinical-overview/vitals-row";
 import { PageHeader } from "@/components/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/format";
 import { getI18n } from "@/lib/i18n";
-import { extractOverviewVitals } from "@/lib/overview-vitals";
 import {
   getWeekClinicalOverview,
   parseOverviewRange,
@@ -75,7 +74,11 @@ export default async function ClinicalOverviewPage({
       fileLabel,
     }));
 
-  const vitals = extractOverviewVitals(overview.weekDocuments);
+  const latestIntake = overview.weekIntakes[0] ?? null;
+  const urgentCheckCount = overview.weekIntakes.filter(
+    (intake) => intake.redFlag,
+  ).length;
+  const labFlagCount = clinical?.abnormal_lab_flags?.length ?? 0;
   const sourceNote =
     overview.source === "ml3"
       ? t("overview.sourceMl3")
@@ -157,21 +160,34 @@ export default async function ClinicalOverviewPage({
               sourceNote={sourceNote}
               title={t("overview.summaryTitle")}
             />
-            {/* <VitalsRow
-              labels={{
-                bp: t("overview.vitalBp"),
-                hr: t("overview.vitalHr"),
-                weight: t("overview.vitalWeight"),
-                spo2: t("overview.vitalSpo2"),
-              }}
-              metrics={vitals}
-              statusLabels={{
-                elevated: t("overview.vitalElevated"),
-                normal: t("overview.vitalNormal"),
-                stable: t("overview.vitalStable"),
-                not_recorded: t("overview.vitalNotRecorded"),
-              }}
-            /> */}
+            <ClinicalRecordSummary
+              description={t("overview.recordSummaryDescription")}
+              items={[
+                {
+                  kind: "checks",
+                  label: t("overview.symptomChecks"),
+                  value: overview.weekIntakes.length,
+                },
+                {
+                  kind: "documents",
+                  label: t("overview.documentsReviewed"),
+                  value: overview.weekDocuments.length,
+                },
+                {
+                  kind: "urgent",
+                  label: t("overview.urgentChecks"),
+                  value: urgentCheckCount,
+                },
+                {
+                  kind: "labs",
+                  label: t("overview.flaggedLabs"),
+                  value: labFlagCount,
+                },
+              ]}
+              latestCheck={latestIntake?.chiefComplaint ?? null}
+              latestCheckLabel={t("overview.latestCheck")}
+              title={t("overview.recordSummaryTitle")}
+            />
           </div>
           <div className="flex min-w-0 flex-col gap-4">
             <MedicationsPanel

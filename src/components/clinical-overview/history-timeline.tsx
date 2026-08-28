@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OpenUploadedFileLink } from "@/components/documents/open-uploaded-file-link";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 export type HistoryTimelineItem = {
@@ -30,35 +31,33 @@ export function HistoryTimeline({
         {items.length === 0 ? (
           <p className="type-card-body">{emptyLabel}</p>
         ) : (
-          <ol className="relative ms-2 flex flex-col gap-5 border-s border-border ps-5">
-            {items.map((item, index) => (
-              <li key={item.id} className="relative">
-                <span
-                  className={cn(
-                    "absolute -start-[1.4rem] top-1.5 size-2.5 rounded-full border-2 border-background",
-                    index === 0 ? "bg-primary" : "bg-muted-foreground",
-                  )}
-                  aria-hidden
-                />
-                <p className="type-meta tabular-nums">
-                  {item.dateLabel}
-                </p>
-                <p className="text-primary type-eyebrow mt-0.5">
-                  {item.type}
-                </p>
-                <p className="type-card-body mt-1">
-                  {item.title}
-                </p>
-                {item.fileUrl && item.fileLabel ? (
-                  <OpenUploadedFileLink
-                    className="mt-2"
-                    href={item.fileUrl}
-                    label={item.fileLabel}
+          <ScrollArea className="h-[min(32rem,calc(100dvh-12rem))] min-h-0 pe-4">
+            <ol className="relative ms-2 flex flex-col gap-5 border-s border-border ps-5">
+              {items.map((item, index) => (
+                <li key={item.id} className="relative">
+                  <span
+                    className={cn(
+                      "absolute -start-[1.4rem] top-1.5 size-2.5 rounded-full border-2 border-background",
+                      index === 0 ? "bg-primary" : "bg-muted-foreground",
+                    )}
+                    aria-hidden
                   />
-                ) : null}
-              </li>
-            ))}
-          </ol>
+                  <p className="type-meta tabular-nums">{item.dateLabel}</p>
+                  <p className="text-primary type-eyebrow mt-0.5">
+                    {item.type}
+                  </p>
+                  <p className="type-card-body mt-1">{item.title}</p>
+                  {item.fileUrl && item.fileLabel ? (
+                    <OpenUploadedFileLink
+                      className="mt-2"
+                      href={item.fileUrl}
+                      label={item.fileLabel}
+                    />
+                  ) : null}
+                </li>
+              ))}
+            </ol>
+          </ScrollArea>
         )}
       </CardContent>
     </Card>

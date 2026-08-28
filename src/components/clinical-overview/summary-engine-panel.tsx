@@ -8,6 +8,7 @@ import {
 } from "@/lib/clinical-summary";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 function BoldText({ text }: { text: string }) {
@@ -106,133 +107,137 @@ export function SummaryEnginePanel({
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-6 pt-5">
-        <div className="flex flex-col gap-4">
-          {clinical.chief_complaint &&
-          !hasChiefSection &&
-          clinical.chief_complaint.length <= 120 ? (
-            <p className="text-foreground text-sm font-semibold">
-              {clinical.chief_complaint}
-            </p>
-          ) : null}
+      <CardContent className="pt-5">
+        <ScrollArea className="h-[min(32rem,calc(100dvh-12rem))] min-h-0 pe-4">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4">
+              {clinical.chief_complaint &&
+              !hasChiefSection &&
+              clinical.chief_complaint.length <= 120 ? (
+                <p className="text-foreground text-sm font-semibold">
+                  {clinical.chief_complaint}
+                </p>
+              ) : null}
 
-          {sections.length > 0 ? (
-            sections.map((section) => (
-              <section key={section.title} className="flex flex-col gap-2">
-                <h3 className="text-foreground text-sm font-semibold tracking-wide">
-                  {section.title}
-                </h3>
-                {/current status|summary/i.test(section.title) &&
-                section.lines.length <= 1 ? (
-                  <p className="text-muted-foreground text-sm leading-6">
-                    <BoldText text={section.lines[0] ?? ""} />
-                  </p>
-                ) : (
-                  <ul className="flex flex-col gap-1.5">
-                    {section.lines.map((line, index) => (
+              {sections.length > 0 ? (
+                sections.map((section) => (
+                  <section key={section.title} className="flex flex-col gap-2">
+                    <h3 className="text-foreground text-sm font-semibold tracking-wide">
+                      {section.title}
+                    </h3>
+                    {/current status|summary/i.test(section.title) &&
+                    section.lines.length <= 1 ? (
+                      <p className="text-muted-foreground text-sm leading-6">
+                        <BoldText text={section.lines[0] ?? ""} />
+                      </p>
+                    ) : (
+                      <ul className="flex flex-col gap-1.5">
+                        {section.lines.map((line, index) => (
+                          <li
+                            key={`${section.title}-${index}-${line.slice(0, 40)}`}
+                            className="text-muted-foreground flex gap-2 text-sm leading-6"
+                          >
+                            <span
+                              className="text-foreground/40 mt-2 size-1 shrink-0 rounded-full bg-current"
+                              aria-hidden
+                            />
+                            <span>
+                              <BoldText text={line} />
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
+                ))
+              ) : narrative ? (
+                <p className="text-muted-foreground text-sm leading-6 whitespace-pre-wrap">
+                  <BoldText text={narrative} />
+                </p>
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  No physician narrative available yet.
+                </p>
+              )}
+            </div>
+
+            <div className="border-border/60 border-t pt-5">
+              <h3 className="mb-3 text-sm font-semibold tracking-wide uppercase">
+                {extractsTitle}
+              </h3>
+              {!hasExtracts ? (
+                <p className="text-muted-foreground text-sm">{extractsEmpty}</p>
+              ) : (
+                <ul className="flex flex-col gap-3">
+                  {labs.map((lab, index) => {
+                    const tone =
+                      /high|critical|elevat/i.test(lab.clinical_significance) ||
+                      /high|critical/i.test(lab.flagged_value)
+                        ? "high"
+                        : /improv|normal|down|low risk/i.test(
+                              lab.clinical_significance,
+                            )
+                          ? "low"
+                          : "medium";
+                    return (
                       <li
-                        key={`${section.title}-${index}-${line.slice(0, 40)}`}
-                        className="text-muted-foreground flex gap-2 text-sm leading-6"
+                        key={`lab-${index}-${lab.test_name}-${lab.flagged_value}`}
+                        className="flex gap-3 text-sm"
                       >
                         <span
-                          className="text-foreground/40 mt-2 size-1 shrink-0 rounded-full bg-current"
+                          className={cn(
+                            "mt-1.5 size-2.5 shrink-0 rounded-full",
+                            tone === "high" && "bg-destructive",
+                            tone === "medium" && "bg-muted-foreground",
+                            tone === "low" && "bg-primary",
+                          )}
                           aria-hidden
                         />
-                        <span>
-                          <BoldText text={line} />
-                        </span>
+                        <div className="min-w-0">
+                          <p className="font-medium">
+                            {lab.test_name}: {lab.flagged_value}
+                          </p>
+                          <p className="text-muted-foreground text-xs leading-5">
+                            {lab.clinical_significance}
+                          </p>
+                        </div>
                       </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            ))
-          ) : narrative ? (
-            <p className="text-muted-foreground text-sm leading-6 whitespace-pre-wrap">
-              <BoldText text={narrative} />
-            </p>
-          ) : (
-            <p className="text-muted-foreground text-sm">
-              No physician narrative available yet.
-            </p>
-          )}
-        </div>
+                    );
+                  })}
+                  {contradictions.map((item, index) => {
+                    const tone = extractTone(item.severity);
+                    return (
+                      <li
+                        key={`contradiction-${index}-${item.severity}-${item.issue}`}
+                        className="flex gap-3 text-sm"
+                      >
+                        <span
+                          className={cn(
+                            "mt-1.5 size-2.5 shrink-0 rounded-full",
+                            tone === "high" && "bg-destructive",
+                            tone === "medium" && "bg-muted-foreground",
+                            tone === "low" && "bg-primary",
+                          )}
+                          aria-hidden
+                        />
+                        <div className="min-w-0">
+                          <p className="font-medium">{item.issue}</p>
+                          {item.source_reference ? (
+                            <p className="text-muted-foreground text-xs">
+                              {item.source_reference}
+                            </p>
+                          ) : null}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </div>
+        </ScrollArea>
 
-        <div className="border-border/60 border-t pt-5">
-          <h3 className="mb-3 text-sm font-semibold tracking-wide uppercase">
-            {extractsTitle}
-          </h3>
-          {!hasExtracts ? (
-            <p className="text-muted-foreground text-sm">{extractsEmpty}</p>
-          ) : (
-            <ul className="flex flex-col gap-3">
-              {labs.map((lab, index) => {
-                const tone =
-                  /high|critical|elevat/i.test(lab.clinical_significance) ||
-                  /high|critical/i.test(lab.flagged_value)
-                    ? "high"
-                    : /improv|normal|down|low risk/i.test(
-                          lab.clinical_significance,
-                        )
-                      ? "low"
-                      : "medium";
-                return (
-                  <li
-                    key={`lab-${index}-${lab.test_name}-${lab.flagged_value}`}
-                    className="flex gap-3 text-sm"
-                  >
-                    <span
-                      className={cn(
-                        "mt-1.5 size-2.5 shrink-0 rounded-full",
-                        tone === "high" && "bg-destructive",
-                        tone === "medium" && "bg-muted-foreground",
-                        tone === "low" && "bg-primary",
-                      )}
-                      aria-hidden
-                    />
-                    <div className="min-w-0">
-                      <p className="font-medium">
-                        {lab.test_name}: {lab.flagged_value}
-                      </p>
-                      <p className="text-muted-foreground text-xs leading-5">
-                        {lab.clinical_significance}
-                      </p>
-                    </div>
-                  </li>
-                );
-              })}
-              {contradictions.map((item, index) => {
-                const tone = extractTone(item.severity);
-                return (
-                  <li
-                    key={`contradiction-${index}-${item.severity}-${item.issue}`}
-                    className="flex gap-3 text-sm"
-                  >
-                    <span
-                      className={cn(
-                        "mt-1.5 size-2.5 shrink-0 rounded-full",
-                        tone === "high" && "bg-destructive",
-                        tone === "medium" && "bg-muted-foreground",
-                        tone === "low" && "bg-primary",
-                      )}
-                      aria-hidden
-                    />
-                    <div className="min-w-0">
-                      <p className="font-medium">{item.issue}</p>
-                      {item.source_reference ? (
-                        <p className="text-muted-foreground text-xs">
-                          {item.source_reference}
-                        </p>
-                      ) : null}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-
-        <div className="text-muted-foreground border-border/50 flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs">
+        <div className="text-muted-foreground border-border/50 mt-5 flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs">
           <p>
             {footerLabel}
             {sourceNote ? ` · ${sourceNote}` : null}
