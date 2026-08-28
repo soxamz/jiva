@@ -1,0 +1,2 @@
+# Optional local ML3 CrewAI synthesis profile. Use Python 3.10-3.13.
+crewai>=0.28.8,<1.0.0; python_version < "3.14"

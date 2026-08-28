@@ -1,6 +1,6 @@
 # JivaHQ — Clinical Conversational Intake
 
-Hybrid CrewAI intake engine for JivaHQ:
+Clinical intake and Document AI backend for JivaHQ:
 
 - **TurnCrew (Groq `llama-3.1-8b-instant`)**: adaptive SOCRATES questioning
 - **Rule red flags**: primary emergency gate (EN + Hinglish patterns)
@@ -35,10 +35,17 @@ python -m venv .venv
 # source .venv/bin/activate
 
 pip install -r requirements.txt
-# ML3 physician synthesis needs crewai (listed in requirements.txt).
-# If POST /api/ml3/synthesize returns 503, reinstall: pip install "crewai>=0.28.8,<1.0.0"
+# Includes ML2 Document AI (Mistral OCR/extraction).
 copy .env.example .env   # then fill API keys (Windows)
 # cp .env.example .env   # macOS / Linux
+```
+
+For document uploads, set `MISTRAL_API_KEY` in `api/.env`. The root `requirements.txt` remains intentionally lean for Vercel's intake function; use `api/requirements.txt` for the local Python API.
+
+ML3's optional CrewAI auditor requires Python 3.10-3.13:
+
+```bash
+pip install -r requirements-ml3.txt
 ```
 
 Run the API (port **5328**, matches Next rewrite):
@@ -79,6 +86,8 @@ Next.js rewrites `/api/*` → `http://127.0.0.1:5328/api/*` (see `next.config.ts
 | POST   | `/api/intake/sessions/{id}/finalize` | CloseCrew → history + draft summary       |
 | GET    | `/api/intake/sessions/{id}`          | Session state                             |
 | GET    | `/api/health`                        | Health + model config                     |
+| POST   | `/api/documents/upload`              | Store a PDF/JPG/PNG for Document AI       |
+| POST   | `/api/documents/{id}/process`        | Run ML2 OCR and structured extraction     |
 
 ## Notes
 

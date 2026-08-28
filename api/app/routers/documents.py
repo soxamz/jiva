@@ -585,6 +585,76 @@ async def process_document(
     except HTTPException:
         raise
 
+    except ModuleNotFoundError as exc:
+
+        document.update(
+            {
+                "status": "failed",
+                "error_message": f"Missing Document AI dependency: {exc.name}",
+                "processing_completed_at": utc_now(),
+            }
+        )
+
+        _repository.put_document(
+            document
+        )
+
+        _repository.audit(
+            document_id,
+            "DOCUMENT_PROCESSING_FAILED",
+            None,
+            "failed",
+            {
+                "error": "missing_document_ai_dependency",
+                "dependency": exc.name,
+            },
+        )
+
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Document AI dependencies are unavailable. "
+                "Install the local API dependencies with: "
+                "pip install -r api/requirements.txt"
+            ),
+        ) from exc
+
+    except RuntimeError as exc:
+
+        detail = str(exc)
+        configuration_error = "MISTRAL_API_KEY is not configured" in detail
+
+        document.update(
+            {
+                "status": "failed",
+                "error_message": detail,
+                "processing_completed_at": utc_now(),
+            }
+        )
+
+        _repository.put_document(
+            document
+        )
+
+        _repository.audit(
+            document_id,
+            "DOCUMENT_PROCESSING_FAILED",
+            None,
+            "failed",
+            {
+                "error": "document_ai_configuration" if configuration_error else "document_ai_runtime",
+            },
+        )
+
+        raise HTTPException(
+            status_code=503 if configuration_error else 502,
+            detail=(
+                "Document AI requires MISTRAL_API_KEY in api/.env."
+                if configuration_error
+                else "Document AI could not process this file. Check the API logs and provider configuration."
+            ),
+        ) from exc
+
     except Exception as exc:
 
         document.update(

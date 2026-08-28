@@ -6,6 +6,9 @@ pydantic-settings>=2.6.0
 python-dotenv>=1.0.1
 groq>=0.11.0
 google-genai>=1.0.0
-# ML3 clinical synthesis (local). Optional for Vercel intake-only deploys.
-crewai>=0.28.8,<1.0.0
+# ML2 Document AI: Mistral OCR and structured extraction.
+# Kept out of the root requirements.txt so Vercel's intake function stays small.
+mistralai>=2.9.0,<3.0.0
+# ML3 CrewAI is optional and isolated in requirements-ml3.txt.
+# It does not currently support Python 3.14.
 pywin32>=310; sys_platform == "win32"

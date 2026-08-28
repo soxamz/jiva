@@ -66,7 +66,7 @@ async def synthesize_clinical_summary(body: SynthesizeRequest) -> dict[str, Any]
             status_code=503,
             detail=(
                 "ML3 dependencies are not installed. "
-                "Install crewai in the API venv (see api/requirements.txt)."
+                "Use Python 3.10-3.13 and install api/requirements-ml3.txt."
             ),
         ) from exc
     except Exception as exc:  # noqa: BLE001 — surface synthesis failures to the client
