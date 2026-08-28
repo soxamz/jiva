@@ -12,6 +12,8 @@ function displayList(values: string[] | undefined) {
   return values?.join(', ') ?? '';
 }
 
+import { MobileHealthInfo } from "@/components/mobile/mobile-health-info";
+
 export default async function HealthInformationPage() {
   const { profile } = await getPatientWorkspace();
   const { t } = await getI18n();
@@ -20,34 +22,39 @@ export default async function HealthInformationPage() {
     .join('\n');
 
   return (
-    <div className="flex max-w-4xl flex-col gap-6">
-      <PageHeader
-        actions={
-          <Link href="/emergency-card" className={buttonVariants({ variant: 'outline' })}>
-            <ShieldCheckIcon data-icon="inline-start" aria-hidden />
-            {t('health.viewEmergencyCard')}
-          </Link>
-        }
-        description={t('health.description')}
-        title={t('health.title')}
-      />
+    <>
+      <MobileHealthInfo data={{ profile }} />
 
-      <Card className="rounded-2xl shadow-sm">
-        <CardHeader>
-          <p className="text-muted-foreground text-sm">{t('health.record')}</p>
-          <CardTitle>{t('health.emergencyDetails')}</CardTitle>
-          <CardDescription>{t('health.emergencyDetailsDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <MedicalProfileForm
-            allergies={displayList(profile?.allergies)}
-            bloodType={profile?.bloodType ?? 'O+'}
-            criticalConditions={displayList(profile?.criticalConditions)}
-            currentMedications={displayList(profile?.currentMedications)}
-            emergencyContacts={emergencyContacts}
-          />
-        </CardContent>
-      </Card>
-    </div>
+      <div className="hidden md:flex max-w-4xl flex-col gap-6">
+        <PageHeader
+          actions={
+            <Link href="/emergency-card" className={buttonVariants({ variant: 'outline' })}>
+              <ShieldCheckIcon data-icon="inline-start" aria-hidden />
+              {t('health.viewEmergencyCard')}
+            </Link>
+          }
+          description={t('health.description')}
+          title={t('health.title')}
+        />
+
+        <Card className="rounded-2xl shadow-sm">
+          <CardHeader>
+            <p className="text-muted-foreground text-sm">{t('health.record')}</p>
+            <CardTitle>{t('health.emergencyDetails')}</CardTitle>
+            <CardDescription>{t('health.emergencyDetailsDescription')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <MedicalProfileForm
+              allergies={displayList(profile?.allergies)}
+              bloodType={profile?.bloodType ?? 'O+'}
+              criticalConditions={displayList(profile?.criticalConditions)}
+              currentMedications={displayList(profile?.currentMedications)}
+              emergencyContacts={emergencyContacts}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }
+

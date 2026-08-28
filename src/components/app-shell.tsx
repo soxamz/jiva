@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import type { AppShellUser } from "@/components/app-shared";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { getI18n } from "@/lib/i18n";
+import { MobileNav } from "@/components/mobile/mobile-nav";
 
 export async function AppShell({
   user,
@@ -20,16 +21,21 @@ export async function AppShell({
       >
         {t("header.skipToContent")}
       </a>
-      <AppSidebar user={user} />
+      <div className="hidden md:block shrink-0">
+        <AppSidebar user={user} />
+      </div>
       <SidebarInset
         className="!w-0 min-w-0 overflow-x-clip"
         id="main-content"
         tabIndex={-1}
       >
-        <AppHeader user={user} />
-        <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-6 p-4 focus:outline-none md:p-6">
+        <div className="hidden md:block shrink-0">
+          <AppHeader user={user} />
+        </div>
+        <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-6 p-0 md:p-6 focus:outline-none">
           {children}
         </div>
+        <MobileNav />
       </SidebarInset>
     </SidebarProvider>
   );
