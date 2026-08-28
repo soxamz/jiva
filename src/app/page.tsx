@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  FlaskConicalIcon,
   HeartPulseIcon,
   ShieldAlertIcon,
   StethoscopeIcon,
-  UserPlusIcon,
   UserRoundIcon,
 } from "lucide-react";
 
@@ -19,6 +19,7 @@ type PortalLinkProps = {
   description: string;
   icon: typeof UserRoundIcon;
   tone?: "default" | "destructive";
+  disabled?: boolean;
 };
 
 function PortalLink({
@@ -26,26 +27,40 @@ function PortalLink({
   title,
   description,
   icon: Icon,
+  disabled = false,
   tone = "default",
 }: Readonly<PortalLinkProps>) {
+  const content = (
+    <Card className="h-full transition-colors group-hover:bg-accent group-focus-visible:ring-2 group-focus-visible:ring-ring">
+      <CardContent className="flex min-h-30 flex-col items-center justify-center gap-2 px-4 py-5 text-center">
+        <span
+          className={cn(
+            "bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full",
+            tone === "destructive" && "bg-destructive/10 text-destructive",
+          )}
+        >
+          <Icon className="size-4" aria-hidden />
+        </span>
+        <p className="text-sm font-medium">{title}</p>
+        <p className="text-muted-foreground text-xs leading-5">{description}</p>
+      </CardContent>
+    </Card>
+  );
+
+  if (disabled) {
+    return (
+      <div
+        aria-disabled="true"
+        className="h-full cursor-not-allowed opacity-60"
+      >
+        {content}
+      </div>
+    );
+  }
+
   return (
     <Link className="group block h-full focus-visible:outline-none" href={href}>
-      <Card className="h-full transition-colors group-hover:bg-accent group-focus-visible:ring-2 group-focus-visible:ring-ring">
-        <CardContent className="flex min-h-30 flex-col items-center justify-center gap-2 px-4 py-5 text-center">
-          <span
-            className={cn(
-              "bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full",
-              tone === "destructive" && "bg-destructive/10 text-destructive",
-            )}
-          >
-            <Icon className="size-4" aria-hidden />
-          </span>
-          <p className="text-sm font-medium">{title}</p>
-          <p className="text-muted-foreground text-xs leading-5">
-            {description}
-          </p>
-        </CardContent>
-      </Card>
+      {content}
     </Link>
   );
 }
@@ -141,10 +156,11 @@ export default async function Page() {
                 tone="destructive"
               />
               <PortalLink
-                description="Register a demo patient, doctor, or responder profile."
-                href="/sign-up"
-                icon={UserPlusIcon}
-                title={t("auth.createAccount")}
+                description={t("auth.labDescription")}
+                href="#"
+                icon={FlaskConicalIcon}
+                title={t("auth.lab")}
+                disabled
               />
             </div>
 

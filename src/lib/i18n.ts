@@ -75,6 +75,8 @@ const english = {
   'auth.patient': 'Patient',
   'auth.doctor': 'Doctor',
   'auth.emergencyResponder': 'Emergency responder',
+  'auth.lab': 'Lab',
+  'auth.labDescription': 'Upload reports and diagnostics.',
   'auth.demoOtp': 'Demo OTP',
   'auth.creating': 'Creating...',
   'auth.create': 'Create account',
