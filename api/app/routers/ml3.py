@@ -70,6 +70,20 @@ async def synthesize_clinical_summary(body: SynthesizeRequest) -> dict[str, Any]
             ),
         ) from exc
     except Exception as exc:  # noqa: BLE001 — surface synthesis failures to the client
+        exc_msg = str(exc)
+        if (
+            "429" in exc_msg
+            or "quota" in exc_msg.lower()
+            or "RateLimit" in type(exc).__name__
+        ):
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "ML3 synthesis quota exceeded for the configured Gemini model. "
+                    "Retry later, switch ML3_LLM_MODEL / ML3_LLM_MODEL_FALLBACK in api/.env, "
+                    "or use the local clinical overview digest."
+                ),
+            ) from exc
         raise HTTPException(status_code=500, detail=f"ML3 synthesis failed: {exc}") from exc
 
     if isinstance(summary, str):
