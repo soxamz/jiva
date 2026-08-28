@@ -1,15 +1,19 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 
 export function hashIdentifier(value: string) {
-  return createHash('sha256').update(value.trim()).digest('hex');
+  return createHash("sha256").update(value.trim()).digest("hex");
 }
 
 export function createConsentCode() {
-  return `JIVA-${randomBytes(3).toString('hex').toUpperCase()}`;
+  return `JIVA-${randomBytes(3).toString("hex").toUpperCase()}`;
+}
+
+export function createShareToken() {
+  return randomUUID();
 }
 
 export function normalizeIdentifier(value: FormDataEntryValue | null) {
-  return String(value ?? '').replace(/\D/g, '');
+  return String(value ?? "").replace(/\D/g, "");
 }
 
 export function maskPhone(phone: string) {

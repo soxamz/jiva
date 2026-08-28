@@ -8,14 +8,11 @@ import {
   addDoctorNoteForConsent,
   authenticateMockUser,
   completeStoredDocumentProcessingForCurrentPatient,
-  isConsentAccessError,
   createBreakGlassAccess,
   createMockUser,
   failStoredDocumentProcessingForCurrentPatient,
   getStoredDocumentForCurrentPatient,
   getRecentOcrExtractionsForCurrentPatient,
-  grantConsentForCurrentPatient,
-  redeemConsentForCurrentUser,
   revokeConsentForCurrentPatient,
   saveAiIntakeForCurrentPatient,
   submitIntakeForCurrentPatient,
@@ -48,6 +45,7 @@ const signInSchema = z.object({
     .string()
     .regex(/^(\d{10}|\d{12})$/, "Enter a 10-digit phone or 12-digit Aadhaar."),
   otp: z.string().regex(/^\d{6}$/, "Enter the 6-digit demo OTP."),
+  returnTo: z.string().optional(),
 });
 
 const signUpSchema = z.object({
@@ -96,20 +94,6 @@ const aiIntakeSchema = z.object({
   }),
   bypassQueue: z.boolean(),
   clinicalSummary: z.record(z.string(), z.unknown()).nullable().optional(),
-});
-
-const consentSchema = z.object({
-  doctorId: z.string().trim().max(80, "Use 80 characters or fewer.").optional(),
-  durationMinutes: z.coerce
-    .number({ error: "Choose a valid duration." })
-    .int("Choose a whole number of minutes.")
-    .min(1, "Access must last at least 1 minute.")
-    .max(1440, "Access cannot exceed 24 hours.")
-    .default(120),
-});
-
-const codeSchema = z.object({
-  code: z.string().trim().min(4).max(24),
 });
 
 const noteSchema = z.object({
@@ -176,6 +160,17 @@ function formErrors(error: z.ZodError): FormState {
   };
 }
 
+function getSafeQrScanPath(value: string | undefined) {
+  const parsed = z
+    .string()
+    .regex(
+      /^\/share\/scan\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    )
+    .safeParse(value);
+
+  return parsed.success ? parsed.data : null;
+}
+
 function splitCommaSeparatedValues(value: FormDataEntryValue | null) {
   return String(value ?? "")
     .split(",")
@@ -206,6 +201,7 @@ export async function signInAction(
   const parsed = signInSchema.safeParse({
     identifier: normalizeIdentifier(formData.get("identifier")),
     otp: String(formData.get("otp") ?? ""),
+    returnTo: String(formData.get("returnTo") ?? "") || undefined,
   });
 
   if (!parsed.success) {
@@ -220,7 +216,13 @@ export async function signInAction(
       parsed.data.otp,
     );
     await createSession({ userId: user.id, role: user.role });
-    nextPath = user.role === "patient" ? "/dashboard" : "/doctor";
+    const returnTo = getSafeQrScanPath(parsed.data.returnTo);
+    nextPath =
+      user.role === "doctor" && returnTo
+        ? returnTo
+        : user.role === "patient"
+          ? "/dashboard"
+          : "/doctor";
   } catch (error) {
     return {
       message: error instanceof Error ? error.message : "Sign-in failed.",
@@ -470,32 +472,6 @@ export async function saveAiIntakeAction(input: unknown) {
   return { id: intake.id, hasClinicalSummary: Boolean(clinicalSummary) };
 }
 
-export async function grantConsentAction(
-  _state: FormState,
-  formData: FormData,
-): Promise<FormState> {
-  const parsed = consentSchema.safeParse({
-    doctorId: formData.get("doctorId"),
-    durationMinutes: formData.get("durationMinutes") || 120,
-  });
-
-  if (!parsed.success) {
-    return formErrors(parsed.error);
-  }
-
-  try {
-    await grantConsentForCurrentPatient(parsed.data);
-  } catch (error) {
-    return {
-      message:
-        error instanceof Error ? error.message : "Unable to create access.",
-    };
-  }
-
-  revalidatePath("/share");
-  redirect("/share");
-}
-
 export async function revokeConsentAction(formData: FormData) {
   const parsed = consentIdSchema.safeParse(formData.get("consentId"));
   if (!parsed.success) {
@@ -505,33 +481,6 @@ export async function revokeConsentAction(formData: FormData) {
   await revokeConsentForCurrentPatient(parsed.data);
   revalidatePath("/share");
   redirect("/share");
-}
-
-export async function redeemConsentAction(
-  _state: FormState,
-  formData: FormData,
-): Promise<FormState> {
-  const parsed = codeSchema.safeParse({
-    code: formData.get("code"),
-  });
-
-  if (!parsed.success) {
-    return formErrors(parsed.error);
-  }
-
-  let normalizedCode: string;
-
-  try {
-    normalizedCode = await redeemConsentForCurrentUser(parsed.data.code);
-  } catch (error) {
-    if (isConsentAccessError(error)) {
-      return { errorCode: error.code };
-    }
-
-    return { errorCode: "access_unavailable" };
-  }
-
-  redirect(`/doctor/access/${normalizedCode}`);
 }
 
 export async function addDoctorNoteAction(

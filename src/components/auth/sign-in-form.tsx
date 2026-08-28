@@ -6,20 +6,44 @@ import { useActionState } from 'react';
 import { signInAction, type FormState } from '@/lib/actions';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { useI18n } from '@/components/i18n-provider';
 
-export function SignInForm({ className, ...props }: React.ComponentProps<'form'>) {
+type SignInFormProps = React.ComponentProps<'form'> & {
+  returnTo?: string;
+};
+
+export function SignInForm({ className, returnTo, ...props }: SignInFormProps) {
   const { t } = useI18n();
-  const [state, action, pending] = useActionState<FormState, FormData>(signInAction, undefined);
+  const [state, action, pending] = useActionState<FormState, FormData>(
+    signInAction,
+    undefined,
+  );
 
   return (
-    <form action={action} className={cn('flex w-full flex-col gap-4', className)} {...props}>
+    <form
+      action={action}
+      className={cn('flex w-full flex-col gap-4', className)}
+      {...props}
+    >
+      {returnTo ? (
+        <input type="hidden" name="returnTo" value={returnTo} />
+      ) : null}
       <FieldGroup>
         <div className="text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">{t('auth.signInTitle')}</h1>
-          <p className="text-muted-foreground mt-1 text-sm">{t('auth.signInDescription')}</p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t('auth.signInTitle')}
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {t('auth.signInDescription')}
+          </p>
         </div>
         <Field data-invalid={Boolean(state?.errors?.identifier)}>
           <FieldLabel htmlFor="identifier">{t('auth.identifier')}</FieldLabel>
@@ -49,7 +73,9 @@ export function SignInForm({ className, ...props }: React.ComponentProps<'form'>
             pattern="[0-9]{6}"
             required
           />
-          <FieldError errors={state?.errors?.otp?.map((message) => ({ message }))} />
+          <FieldError
+            errors={state?.errors?.otp?.map((message) => ({ message }))}
+          />
         </Field>
         {state?.message && <FieldError>{state.message}</FieldError>}
         <Field>
@@ -58,9 +84,11 @@ export function SignInForm({ className, ...props }: React.ComponentProps<'form'>
           </Button>
         </Field>
         <FieldDescription className="text-center">
-          {t('auth.needAccount')} <Link href="/sign-up">{t('auth.createAccount')}</Link>
+          {t('auth.needAccount')}{' '}
+          <Link href="/sign-up">{t('auth.createAccount')}</Link>
           <br />
-          {t('auth.responder')} <Link href="/emergency">{t('auth.useBreakGlass')}</Link>
+          {t('auth.responder')}{' '}
+          <Link href="/emergency">{t('auth.useBreakGlass')}</Link>
         </FieldDescription>
       </FieldGroup>
     </form>

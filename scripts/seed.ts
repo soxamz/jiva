@@ -42,6 +42,7 @@ async function main() {
         name: 'Aarav Sharma',
         phone: '9876543210',
         aadhaarHash: hashIdentifier('123412341234'),
+        shareToken: 'a1111111-1111-4111-8111-111111111111',
       },
       {
         id: doctorId,
@@ -156,8 +157,8 @@ async function main() {
     .where(
       and(
         eq(intakeSessions.patientId, patientId),
-        eq(intakeSessions.chiefComplaint, 'Dizziness and fatigue')
-      )
+        eq(intakeSessions.chiefComplaint, 'Dizziness and fatigue'),
+      ),
     )
     .limit(1);
 
@@ -190,7 +191,10 @@ async function main() {
     })
     .onConflictDoNothing();
 
-  const existingLogs = await db.select({ id: auditLogs.id }).from(auditLogs).limit(1);
+  const existingLogs = await db
+    .select({ id: auditLogs.id })
+    .from(auditLogs)
+    .limit(1);
 
   if (existingLogs.length === 0) {
     await db.insert(auditLogs).values([

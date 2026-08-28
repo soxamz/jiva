@@ -48,6 +48,7 @@ export const users = pgTable(
     phone: varchar("phone", { length: 20 }).notNull(),
     aadhaarHash: varchar("aadhaar_hash", { length: 128 }),
     doctorId: varchar("doctor_id", { length: 80 }),
+    shareToken: uuid("share_token"),
     status: userStatus("status").notNull().default("active"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
@@ -60,6 +61,7 @@ export const users = pgTable(
     uniqueIndex("users_phone_idx").on(table.phone),
     uniqueIndex("users_aadhaar_hash_idx").on(table.aadhaarHash),
     uniqueIndex("users_doctor_id_idx").on(table.doctorId),
+    uniqueIndex("users_share_token_idx").on(table.shareToken),
     index("users_role_idx").on(table.role),
   ],
 );
@@ -157,17 +159,25 @@ export const consents = pgTable(
       onDelete: "set null",
     }),
     code: varchar("code", { length: 24 }).notNull(),
-    durationMinutes: integer("duration_minutes").notNull().default(120),
+    durationMinutes: integer("duration_minutes").default(120),
     status: consentStatus("status").notNull().default("active"),
     grantedAt: timestamp("granted_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
-    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    lastAuthenticatedAt: timestamp("last_authenticated_at", {
+      withTimezone: true,
+    }),
     revokedAt: timestamp("revoked_at", { withTimezone: true }),
   },
   (table) => [
     uniqueIndex("consents_code_idx").on(table.code),
     index("consents_patient_status_idx").on(table.patientId, table.status),
+    index("consents_patient_grantee_status_idx").on(
+      table.patientId,
+      table.granteeId,
+      table.status,
+    ),
     index("consents_expires_at_idx").on(table.expiresAt),
   ],
 );

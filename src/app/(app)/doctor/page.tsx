@@ -1,6 +1,5 @@
 import { QrCodeIcon } from 'lucide-react';
 
-import { DoctorConsentForm } from '@/components/doctor-consent-form';
 import { PageHeader } from '@/components/page-header';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
@@ -47,14 +46,16 @@ export default async function DoctorPage({
               </span>
               <div>
                 <CardTitle>{t('doctor.openRecord')}</CardTitle>
-                <CardDescription>{t('doctor.openRecordDescription')}</CardDescription>
+                <CardDescription>
+                  {t('doctor.openRecordDescription')}
+                </CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="rounded-2xl border border-dashed bg-muted/30 p-5">
-              <DoctorConsentForm />
-            </div>
+          <CardContent className="pt-6 text-sm">
+            <p className="text-muted-foreground max-w-xl leading-6">
+              {t('doctor.openRecordDescription')}
+            </p>
           </CardContent>
         </Card>
         <Card className="rounded-2xl shadow-sm">
@@ -66,21 +67,29 @@ export default async function DoctorPage({
             <p className="font-mono text-2xl font-semibold">
               {user.doctorId ?? t('doctor.notAssigned')}
             </p>
-            <p className="text-muted-foreground mt-2 text-sm">{t('doctor.revokeNotice')}</p>
+            <p className="text-muted-foreground mt-2 text-sm">
+              {t('doctor.revokeNotice')}
+            </p>
           </CardContent>
         </Card>
         <Card className="rounded-2xl shadow-sm">
           <CardHeader className="border-b">
             <CardTitle>{t('doctor.consultationHours')}</CardTitle>
-            <CardDescription>{t('doctor.consultationHoursDescription')}</CardDescription>
+            <CardDescription>
+              {t('doctor.consultationHoursDescription')}
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3 text-sm">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground">{t('doctor.morningConsultation')}</span>
+              <span className="text-muted-foreground">
+                {t('doctor.morningConsultation')}
+              </span>
               <span className="font-medium">10:00 - 13:00</span>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground">{t('doctor.eveningConsultation')}</span>
+              <span className="text-muted-foreground">
+                {t('doctor.eveningConsultation')}
+              </span>
               <span className="font-medium">17:00 - 20:00</span>
             </div>
           </CardContent>

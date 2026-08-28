@@ -14,7 +14,12 @@ import {
   structuredData,
   users,
 } from "@/db/schema";
-import { createConsentCode, hashIdentifier, maskPhone } from "@/lib/identity";
+import {
+  createConsentCode,
+  createShareToken,
+  hashIdentifier,
+  maskPhone,
+} from "@/lib/identity";
 import {
   createEmergencyPreview,
   readEmergencyPreview,
@@ -358,6 +363,7 @@ export async function createMockUser(input: {
       phone: input.phone,
       role: input.role,
       aadhaarHash: input.aadhaar ? hashIdentifier(input.aadhaar) : null,
+      shareToken: input.role === "patient" ? createShareToken() : null,
       doctorId:
         input.role === "doctor" ? `HPR-DEMO-${input.phone.slice(-4)}` : null,
     })
@@ -417,10 +423,24 @@ export async function getPatientWorkspace() {
     .orderBy(desc(documents.uploadedAt));
 
   const activeConsents = await db
-    .select()
+    .select({
+      consent: consents,
+      doctor: {
+        id: users.id,
+        name: users.name,
+        doctorId: users.doctorId,
+      },
+    })
     .from(consents)
-    .where(and(eq(consents.patientId, user.id), eq(consents.status, "active")))
-    .orderBy(desc(consents.grantedAt));
+    .innerJoin(users, eq(consents.granteeId, users.id))
+    .where(
+      and(
+        eq(consents.patientId, user.id),
+        eq(consents.status, "active"),
+        eq(users.role, "doctor"),
+      ),
+    )
+    .orderBy(desc(consents.lastAuthenticatedAt), desc(consents.grantedAt));
 
   const intakes = await db
     .select()
@@ -469,6 +489,7 @@ export async function getPatientWorkspace() {
 
   return {
     user: toSafeUser(user),
+    shareToken: user.shareToken,
     profile,
     documents: docs,
     activeConsents,
@@ -1030,7 +1051,7 @@ async function getValidConsent(code: string, viewerId: string) {
   if (
     !consent ||
     consent.status !== "active" ||
-    consent.expiresAt <= new Date()
+    (consent.expiresAt && consent.expiresAt <= new Date())
   ) {
     throw new ConsentAccessError("access_unavailable");
   }
@@ -1043,6 +1064,105 @@ async function getValidConsent(code: string, viewerId: string) {
   }
 
   return consent;
+}
+
+export async function redeemPatientQrForCurrentDoctor(shareToken: string) {
+  const viewer = await requireUser(["doctor"]);
+  const [patient] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(
+      and(
+        eq(users.shareToken, shareToken),
+        eq(users.role, "patient"),
+        eq(users.status, "active"),
+      ),
+    )
+    .limit(1);
+
+  if (!patient) {
+    throw new ConsentAccessError("access_unavailable");
+  }
+
+  const now = new Date();
+  const [activeConsent] = await db
+    .select()
+    .from(consents)
+    .where(
+      and(
+        eq(consents.patientId, patient.id),
+        eq(consents.granteeId, viewer.id),
+        eq(consents.status, "active"),
+      ),
+    )
+    .orderBy(desc(consents.grantedAt))
+    .limit(1);
+
+  if (activeConsent) {
+    await db
+      .update(consents)
+      .set({
+        durationMinutes: null,
+        expiresAt: null,
+        lastAuthenticatedAt: now,
+      })
+      .where(eq(consents.id, activeConsent.id));
+    await logAudit(viewer.id, "QR_SHARE_SCANNED", "patient", patient.id, {
+      patientId: patient.id,
+      consentId: activeConsent.id,
+    });
+    return activeConsent.code;
+  }
+
+  const [previousConsent] = await db
+    .select()
+    .from(consents)
+    .where(
+      and(
+        eq(consents.patientId, patient.id),
+        eq(consents.granteeId, viewer.id),
+      ),
+    )
+    .orderBy(desc(consents.grantedAt))
+    .limit(1);
+
+  const consentValues = {
+    code: createConsentCode(),
+    status: "active" as const,
+    grantedAt: now,
+    durationMinutes: null,
+    expiresAt: null,
+    revokedAt: null,
+    lastAuthenticatedAt: now,
+  };
+
+  const [consent] = previousConsent
+    ? await db
+        .update(consents)
+        .set(consentValues)
+        .where(eq(consents.id, previousConsent.id))
+        .returning()
+    : await db
+        .insert(consents)
+        .values({
+          patientId: patient.id,
+          granteeId: viewer.id,
+          ...consentValues,
+        })
+        .returning();
+
+  await logAudit(
+    viewer.id,
+    previousConsent ? "QR_SHARE_REGRANTED" : "QR_SHARE_GRANTED",
+    "patient",
+    patient.id,
+    {
+      patientId: patient.id,
+      consentId: consent.id,
+    },
+  );
+
+  return consent.code;
 }
 
 export async function redeemConsentForCurrentUser(code: string) {

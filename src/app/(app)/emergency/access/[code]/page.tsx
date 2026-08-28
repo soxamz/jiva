@@ -79,7 +79,7 @@ export default async function EmergencyAccessPage({
           <AlarmClockIcon className="size-5" aria-hidden />
           <span className="font-mono text-lg font-semibold tabular-nums">
             {t("emergencyView.remaining", {
-              count: minutesUntil(data.consent.expiresAt),
+              count: minutesUntil(data.consent.expiresAt ?? new Date()),
             })}
           </span>
         </div>

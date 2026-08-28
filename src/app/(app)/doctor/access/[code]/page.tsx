@@ -77,12 +77,14 @@ export default async function DoctorAccessPage({
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border bg-card p-5 shadow-sm">
         <PatientProfileStrip
           name={data.patient.name}
-          subtitle={t("doctor.activeConsent", { code: data.consent.code })}
+          subtitle={t("doctor.activeConsent")}
         />
         <StatusPill tone="info">
-          {t("doctor.remaining", {
-            count: minutesUntil(data.consent.expiresAt),
-          })}
+          {data.consent.expiresAt
+            ? t("doctor.remaining", {
+                count: minutesUntil(data.consent.expiresAt),
+              })
+            : t("share.activeUntilRevoked")}
         </StatusPill>
       </div>
 

@@ -66,7 +66,8 @@ const english = {
   'auth.responder': 'Emergency responder?',
   'auth.useBreakGlass': 'Use break-glass',
   'auth.signUpTitle': 'Create demo account',
-  'auth.signUpDescription': 'Register a patient, doctor, or responder profile for the prototype.',
+  'auth.signUpDescription':
+    'Register a patient, doctor, or responder profile for the prototype.',
   'auth.name': 'Name',
   'auth.mobile': 'Mobile number',
   'auth.aadhaar': 'Aadhaar number',
@@ -93,10 +94,12 @@ const english = {
   'dashboard.activeAccess': '{count} active',
   'dashboard.shareRecords': 'Share records',
   'dashboard.addMedicalRecord': 'Add a medical record',
-  'dashboard.addMedicalRecordDescription': 'Add a report, prescription, or discharge summary.',
+  'dashboard.addMedicalRecordDescription':
+    'Add a report, prescription, or discharge summary.',
   'dashboard.add': 'Add',
   'dashboard.checkSymptoms': 'Ask Arohi',
-  'dashboard.checkSymptomsDescription': 'Tell us what you are feeling before a doctor visit.',
+  'dashboard.checkSymptomsDescription':
+    'Tell us what you are feeling before a doctor visit.',
   'dashboard.check': 'Chat now',
   'dashboard.shareWithDoctor': 'Share with a doctor',
   'dashboard.shareWithDoctorDescription':
@@ -104,11 +107,13 @@ const english = {
   'dashboard.quickActions': 'Quick actions',
   'dashboard.quickActionsDescription': 'Common tasks for your health record.',
   'dashboard.recentUpdates': 'Your health timeline',
-  'dashboard.recentUpdatesDescription': 'Your latest records and symptom checks.',
+  'dashboard.recentUpdatesDescription':
+    'Your latest records and symptom checks.',
   'dashboard.noUpdates': 'No health updates yet.',
   'dashboard.viewUpdates': 'View full timeline',
   'dashboard.importantInformation': 'Important health information',
-  'dashboard.importantInformationDescription': 'Useful details for you and your care team.',
+  'dashboard.importantInformationDescription':
+    'Useful details for you and your care team.',
   'dashboard.bloodGroup': 'Blood group',
   'dashboard.notAdded': 'Not added',
   'dashboard.medicines': 'Medicines',
@@ -118,16 +123,19 @@ const english = {
   'dashboard.editHealthInformation': 'Edit health information',
   'dashboard.openEmergencyCard': 'Open emergency card',
   'dashboard.latestSymptomCheck': 'Latest symptom check',
-  'dashboard.latestSymptomDescription': 'Saved so you can discuss it with a doctor.',
+  'dashboard.latestSymptomDescription':
+    'Saved so you can discuss it with a doctor.',
   'dashboard.needsAttention': 'Needs quick attention',
   'dashboard.saved': 'Saved',
   'dashboard.noSymptomCheck': 'You have not checked any symptoms yet.',
   'dashboard.emergencyContacts': 'Emergency contacts',
-  'dashboard.emergencyContactsDescription': 'People who can be contacted if you need help.',
+  'dashboard.emergencyContactsDescription':
+    'People who can be contacted if you need help.',
   'dashboard.noEmergencyContacts': 'No emergency contacts added.',
   'dashboard.updateContacts': 'Update contacts',
   'dashboard.recordAccess': 'Record access',
-  'dashboard.recordAccessDescription': 'Only share records for as long as you choose.',
+  'dashboard.recordAccessDescription':
+    'Only share records for as long as you choose.',
   'dashboard.noDoctorAccess': 'No doctor has access to your records.',
   'dashboard.manageAccess': 'Manage access',
   'dashboard.minutesLeft': '{count} min left',
@@ -135,7 +143,8 @@ const english = {
     'You have a symptom check marked for quick attention. Please contact a healthcare professional if you need help.',
   'health.record': 'Your health record',
   'health.title': 'Health information',
-  'health.description': 'Keep these details current so they are ready when care is needed.',
+  'health.description':
+    'Keep these details current so they are ready when care is needed.',
   'health.viewEmergencyCard': 'View emergency card',
   'health.emergencyDetails': 'Emergency health details',
   'health.emergencyDetailsDescription':
@@ -143,14 +152,16 @@ const english = {
   'health.criticalConditions': 'Critical conditions',
   'health.currentMedicines': 'Current medicines',
   'health.separateComma': 'Separate each item with a comma.',
-  'health.contactsFormat': 'Use one contact per line: name | relation | phone number.',
+  'health.contactsFormat':
+    'Use one contact per line: name | relation | phone number.',
   'health.save': 'Save health information',
   'timeline.title': 'Your health updates',
   'timeline.description': 'Records and symptom checks in date order.',
   'timeline.allUpdates': 'All updates',
   'timeline.allUpdatesDescription': 'Review what you have added and when.',
   'documents.title': 'Your medical records',
-  'documents.description': 'Keep reports, prescriptions, and discharge summaries in one place.',
+  'documents.description':
+    'Keep reports, prescriptions, and discharge summaries in one place.',
   'documents.upload': 'Upload record',
   'documents.uploadDescription': 'PDF, JPG, or PNG under 10MB.',
   'documents.documentType': 'Document type',
@@ -158,7 +169,8 @@ const english = {
   'documents.notes': 'Notes',
   'documents.add': 'Add record',
   'documents.saved': 'Saved records',
-  'documents.savedDescription': 'Your records are ready when you need to share them.',
+  'documents.savedDescription':
+    'Your records are ready when you need to share them.',
   'documents.document': 'Document',
   'documents.type': 'Type',
   'documents.size': 'Size',
@@ -171,7 +183,8 @@ const english = {
   'documents.empty': 'No records uploaded yet.',
   'documents.uploading': 'Uploading and extracting…',
   'documents.ocrHighlights': 'Extracted details',
-  'documents.ocrNoHighlights': 'No structured fields were extracted for this file.',
+  'documents.ocrNoHighlights':
+    'No structured fields were extracted for this file.',
   'documents.openFile': 'Open uploaded file',
   'overview.eyebrow': 'Clinical overview',
   'overview.pageTitle': 'Clinical Overview',
@@ -203,11 +216,13 @@ const english = {
   'overview.sourceMl3': 'Generated with Clinical Intelligence (ML3)',
   'overview.sourceStored': 'From saved intake clinical summary',
   'overview.sourceLocal': 'Draft from recent clinical history',
-  'overview.ml3FallbackNote': 'ML3 was unavailable; showing history-based draft.',
+  'overview.ml3FallbackNote':
+    'ML3 was unavailable; showing history-based draft.',
   'overview.startIntake': 'Start symptom check',
   'overview.uploadLabs': 'Upload records',
   'overview.summaryTitle': 'Physician Summary Engine',
-  'overview.summaryDescription': 'Draft narrative for your care team from the selected window.',
+  'overview.summaryDescription':
+    'Draft narrative for your care team from the selected window.',
   'overview.generated': 'Generated {date}',
   'overview.basedOnRecords': 'based on {count} vault records',
   'overview.engineFooter': 'Summary generated by Arohi for your care team',
@@ -228,7 +243,8 @@ const english = {
   'overview.actionsDescription': 'Next steps pulled from the draft summary.',
   'overview.actionsEmpty': 'No suggested actions in this summary.',
   'overview.medsTitle': 'Active medications',
-  'overview.medsDescription': 'From profile, window OCR, and clinical synthesis.',
+  'overview.medsDescription':
+    'From profile, window OCR, and clinical synthesis.',
   'overview.medsEmpty': 'No medications recorded.',
   'overview.medsItems': '{count} items',
   'overview.medCompliant': 'Compliant',
@@ -236,7 +252,8 @@ const english = {
   'overview.medsViewAll': 'View full medication list',
   'overview.historyTitle': 'Recent clinical history',
   'overview.historyDescription': 'Recent symptom checks and document uploads.',
-  'overview.historyWeekDescription': 'Symptom checks and documents from the past 7 days.',
+  'overview.historyWeekDescription':
+    'Symptom checks and documents from the past 7 days.',
   'overview.historyWindowDescription':
     'Conversational AI intakes and OCR documents from the past {count} days.',
   'overview.historyEmpty': 'No recent history yet.',
@@ -245,7 +262,8 @@ const english = {
   'intake.title': 'Tell us how you feel',
   'intake.description': 'Share your symptoms before you meet a doctor.',
   'intake.describe': 'Describe your symptoms',
-  'intake.describeDescription': 'Answer in your own words. Urgent symptoms will be highlighted.',
+  'intake.describeDescription':
+    'Answer in your own words. Urgent symptoms will be highlighted.',
   'intake.chiefComplaint': 'What is troubling you?',
   'intake.duration': 'When did it begin?',
   'intake.location': 'Where do you feel it?',
@@ -258,19 +276,26 @@ const english = {
   'intake.previous': 'Previous symptom checks',
   'intake.previousDescription': 'A summary is saved for you and your doctor.',
   'share.title': 'Share your records',
-  'share.description': 'Give a doctor temporary access. You can stop it anytime.',
-  'share.create': 'Create doctor access',
-  'share.createDescription': 'Access stays open for 2 hours by default, up to 24 hours.',
-  'share.doctorId': 'Doctor ID',
-  'share.duration': 'How long should access stay open?',
-  'share.createCode': 'Create access code',
+  'share.description':
+    'Let a verified doctor scan your personal QR code. You can revoke access anytime.',
+  'share.create': 'Your doctor access QR',
+  'share.createDescription':
+    'This QR is unique to you. Doctors must sign in before your records can be opened.',
+  'share.downloadPng': 'Download PNG',
+  'share.downloadSvg': 'Download SVG',
+  'share.qrLoading': 'Preparing your QR code...',
   'share.people': 'People with access',
   'share.peopleDescription': 'You can stop access immediately from this list.',
   'share.granted': 'Granted',
-  'share.expires': 'Expires',
-  'share.action': 'Action',
+  'share.lastAuthenticated': 'Last authenticated',
+  'share.doctorId': 'Doctor ID',
   'share.stop': 'Stop access',
-  'share.none': 'No active consent links.',
+  'share.none': 'No doctor has access yet.',
+  'share.activeUntilRevoked': 'Active until you revoke it',
+  'share.doctorRequiredTitle': 'Doctor account required',
+  'share.doctorRequiredDescription':
+    'This patient QR can only be opened by an authenticated doctor account.',
+  'share.returnToSignIn': 'Sign in as a doctor',
   'emergency.title': 'Emergency Break-Glass',
   'emergency.description':
     'Mock responder flow. Every access is logged as an immutable audit event.',
@@ -278,7 +303,8 @@ const english = {
   'emergency.overrideDescription':
     'Use patient phone 9876543210 or Aadhaar 123412341234 to open a 1-hour emergency view.',
   'emergency.terminal': 'Responder terminal',
-  'emergency.terminalDescription': 'Provide a patient identifier and reason code.',
+  'emergency.terminalDescription':
+    'Provide a patient identifier and reason code.',
   'emergency.patientIdentifier': 'Patient phone or Aadhaar',
   'emergency.reason': 'Emergency reason',
   'emergency.initiate': 'Initiate audited access',
@@ -290,20 +316,24 @@ const english = {
   'emergencyView.criticalInformationDescription':
     'Use this information only to provide immediate emergency care.',
   'emergencyView.conditions': 'Critical conditions',
-  'emergencyView.contactsDescription': 'Call these contacts when it is safe and appropriate.',
+  'emergencyView.contactsDescription':
+    'Call these contacts when it is safe and appropriate.',
   'emergencyView.recentAlerts': 'Recent urgent health alerts',
-  'emergencyView.recentAlertsDescription': 'Recent symptom checks marked for urgent attention.',
+  'emergencyView.recentAlertsDescription':
+    'Recent symptom checks marked for urgent attention.',
   'emergencyView.noRecentAlerts': 'No recent urgent symptom checks.',
   'emergencyCard.title': 'Emergency card',
   'emergencyCard.description':
     'Important health details for you, your family, and first responders.',
   'emergencyCard.verified': 'Verified profile',
-  'emergencyCard.verifiedDescription': 'Important information available quickly in an emergency.',
+  'emergencyCard.verifiedDescription':
+    'Important information available quickly in an emergency.',
   'emergencyCard.bloodType': 'Blood type',
   'emergencyCard.noAllergies': 'No allergies listed',
   'emergencyCard.noneListed': 'None listed',
   'accessLog.title': 'Activity on your records',
-  'accessLog.description': 'See when your records were added, shared, or opened.',
+  'accessLog.description':
+    'See when your records were added, shared, or opened.',
   'accessLog.recent': 'Recent activity',
   'accessLog.recentDescription':
     'Everything important that happens to your records is listed here.',
@@ -311,27 +341,31 @@ const english = {
   'accessLog.related': 'Related record',
   'accessLog.time': 'Time',
   'doctor.title': 'Doctor portal',
-  'doctor.signedIn': 'Signed in as {name}. Redeem an active patient consent code.',
+  'doctor.signedIn': 'Signed in as {name}. Scan a patient QR to open a record.',
   'doctor.doctorId': 'Your doctor ID',
-  'doctor.doctorIdDescription': 'Give this ID to a patient when they share records with you.',
+  'doctor.doctorIdDescription':
+    'Your professional ID is shown to patients after you authenticate with their QR.',
   'doctor.notAssigned': 'Not assigned',
   'doctor.consultationHours': 'Consultation hours',
   'doctor.consultationHoursDescription': 'Demo availability for today.',
   'doctor.morningConsultation': 'Morning clinic',
   'doctor.eveningConsultation': 'Evening clinic',
   'doctor.openRecord': 'Open patient record',
-  'doctor.openRecordDescription': 'Use the patient-issued code to view a time-bound record.',
+  'doctor.openRecordDescription':
+    'Use your phone camera to scan a patient’s JivaHQ QR code, then sign in to continue.',
   'doctor.consentCode': 'Consent code or PIN',
   'doctor.accessSummary': 'Access patient summary',
   'doctor.checkingAccess': 'Checking access...',
   'doctor.accessDeniedTitle': 'Access unavailable',
   'doctor.accessBoundMessage':
     'This record has been shared with another clinician. Ask the patient to create a new access code for you.',
-  'doctor.accessUnavailableMessage': 'This access code is invalid, expired, or has been revoked.',
+  'doctor.accessUnavailableMessage':
+    'This access code is invalid, expired, or has been revoked.',
   'doctor.demoAccess': 'Demo access',
   'doctor.demoAccessDescription': 'For the seeded doctor account.',
-  'doctor.revokeNotice': 'The patient can revoke the code from consent sharing at any time.',
-  'doctor.activeConsent': 'Active consent code {code}',
+  'doctor.revokeNotice':
+    'The patient can revoke access from their sharing page at any time.',
+  'doctor.activeConsent': 'Access approved through the patient QR',
   'doctor.remaining': '{count} min remaining',
   'doctor.criticalProfile': 'Critical profile',
   'doctor.criticalProfileDescription': 'Emergency and safety context.',
@@ -341,10 +375,12 @@ const english = {
   'doctor.redFlag': 'red flag',
   'doctor.routine': 'routine',
   'doctor.patientRecords': 'Patient records',
-  'doctor.patientRecordsDescription': 'Structured values extracted from uploaded metadata.',
+  'doctor.patientRecordsDescription':
+    'Structured values extracted from uploaded metadata.',
   'doctor.confidence': 'Confidence',
   'doctor.addNote': 'Add note or prescription',
-  'doctor.addNoteDescription': 'This creates a patient timeline record and audit log.',
+  'doctor.addNoteDescription':
+    'This creates a patient timeline record and audit log.',
   'doctor.clinicalNote': 'Clinical note',
   'doctor.saveNote': 'Save note to patient vault',
 } as const;
@@ -373,7 +409,8 @@ const dictionaries: Record<Locale, Messages> = {
     'nav.accessLog': 'पहुंच लॉग',
     'nav.emergencyCard': 'आपातकालीन कार्ड',
     'auth.signInTitle': 'सुरक्षित नैदानिक पहुंच',
-    'auth.signInDescription': 'डेमो OTP से साइन इन करें। OTP 123456 का उपयोग करें।',
+    'auth.signInDescription':
+      'डेमो OTP से साइन इन करें। OTP 123456 का उपयोग करें।',
     'auth.identifier': 'आधार / मोबाइल नंबर',
     'auth.otp': 'एक बार का पासवर्ड',
     'auth.verify': 'सत्यापित करें और साइन इन करें',
@@ -398,7 +435,8 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.emergencyContacts': 'आपातकालीन संपर्क',
     'dashboard.recordAccess': 'रिकॉर्ड पहुंच',
     'dashboard.manageAccess': 'पहुंच प्रबंधित करें',
-    'dashboard.readyForVisit': 'अगली डॉक्टर मुलाकात के लिए अपने रिकॉर्ड तैयार रखें।',
+    'dashboard.readyForVisit':
+      'अगली डॉक्टर मुलाकात के लिए अपने रिकॉर्ड तैयार रखें।',
     'dashboard.addOrViewRecords': 'रिकॉर्ड जोड़ें या देखें',
     'dashboard.emergencyInformation': 'आपातकालीन जानकारी',
     'dashboard.ready': '{percent}% तैयार',
@@ -406,10 +444,12 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.noAccess': 'कोई सक्रिय पहुंच नहीं',
     'dashboard.activeAccess': '{count} सक्रिय',
     'dashboard.addMedicalRecord': 'मेडिकल रिकॉर्ड जोड़ें',
-    'dashboard.addMedicalRecordDescription': 'रिपोर्ट, पर्ची या डिस्चार्ज सारांश जोड़ें।',
+    'dashboard.addMedicalRecordDescription':
+      'रिपोर्ट, पर्ची या डिस्चार्ज सारांश जोड़ें।',
     'dashboard.add': 'जोड़ें',
     'dashboard.checkSymptoms': 'Ask Arohi',
-    'dashboard.checkSymptomsDescription': 'डॉक्टर से मिलने से पहले हमें अपनी तकलीफ बताएं।',
+    'dashboard.checkSymptomsDescription':
+      'डॉक्टर से मिलने से पहले हमें अपनी तकलीफ बताएं।',
     'dashboard.check': 'चैट करें',
     'dashboard.shareWithDoctor': 'डॉक्टर के साथ साझा करें',
     'dashboard.shareWithDoctorDescription':
@@ -417,20 +457,25 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.recentUpdatesDescription': 'आपके नवीनतम रिकॉर्ड और लक्षण जांच।',
     'dashboard.noUpdates': 'अभी तक कोई स्वास्थ्य अपडेट नहीं है।',
     'dashboard.viewUpdates': 'सभी अपडेट देखें',
-    'dashboard.importantInformationDescription': 'आप और आपकी देखभाल टीम के लिए उपयोगी जानकारी।',
+    'dashboard.importantInformationDescription':
+      'आप और आपकी देखभाल टीम के लिए उपयोगी जानकारी।',
     'dashboard.notAdded': 'नहीं जोड़ा गया',
     'dashboard.noMedicines': 'कोई दवा नहीं जोड़ी गई।',
     'dashboard.noAllergies': 'कोई एलर्जी नहीं जोड़ी गई।',
     'dashboard.openEmergencyCard': 'आपातकालीन कार्ड खोलें',
-    'dashboard.latestSymptomDescription': 'सहेजा गया ताकि आप डॉक्टर से इस पर चर्चा कर सकें।',
+    'dashboard.latestSymptomDescription':
+      'सहेजा गया ताकि आप डॉक्टर से इस पर चर्चा कर सकें।',
     'dashboard.needsAttention': 'तुरंत ध्यान चाहिए',
     'dashboard.saved': 'सहेजा गया',
     'dashboard.noSymptomCheck': 'आपने अभी तक कोई लक्षण जांच नहीं की है।',
-    'dashboard.emergencyContactsDescription': 'जिन लोगों से जरूरत पड़ने पर संपर्क किया जा सकता है।',
+    'dashboard.emergencyContactsDescription':
+      'जिन लोगों से जरूरत पड़ने पर संपर्क किया जा सकता है।',
     'dashboard.noEmergencyContacts': 'कोई आपातकालीन संपर्क नहीं जोड़ा गया।',
     'dashboard.updateContacts': 'संपर्क अपडेट करें',
-    'dashboard.recordAccessDescription': 'रिकॉर्ड केवल उतने समय के लिए साझा करें जितना आप चुनें।',
-    'dashboard.noDoctorAccess': 'किसी डॉक्टर के पास आपके रिकॉर्ड की पहुंच नहीं है।',
+    'dashboard.recordAccessDescription':
+      'रिकॉर्ड केवल उतने समय के लिए साझा करें जितना आप चुनें।',
+    'dashboard.noDoctorAccess':
+      'किसी डॉक्टर के पास आपके रिकॉर्ड की पहुंच नहीं है।',
     'dashboard.minutesLeft': '{count} मिनट बाकी',
     'dashboard.urgentNotice':
       'एक लक्षण जांच पर तुरंत ध्यान देने का निशान है। जरूरत हो तो स्वास्थ्य विशेषज्ञ से संपर्क करें।',
@@ -441,7 +486,8 @@ const dictionaries: Record<Locale, Messages> = {
     'doctor.accessDeniedTitle': 'पहुंच उपलब्ध नहीं है',
     'doctor.accessBoundMessage':
       'यह रिकॉर्ड किसी अन्य चिकित्सक के साथ साझा किया गया है। मरीज से आपके लिए नया एक्सेस कोड बनाने को कहें।',
-    'doctor.accessUnavailableMessage': 'यह एक्सेस कोड अमान्य, समाप्त या रद्द हो चुका है।',
+    'doctor.accessUnavailableMessage':
+      'यह एक्सेस कोड अमान्य, समाप्त या रद्द हो चुका है।',
   }),
   or: dictionary({
     'header.patientWorkspace': 'ରୋଗୀ କାର୍ଯ୍ୟକ୍ଷେତ୍ର',
@@ -481,7 +527,8 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.emergencyContacts': 'ଜରୁରୀ ସମ୍ପର୍କ',
     'dashboard.recordAccess': 'ରେକର୍ଡ ପ୍ରବେଶ',
     'dashboard.manageAccess': 'ପ୍ରବେଶ ପରିଚାଳନା କରନ୍ତୁ',
-    'dashboard.readyForVisit': 'ପରବର୍ତ୍ତୀ ଡାକ୍ତର ଦେଖା ପାଇଁ ଆପଣଙ୍କ ରେକର୍ଡ ପ୍ରସ୍ତୁତ ରଖନ୍ତୁ।',
+    'dashboard.readyForVisit':
+      'ପରବର୍ତ୍ତୀ ଡାକ୍ତର ଦେଖା ପାଇଁ ଆପଣଙ୍କ ରେକର୍ଡ ପ୍ରସ୍ତୁତ ରଖନ୍ତୁ।',
     'dashboard.addOrViewRecords': 'ରେକର୍ଡ ଯୋଡନ୍ତୁ କିମ୍ବା ଦେଖନ୍ତୁ',
     'dashboard.emergencyInformation': 'ଜରୁରୀ ସୂଚନା',
     'dashboard.ready': '{percent}% ପ୍ରସ୍ତୁତ',
@@ -499,10 +546,12 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.shareWithDoctor': 'ଡାକ୍ତରଙ୍କ ସହ ସେୟାର କରନ୍ତୁ',
     'dashboard.shareWithDoctorDescription':
       'ଡାକ୍ତରଙ୍କୁ ଅସ୍ଥାୟୀ ପ୍ରବେଶ ଦିଅନ୍ତୁ, ଯାହାକୁ ଆପଣ ଯେକୌଣସି ସମୟରେ ବନ୍ଦ କରିପାରିବେ।',
-    'dashboard.recentUpdatesDescription': 'ଆପଣଙ୍କ ସାମ୍ପ୍ରତିକ ରେକର୍ଡ ଏବଂ ଲକ୍ଷଣ ଯାଞ୍ଚ।',
+    'dashboard.recentUpdatesDescription':
+      'ଆପଣଙ୍କ ସାମ୍ପ୍ରତିକ ରେକର୍ଡ ଏବଂ ଲକ୍ଷଣ ଯାଞ୍ଚ।',
     'dashboard.noUpdates': 'ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ସ୍ୱାସ୍ଥ୍ୟ ଅପଡେଟ୍ ନାହିଁ।',
     'dashboard.viewUpdates': 'ସମସ୍ତ ଅପଡେଟ୍ ଦେଖନ୍ତୁ',
-    'dashboard.importantInformationDescription': 'ଆପଣ ଏବଂ ଆପଣଙ୍କ ସେବା ଦଳ ପାଇଁ ଉପଯୋଗୀ ସୂଚନା।',
+    'dashboard.importantInformationDescription':
+      'ଆପଣ ଏବଂ ଆପଣଙ୍କ ସେବା ଦଳ ପାଇଁ ଉପଯୋଗୀ ସୂଚନା।',
     'dashboard.notAdded': 'ଯୋଡାଯାଇନାହିଁ',
     'dashboard.noMedicines': 'କୌଣସି ଔଷଧ ଯୋଡାଯାଇନାହିଁ।',
     'dashboard.noAllergies': 'କୌଣସି ଆଲର୍ଜି ଯୋଡାଯାଇନାହିଁ।',
@@ -512,22 +561,26 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.needsAttention': 'ଶୀଘ୍ର ଧ୍ୟାନ ଆବଶ୍ୟକ',
     'dashboard.saved': 'ସଞ୍ଚୟ ହୋଇଛି',
     'dashboard.noSymptomCheck': 'ଆପଣ ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଲକ୍ଷଣ ଯାଞ୍ଚ କରିନାହାନ୍ତି।',
-    'dashboard.emergencyContactsDescription': 'ଆବଶ୍ୟକ ସମୟରେ ଯେଉଁମାନଙ୍କୁ ସମ୍ପର୍କ କରାଯାଇପାରିବ।',
+    'dashboard.emergencyContactsDescription':
+      'ଆବଶ୍ୟକ ସମୟରେ ଯେଉଁମାନଙ୍କୁ ସମ୍ପର୍କ କରାଯାଇପାରିବ।',
     'dashboard.noEmergencyContacts': 'କୌଣସି ଜରୁରୀ ସମ୍ପର୍କ ଯୋଡାଯାଇନାହିଁ।',
     'dashboard.updateContacts': 'ସମ୍ପର୍କ ଅପଡେଟ୍ କରନ୍ତୁ',
-    'dashboard.recordAccessDescription': 'ଆପଣ ବାଛିଥିବା ସମୟ ପର୍ଯ୍ୟନ୍ତ ମାତ୍ର ରେକର୍ଡ ସେୟାର କରନ୍ତୁ।',
+    'dashboard.recordAccessDescription':
+      'ଆପଣ ବାଛିଥିବା ସମୟ ପର୍ଯ୍ୟନ୍ତ ମାତ୍ର ରେକର୍ଡ ସେୟାର କରନ୍ତୁ।',
     'dashboard.noDoctorAccess': 'କୌଣସି ଡାକ୍ତରଙ୍କର ଆପଣଙ୍କ ରେକର୍ଡ ପ୍ରବେଶ ନାହିଁ।',
     'dashboard.minutesLeft': '{count} ମିନିଟ ବାକି',
     'dashboard.urgentNotice':
       'ଏକ ଲକ୍ଷଣ ଯାଞ୍ଚରେ ଶୀଘ୍ର ଧ୍ୟାନର ଚିହ୍ନ ଅଛି। ଆବଶ୍ୟକ ହେଲେ ସ୍ୱାସ୍ଥ୍ୟ ବିଶେଷଜ୍ଞଙ୍କ ସହ ଯୋଗାଯୋଗ କରନ୍ତୁ।',
     'doctor.doctorId': 'ଆପଣଙ୍କ ଡାକ୍ତର ଆଇଡି',
-    'doctor.doctorIdDescription': 'ରେକର୍ଡ ସେୟାର କରିବା ସମୟରେ ରୋଗୀଙ୍କୁ ଏହି ଆଇଡି ଦିଅନ୍ତୁ।',
+    'doctor.doctorIdDescription':
+      'ରେକର୍ଡ ସେୟାର କରିବା ସମୟରେ ରୋଗୀଙ୍କୁ ଏହି ଆଇଡି ଦିଅନ୍ତୁ।',
     'doctor.notAssigned': 'ନିର୍ଦ୍ଧାରିତ ହୋଇନାହିଁ',
     'doctor.checkingAccess': 'ପ୍ରବେଶ ଯାଞ୍ଚ ହେଉଛି...',
     'doctor.accessDeniedTitle': 'ପ୍ରବେଶ ଉପଲବ୍ଧ ନାହିଁ',
     'doctor.accessBoundMessage':
       'ଏହି ରେକର୍ଡ ଅନ୍ୟ ଜଣେ ଚିକିତ୍ସକଙ୍କ ସହ ସେୟାର ହୋଇଛି। ରୋଗୀଙ୍କୁ ଆପଣଙ୍କ ପାଇଁ ନୂଆ ଆକ୍ସେସ କୋଡ ତିଆରି କରିବାକୁ କୁହନ୍ତୁ।',
-    'doctor.accessUnavailableMessage': 'ଏହି ଆକ୍ସେସ କୋଡ ଅବୈଧ, ସମାପ୍ତ କିମ୍ବା ରଦ୍ଦ ହୋଇଛି।',
+    'doctor.accessUnavailableMessage':
+      'ଏହି ଆକ୍ସେସ କୋଡ ଅବୈଧ, ସମାପ୍ତ କିମ୍ବା ରଦ୍ଦ ହୋଇଛି।',
   }),
   bn: dictionary({
     'header.patientWorkspace': 'রোগীর কর্মক্ষেত্র',
@@ -567,7 +620,8 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.emergencyContacts': 'জরুরি যোগাযোগ',
     'dashboard.recordAccess': 'রেকর্ড অ্যাক্সেস',
     'dashboard.manageAccess': 'অ্যাক্সেস পরিচালনা করুন',
-    'dashboard.readyForVisit': 'পরের ডাক্তার দেখানোর জন্য আপনার রেকর্ড প্রস্তুত রাখুন।',
+    'dashboard.readyForVisit':
+      'পরের ডাক্তার দেখানোর জন্য আপনার রেকর্ড প্রস্তুত রাখুন।',
     'dashboard.addOrViewRecords': 'রেকর্ড যোগ করুন বা দেখুন',
     'dashboard.emergencyInformation': 'জরুরি তথ্য',
     'dashboard.ready': '{percent}% প্রস্তুত',
@@ -575,7 +629,8 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.noAccess': 'কোনও সক্রিয় অ্যাক্সেস নেই',
     'dashboard.activeAccess': '{count} সক্রিয়',
     'dashboard.addMedicalRecord': 'চিকিৎসার রেকর্ড যোগ করুন',
-    'dashboard.addMedicalRecordDescription': 'রিপোর্ট, প্রেসক্রিপশন বা ছাড়পত্রের সারাংশ যোগ করুন।',
+    'dashboard.addMedicalRecordDescription':
+      'রিপোর্ট, প্রেসক্রিপশন বা ছাড়পত্রের সারাংশ যোগ করুন।',
     'dashboard.add': 'যোগ করুন',
     'dashboard.checkSymptoms': 'Ask Arohi',
     'dashboard.checkSymptomsDescription':
@@ -584,10 +639,12 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.shareWithDoctor': 'ডাক্তারের সঙ্গে শেয়ার করুন',
     'dashboard.shareWithDoctorDescription':
       'ডাক্তারকে সাময়িক অ্যাক্সেস দিন, যা আপনি যেকোনও সময় বন্ধ করতে পারবেন।',
-    'dashboard.recentUpdatesDescription': 'আপনার সাম্প্রতিক রেকর্ড ও লক্ষণ পরীক্ষা।',
+    'dashboard.recentUpdatesDescription':
+      'আপনার সাম্প্রতিক রেকর্ড ও লক্ষণ পরীক্ষা।',
     'dashboard.noUpdates': 'এখনও কোনও স্বাস্থ্য আপডেট নেই।',
     'dashboard.viewUpdates': 'সব আপডেট দেখুন',
-    'dashboard.importantInformationDescription': 'আপনি এবং আপনার সেবা দলের জন্য দরকারি তথ্য।',
+    'dashboard.importantInformationDescription':
+      'আপনি এবং আপনার সেবা দলের জন্য দরকারি তথ্য।',
     'dashboard.notAdded': 'যোগ করা হয়নি',
     'dashboard.noMedicines': 'কোনও ওষুধ যোগ করা হয়নি।',
     'dashboard.noAllergies': 'কোনও অ্যালার্জি যোগ করা হয়নি।',
@@ -597,10 +654,12 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.needsAttention': 'দ্রুত নজর দরকার',
     'dashboard.saved': 'সংরক্ষিত',
     'dashboard.noSymptomCheck': 'আপনি এখনও কোনও লক্ষণ পরীক্ষা করেননি।',
-    'dashboard.emergencyContactsDescription': 'প্রয়োজনে যাঁদের সঙ্গে যোগাযোগ করা যাবে।',
+    'dashboard.emergencyContactsDescription':
+      'প্রয়োজনে যাঁদের সঙ্গে যোগাযোগ করা যাবে।',
     'dashboard.noEmergencyContacts': 'কোনও জরুরি যোগাযোগ যোগ করা হয়নি।',
     'dashboard.updateContacts': 'যোগাযোগ আপডেট করুন',
-    'dashboard.recordAccessDescription': 'আপনি যতক্ষণ চান, শুধু ততক্ষণই রেকর্ড শেয়ার করুন।',
+    'dashboard.recordAccessDescription':
+      'আপনি যতক্ষণ চান, শুধু ততক্ষণই রেকর্ড শেয়ার করুন।',
     'dashboard.noDoctorAccess': 'কোনও ডাক্তারের আপনার রেকর্ডে অ্যাক্সেস নেই।',
     'dashboard.minutesLeft': '{count} মিনিট বাকি',
     'dashboard.urgentNotice':
@@ -612,7 +671,8 @@ const dictionaries: Record<Locale, Messages> = {
     'doctor.accessDeniedTitle': 'অ্যাক্সেস উপলব্ধ নেই',
     'doctor.accessBoundMessage':
       'এই রেকর্ড অন্য একজন চিকিৎসকের সঙ্গে শেয়ার করা হয়েছে। রোগীকে আপনার জন্য একটি নতুন অ্যাক্সেস কোড তৈরি করতে বলুন।',
-    'doctor.accessUnavailableMessage': 'এই অ্যাক্সেস কোডটি অবৈধ, মেয়াদ শেষ বা বাতিল করা হয়েছে।',
+    'doctor.accessUnavailableMessage':
+      'এই অ্যাক্সেস কোডটি অবৈধ, মেয়াদ শেষ বা বাতিল করা হয়েছে।',
   }),
   te: dictionary({
     'header.patientWorkspace': 'రోగి కార్యస్థలం',
@@ -652,7 +712,8 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.emergencyContacts': 'అత్యవసర పరిచయాలు',
     'dashboard.recordAccess': 'రికార్డు ప్రవేశం',
     'dashboard.manageAccess': 'ప్రవేశాన్ని నిర్వహించండి',
-    'dashboard.readyForVisit': 'తదుపరి డాక్టర్ సందర్శన కోసం మీ రికార్డులను సిద్ధంగా ఉంచండి.',
+    'dashboard.readyForVisit':
+      'తదుపరి డాక్టర్ సందర్శన కోసం మీ రికార్డులను సిద్ధంగా ఉంచండి.',
     'dashboard.addOrViewRecords': 'రికార్డులను జోడించండి లేదా చూడండి',
     'dashboard.emergencyInformation': 'అత్యవసర సమాచారం',
     'dashboard.ready': '{percent}% సిద్ధంగా ఉంది',
@@ -670,7 +731,8 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.shareWithDoctor': 'డాక్టర్‌తో పంచుకోండి',
     'dashboard.shareWithDoctorDescription':
       'డాక్టర్‌కు తాత్కాలిక ప్రవేశం ఇవ్వండి, దాన్ని మీరు ఎప్పుడైనా నిలిపివేయవచ్చు.',
-    'dashboard.recentUpdatesDescription': 'మీ తాజా రికార్డులు మరియు లక్షణాల తనిఖీలు.',
+    'dashboard.recentUpdatesDescription':
+      'మీ తాజా రికార్డులు మరియు లక్షణాల తనిఖీలు.',
     'dashboard.noUpdates': 'ఇంకా ఆరోగ్య నవీకరణలు లేవు.',
     'dashboard.viewUpdates': 'అన్ని నవీకరణలు చూడండి',
     'dashboard.importantInformationDescription':
@@ -679,20 +741,24 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.noMedicines': 'మందులు జోడించలేదు.',
     'dashboard.noAllergies': 'అలెర్జీలు జోడించలేదు.',
     'dashboard.openEmergencyCard': 'అత్యవసర కార్డు తెరవండి',
-    'dashboard.latestSymptomDescription': 'డాక్టర్‌తో చర్చించడానికి ఇది సేవ్ చేయబడింది.',
+    'dashboard.latestSymptomDescription':
+      'డాక్టర్‌తో చర్చించడానికి ఇది సేవ్ చేయబడింది.',
     'dashboard.needsAttention': 'త్వరిత శ్రద్ధ అవసరం',
     'dashboard.saved': 'సేవ్ చేయబడింది',
     'dashboard.noSymptomCheck': 'మీరు ఇంకా లక్షణాల తనిఖీ చేయలేదు.',
-    'dashboard.emergencyContactsDescription': 'మీకు సహాయం అవసరమైనప్పుడు సంప్రదించగల వ్యక్తులు.',
+    'dashboard.emergencyContactsDescription':
+      'మీకు సహాయం అవసరమైనప్పుడు సంప్రదించగల వ్యక్తులు.',
     'dashboard.noEmergencyContacts': 'అత్యవసర పరిచయాలు జోడించలేదు.',
     'dashboard.updateContacts': 'పరిచయాలను నవీకరించండి',
-    'dashboard.recordAccessDescription': 'మీరు ఎంచుకున్నంత కాలం మాత్రమే రికార్డులను పంచుకోండి.',
+    'dashboard.recordAccessDescription':
+      'మీరు ఎంచుకున్నంత కాలం మాత్రమే రికార్డులను పంచుకోండి.',
     'dashboard.noDoctorAccess': 'ఏ డాక్టర్‌కూ మీ రికార్డులకు ప్రవేశం లేదు.',
     'dashboard.minutesLeft': '{count} నిమిషాలు మిగిలి ఉన్నాయి',
     'dashboard.urgentNotice':
       'ఒక లక్షణాల తనిఖీకి త్వరిత శ్రద్ధ అవసరమని గుర్తించబడింది. సహాయం కావాలంటే ఆరోగ్య నిపుణుడిని సంప్రదించండి.',
     'doctor.doctorId': 'మీ డాక్టర్ ఐడి',
-    'doctor.doctorIdDescription': 'రికార్డులను పంచుకునేటప్పుడు రోగికి ఈ ఐడిని ఇవ్వండి.',
+    'doctor.doctorIdDescription':
+      'రికార్డులను పంచుకునేటప్పుడు రోగికి ఈ ఐడిని ఇవ్వండి.',
     'doctor.notAssigned': 'కేటాయించలేదు',
     'doctor.checkingAccess': 'ప్రవేశాన్ని తనిఖీ చేస్తున్నాము...',
     'doctor.accessDeniedTitle': 'ప్రవేశం అందుబాటులో లేదు',
@@ -758,7 +824,8 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.shareWithDoctor': 'மருத்துவருடன் பகிரவும்',
     'dashboard.shareWithDoctorDescription':
       'மருத்துவருக்கு தற்காலிக அணுகலை வழங்குங்கள்; அதை எப்போது வேண்டுமானாலும் நிறுத்தலாம்.',
-    'dashboard.recentUpdatesDescription': 'உங்கள் சமீபத்திய பதிவுகள் மற்றும் அறிகுறி சோதனைகள்.',
+    'dashboard.recentUpdatesDescription':
+      'உங்கள் சமீபத்திய பதிவுகள் மற்றும் அறிகுறி சோதனைகள்.',
     'dashboard.noUpdates': 'இதுவரை சுகாதாரப் புதுப்பிப்புகள் இல்லை.',
     'dashboard.viewUpdates': 'அனைத்து புதுப்பிப்புகளையும் பார்க்கவும்',
     'dashboard.importantInformationDescription':
@@ -767,21 +834,26 @@ const dictionaries: Record<Locale, Messages> = {
     'dashboard.noMedicines': 'மருந்துகள் சேர்க்கப்படவில்லை.',
     'dashboard.noAllergies': 'ஒவ்வாமைகள் சேர்க்கப்படவில்லை.',
     'dashboard.openEmergencyCard': 'அவசர அட்டையைத் திறக்கவும்',
-    'dashboard.latestSymptomDescription': 'மருத்துவருடன் விவாதிக்க இது சேமிக்கப்பட்டுள்ளது.',
+    'dashboard.latestSymptomDescription':
+      'மருத்துவருடன் விவாதிக்க இது சேமிக்கப்பட்டுள்ளது.',
     'dashboard.needsAttention': 'விரைவான கவனம் தேவை',
     'dashboard.saved': 'சேமிக்கப்பட்டது',
-    'dashboard.noSymptomCheck': 'நீங்கள் இன்னும் அறிகுறிகளைச் சரிபார்க்கவில்லை.',
-    'dashboard.emergencyContactsDescription': 'உதவி தேவைப்பட்டால் தொடர்புகொள்ளக்கூடியவர்கள்.',
+    'dashboard.noSymptomCheck':
+      'நீங்கள் இன்னும் அறிகுறிகளைச் சரிபார்க்கவில்லை.',
+    'dashboard.emergencyContactsDescription':
+      'உதவி தேவைப்பட்டால் தொடர்புகொள்ளக்கூடியவர்கள்.',
     'dashboard.noEmergencyContacts': 'அவசர தொடர்புகள் சேர்க்கப்படவில்லை.',
     'dashboard.updateContacts': 'தொடர்புகளைப் புதுப்பிக்கவும்',
     'dashboard.recordAccessDescription':
       'நீங்கள் தேர்ந்தெடுக்கும் காலத்திற்கு மட்டுமே பதிவுகளைப் பகிரவும்.',
-    'dashboard.noDoctorAccess': 'எந்த மருத்துவருக்கும் உங்கள் பதிவுகளுக்கான அணுகல் இல்லை.',
+    'dashboard.noDoctorAccess':
+      'எந்த மருத்துவருக்கும் உங்கள் பதிவுகளுக்கான அணுகல் இல்லை.',
     'dashboard.minutesLeft': '{count} நிமிடங்கள் மீதமுள்ளன',
     'dashboard.urgentNotice':
       'ஒரு அறிகுறி சோதனைக்கு விரைவான கவனம் தேவை எனக் குறிக்கப்பட்டுள்ளது. உதவி தேவைப்பட்டால் சுகாதார நிபுணரைத் தொடர்புகொள்ளவும்.',
     'doctor.doctorId': 'உங்கள் மருத்துவர் ஐடி',
-    'doctor.doctorIdDescription': 'பதிவுகளைப் பகிரும்போது நோயாளிக்கு இந்த ஐடியை வழங்கவும்.',
+    'doctor.doctorIdDescription':
+      'பதிவுகளைப் பகிரும்போது நோயாளிக்கு இந்த ஐடியை வழங்கவும்.',
     'doctor.notAssigned': 'ஒதுக்கப்படவில்லை',
     'doctor.checkingAccess': 'அணுகல் சரிபார்க்கப்படுகிறது...',
     'doctor.accessDeniedTitle': 'அணுகல் கிடைக்கவில்லை',
@@ -803,11 +875,11 @@ export function getLanguage(locale: Locale) {
 export function translate(
   locale: Locale,
   key: MessageKey,
-  values: Record<string, string | number> = {}
+  values: Record<string, string | number> = {},
 ) {
   const template = dictionaries[locale]?.[key] ?? dictionaries.en[key];
   return String(template ?? key).replace(/\{(\w+)\}/g, (_, name: string) =>
-    String(values[name] ?? `{${name}}`)
+    String(values[name] ?? `{${name}}`),
   );
 }
 
