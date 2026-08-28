@@ -6,6 +6,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 
+from app.config import get_settings
 from app.schemas.clinical_summary import PhysicianDraftSummary
 
 load_dotenv()
@@ -55,6 +56,48 @@ def _format_structured_context(payload: dict[str, Any]) -> str:
     return "\n\n".join(sections)
 
 
+class Ml3UnavailableError(RuntimeError):
+    """Raised when no configured local ML3 provider can run synthesis."""
+
+
+def _run_direct_gemini_synthesis(context_text: str) -> dict[str, Any]:
+    """Use the installed Gemini SDK when the optional CrewAI stack is absent."""
+    settings = get_settings()
+    if not settings.gemini_api_key:
+        raise Ml3UnavailableError(
+            "ML3 needs GEMINI_API_KEY when CrewAI is not installed. "
+            "Set it in api/.env.local or the deployment environment."
+        )
+
+    try:
+        from google import genai
+
+        with genai.Client(
+            api_key=settings.gemini_api_key,
+            http_options={"timeout": settings.ai_timeout_ms},
+        ) as client:
+            response = client.models.generate_content(
+                model=settings.gemini_llm_close,
+                contents=(
+                    "Create a physician-review clinical summary from the payload below. "
+                    "Do not diagnose or prescribe treatment. Keep every factual statement "
+                    "grounded in the supplied data. Return JSON matching the requested schema.\n\n"
+                    f"Clinical payload:\n{context_text}"
+                ),
+                config={
+                    "response_mime_type": "application/json",
+                    "response_schema": PhysicianDraftSummary,
+                    "automatic_function_calling": {"disable": True},
+                },
+            )
+    except Ml3UnavailableError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(f"Gemini synthesis failed: {exc}") from exc
+
+    return PhysicianDraftSummary.model_validate_json(response.text or "{}").model_dump()
+
+
 def run_synthesis_crew(
     clinical_context: str | dict[str, Any] | None = None,
     *,
@@ -85,8 +128,12 @@ def run_synthesis_crew(
     else:
         context_text = str(clinical_context)
 
-    # Lazy import so the API can boot without CrewAI installed.
-    from crewai import Agent, Crew, LLM, Process, Task
+    # CrewAI is optional to keep Vercel bundles small. Local Python 3.14
+    # environments use the direct Gemini SDK instead.
+    try:
+        from crewai import Agent, Crew, LLM, Process, Task
+    except ImportError:
+        return _run_direct_gemini_synthesis(context_text)
 
     gemini_llm = LLM(
         model=os.getenv("ML3_LLM_MODEL", "openai/gemini-3.6-flash"),

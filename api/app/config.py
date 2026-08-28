@@ -12,7 +12,11 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         # Vercel injects environment variables at runtime. The files are only
         # convenience fallbacks for local development.
-        env_file=(_API_DIR / ".env", _PROJECT_DIR / ".env.local"),
+        env_file=(
+            _PROJECT_DIR / ".env.local",
+            _API_DIR / ".env",
+            _API_DIR / ".env.local",
+        ),
         env_file_encoding="utf-8",
         extra="ignore",
     )

@@ -6,7 +6,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from app.services.ml3.crew_engine import run_synthesis_crew
+from app.services.ml3.crew_engine import Ml3UnavailableError, run_synthesis_crew
 from app.services.ml3.red_flag_detector import detect_emergencies
 
 router = APIRouter(prefix="/api/ml3", tags=["ml3"])
@@ -63,13 +63,10 @@ async def synthesize_clinical_summary(body: SynthesizeRequest) -> dict[str, Any]
 
     try:
         summary = run_synthesis_crew(payload)
-    except ImportError as exc:
+    except Ml3UnavailableError as exc:
         raise HTTPException(
             status_code=503,
-            detail=(
-                "ML3 dependencies are not installed. "
-                "Use Python 3.10-3.13 and install api/requirements-ml3.txt."
-            ),
+            detail=str(exc),
         ) from exc
     except Exception as exc:  # noqa: BLE001 — surface synthesis failures to the client
         raise HTTPException(status_code=500, detail=f"ML3 synthesis failed: {exc}") from exc
