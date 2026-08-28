@@ -23,10 +23,7 @@ import {
   uploadAndProcessDocument,
 } from "@/lib/document-api";
 import { storedDocumentIdSchema } from "@/lib/document-upload";
-import {
-  labReportsFromExtractions,
-  synthesizeClinicalSummary,
-} from "@/lib/ml3-api";
+import { buildMl3Payload, synthesizeClinicalSummary } from "@/lib/ml3-api";
 import { normalizeIdentifier } from "@/lib/identity";
 import { clearSession, createSession } from "@/lib/session";
 import { isLocale, setLocale } from "@/lib/i18n";
@@ -427,34 +424,20 @@ export async function saveAiIntakeAction(input: unknown) {
   if (!clinicalSummary) {
     try {
       const extractions = await getRecentOcrExtractionsForCurrentPatient(5);
-      const medications = Array.isArray(history.medications)
-        ? history.medications
-        : history.prior_medications
-          ? [history.prior_medications]
-          : [];
-
-      clinicalSummary = (await synthesizeClinicalSummary({
-        intake_session_id: parsed.apiSessionId,
-        chief_complaint:
-          typeof history.chief_complaint === "string"
-            ? history.chief_complaint
-            : null,
-        hpi: (history.hpi as Record<string, unknown> | null) ?? null,
-        allergies: Array.isArray(history.allergies) ? history.allergies : [],
-        medications,
-        comorbidities: Array.isArray(history.comorbidities)
-          ? history.comorbidities
-          : [],
-        review_of_systems:
-          (history.review_of_systems as Record<string, unknown> | null) ?? null,
-        ayush: (history.ayush as Record<string, unknown> | null) ?? null,
-        source_transcript_refs: Array.isArray(history.source_transcript_refs)
-          ? (history.source_transcript_refs as string[])
-          : [],
-        red_flags: parsed.physicianSummary.red_flags,
-        lab_reports: labReportsFromExtractions(extractions),
-        ocr_documents: extractions,
-      })) as Record<string, unknown>;
+      clinicalSummary = (await synthesizeClinicalSummary(
+        buildMl3Payload({
+          ml1Histories: [history],
+          ml2Documents: extractions,
+          meta: {
+            intakeSessionId: parsed.apiSessionId,
+            chiefComplaint:
+              typeof history.chief_complaint === "string"
+                ? history.chief_complaint
+                : null,
+            redFlags: parsed.physicianSummary.red_flags,
+          },
+        }),
+      )) as Record<string, unknown>;
     } catch {
       // CloseCrew patient draft still saves if ML3 is unavailable.
       clinicalSummary = null;
