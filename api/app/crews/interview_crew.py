@@ -1,4 +1,4 @@
-"""CrewAI-driven intake assessor + physician interviewer with Groq fallback."""
+"""Rules-first intake assessor + Groq physician wording on advance."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ import re
 from typing import Callable, Literal
 
 from groq import Groq
-from pydantic import BaseModel
 
 from app.config import get_settings
 from app.crews.turn_crew import (
@@ -15,18 +14,35 @@ from app.crews.turn_crew import (
     InterpreterOutput,
     _coerce_pydantic,
     _extract_json_object,
-    _format_transcript,
-    run_turn_crew,
 )
 from app.schemas.intake import RedFlagResult, SessionState
 from app.schemas.socrates import SocratesSlots
-from app.services.intake_pathways import ComplaintSubtype, probe_order_for_subtype
+from app.services.intake_pathways import (
+    ComplaintSubtype,
+    PatientLanguage,
+    has_trauma_context,
+    reprompt_text_for,
+    session_patient_language,
+)
 from app.services.llm import redact_pii
 from app.services.slot_fill import (
+    DENIAL_NONE_VALUES,
+    SESSION_EXTRA_FIELDS,
+    SOCRATES_FIELDS,
+    coerce_severity_score,
     effective_answer_quality,
+    effective_max_turns,
     filled_dimensions,
+    is_affirmative,
+    is_denial,
     next_subtype_dimension,
+    patient_extra_value,
+    patient_slot_value,
+    planning_filled_dimensions,
+    probe_order_for_session,
     sanitize_slots_dict,
+    should_ask_dimension,
+    should_store_patient_extra,
     subtype_complete,
 )
 
@@ -116,22 +132,6 @@ def run_interview_crew(
 ) -> InterviewCrewResult:
     """Assess patient answer, navigate deterministically, generate contextual question."""
     assessor = _run_assessor_extraction(session, patient_text, subtype)
-    if assessor is None:
-        turn = run_turn_crew(session, patient_text, rule_red_flags)
-        plan = _deterministic_plan(
-            session,
-            subtype,
-            probe_text_fn,
-            closing_message,
-            urgent_closing_message,
-            max_intake_turns,
-            force_advance=True,
-        )
-        return InterviewCrewResult(
-            interpreter=turn.interpreter,
-            plan=plan,
-            merged_red_flags=turn.merged_red_flags,
-        )
 
     quality = effective_answer_quality(
         session.last_asked_dimension,
@@ -152,7 +152,7 @@ def run_interview_crew(
         assessor=assessor,
         closing_message=closing_message,
         urgent_closing_message=urgent_closing_message,
-        max_intake_turns=max_intake_turns,
+        max_intake_turns=effective_max_turns(session, subtype, max_intake_turns),
     )
 
     if not plan.complete and plan.target_dimension:
@@ -178,65 +178,42 @@ def _run_assessor_extraction(
     session: SessionState,
     patient_text: str,
     subtype: ComplaintSubtype,
-) -> dict | None:
-    out = _run_crewai_assessor(session, patient_text, subtype)
-    if out is not None:
-        return out
-    return _run_groq_assessor(session, patient_text, subtype)
+) -> dict:
+    ruled = _rule_based_assessor(session, patient_text, subtype)
+    if _assessor_confident(ruled, session, patient_text):
+        return ruled
+    groq = _run_groq_assessor(session, patient_text, subtype)
+    return groq or ruled
 
 
-def _run_crewai_assessor(
+def _assessor_confident(
+    ruled: dict,
     session: SessionState,
     patient_text: str,
-    subtype: ComplaintSubtype,
-) -> dict | None:
-    settings = get_settings()
-    if not settings.groq_api_key:
-        return None
-    try:
-        from crewai import Agent, Crew, LLM, Process, Task
-    except ImportError:
-        return None
-
-    try:
-        groq_llm = LLM(
-            model=f"groq/{settings.groq_llm_turn.removeprefix('groq/')}",
-            api_key=settings.groq_api_key,
-            temperature=0.1,
-        )
-        assessor = Agent(
-            role="Intake Assessor",
-            goal=(
-                "Classify answer quality and extract clinical slot values for the "
-                "last-asked dimension only. Do not choose the next question."
-            ),
-            backstory=(
-                "Bilingual medical intake scribe. No diagnosis or treatment advice."
-            ),
-            llm=groq_llm,
-            verbose=False,
-            max_iter=1,
-            allow_delegation=False,
-        )
-        assess_task = Task(
-            description=_assessor_prompt(session, patient_text, subtype),
-            expected_output="Valid JSON object only.",
-            agent=assessor,
-        )
-        crew = Crew(
-            agents=[assessor],
-            tasks=[assess_task],
-            process=Process.sequential,
-            verbose=False,
-        )
-        crew.kickoff()
-        raw = assess_task.output.raw if assess_task.output else ""
-        data = _extract_json_object(str(raw)) or {}
-        if data.get("answer_quality"):
-            return data
-    except Exception:
-        logger.exception("CrewAI assessor failed; falling back to Groq")
-    return None
+) -> bool:
+    """Skip Groq when rules already classified/extracted the answer."""
+    quality = ruled.get("answer_quality", "answered")
+    if quality in ("vague", "off_topic", "confused"):
+        return True
+    last = session.last_asked_dimension
+    if not last:
+        slots = ruled.get("slots") or {}
+        return bool(ruled.get("chief_complaint") or slots)
+    if quality == "denial":
+        return True
+    if last in SOCRATES_FIELDS:
+        if last == "severity" and coerce_severity_score(patient_text) is not None:
+            return True
+        if patient_slot_value(last, patient_text):
+            return True
+        if is_denial(patient_text):
+            return True
+    if last in SESSION_EXTRA_FIELDS:
+        if is_denial(patient_text) or is_affirmative(patient_text):
+            return True
+        if ruled.get(last):
+            return True
+    return False
 
 
 def _run_groq_assessor(
@@ -251,13 +228,12 @@ def _run_groq_assessor(
         completion = Groq(api_key=settings.groq_api_key).chat.completions.create(
             model=settings.groq_llm_turn.removeprefix("groq/"),
             temperature=0.1,
-            response_format={"type": "json_object"},
             messages=[
                 {
                     "role": "system",
                     "content": "Return only valid JSON. Extraction and classification only.",
                 },
-                {"role": "user", "content": _assessor_prompt(session, patient_text, subtype)},
+                {"role": "user", "content": _slim_assessor_prompt(session, patient_text, subtype)},
             ],
         )
         content = completion.choices[0].message.content or "{}"
@@ -269,23 +245,76 @@ def _run_groq_assessor(
     return None
 
 
-def _assessor_prompt(
+def _rule_based_assessor(
+    session: SessionState,
+    patient_text: str,
+    subtype: ComplaintSubtype,
+) -> dict:
+    """No-API fallback when Groq assessor fails or rate-limits."""
+    last = session.last_asked_dimension
+    quality = effective_answer_quality(last, patient_text, "answered")
+    data: dict = {
+        "answer_quality": quality,
+        "slots": {},
+        "detected_language": session_patient_language(session),
+        "inconsistencies": [],
+    }
+    if quality in ("answered", "partial", "denial") and last:
+        if last in SOCRATES_FIELDS:
+            if last == "severity":
+                sev = coerce_severity_score(patient_text)
+                if sev is not None:
+                    data["slots"]["severity"] = sev
+            else:
+                slot_val = patient_slot_value(last, patient_text)
+                if slot_val:
+                    data["slots"][last] = slot_val
+                elif is_denial(patient_text):
+                    data["answer_quality"] = "denial"
+        if last in SESSION_EXTRA_FIELDS and should_store_patient_extra(quality):
+            if is_denial(patient_text):
+                sentinel = DENIAL_NONE_VALUES.get(last, "none")
+                if sentinel:
+                    data[last] = sentinel
+            else:
+                data[last] = patient_extra_value(last, patient_text)
+    elif not last:
+        if not session.chief_complaint and patient_text.strip():
+            data["chief_complaint"] = patient_text.strip()[:200]
+        for key in ("site", "onset", "character"):
+            val = patient_slot_value(key, patient_text)
+            if val:
+                data["slots"][key] = val
+        if data["slots"]:
+            data["answer_quality"] = "answered"
+    return data
+
+
+def _slim_assessor_prompt(
     session: SessionState,
     patient_text: str,
     subtype: ComplaintSubtype,
 ) -> str:
+    last = session.last_asked_dimension or "opening/chief complaint"
+    hint = DIMENSION_HINTS.get(last, last)
+    safe = redact_pii(patient_text)
+    current = ""
+    if last in SOCRATES_FIELDS:
+        current = str(getattr(session.slots, last, None) or "")
+    elif last in SESSION_EXTRA_FIELDS:
+        current = str(getattr(session, last, None) or "")
     return (
-        f"{_assessor_context(session, patient_text, subtype)}\n\n"
-        "Return JSON only with keys:\n"
-        "- answer_quality: answered|partial|vague|off_topic|confused|denial\n"
-        "- chief_complaint, slots (SOCRATES), prior_medications, prior_consult, "
-        "pain_now, mechanism, bleeding_now, consciousness, blood_thinners, "
-        "ayush_* fields, allergies, medications, comorbidities\n"
-        "- inconsistencies: string array\n"
-        "- detected_language: en|hi|hinglish\n\n"
-        "Rules: extract ONLY last-asked dimension unless opening bootstrap "
-        "(site/onset/character). Denials → 'none'. severity is ONLY 0–10 score — "
-        "NEVER fever temperature in severity. Do NOT generate patient-facing questions."
+        f"Subtype: {subtype}\n"
+        f"Chief complaint: {session.chief_complaint}\n"
+        f"Last asked dimension: {last} ({hint})\n"
+        f"Current value for that dimension: {current or 'empty'}\n"
+        f"Patient utterance: {safe}\n\n"
+        "Return JSON only with keys: answer_quality, chief_complaint (if opening), "
+        "slots (only fields extracted from this utterance), and the one extra field "
+        "matching last asked dimension if applicable.\n"
+        "answer_quality: answered|partial|vague|off_topic|confused|denial\n"
+        "Rules: extract ONLY last-asked dimension unless opening (site/onset/character). "
+        "severity is 0-10 only, not fever temp. No patient-facing questions."
     )
 
 
@@ -301,65 +330,44 @@ def _generate_physician_message(
     if not target:
         return ""
 
+    language = session_patient_language(session)
     fallback = probe_text_fn(target, subtype)
-    msg = _run_physician_groq(session, patient_text, subtype, plan, assessor)
-    if not msg:
-        msg = _run_physician_crewai(session, patient_text, subtype, plan, assessor)
-
+    msg = _run_physician_groq(session, patient_text, subtype, plan, assessor, language)
     if msg and _message_matches_dimension(msg, target) and not _contains_devanagari(msg):
         return msg.strip()
+    if plan.action == "reprompt":
+        return (
+            reprompt_text_for(target, subtype, language=language)
+            or fallback
+        )
     return fallback
 
 
-def _run_physician_crewai(
-    session: SessionState,
-    patient_text: str,
-    subtype: ComplaintSubtype,
-    plan: InterviewPlan,
-    assessor: dict,
-) -> str | None:
-    settings = get_settings()
-    if not settings.groq_api_key:
-        return None
-    try:
-        from crewai import Agent, Crew, LLM, Process, Task
-    except ImportError:
-        return None
+def _language_instruction(language: PatientLanguage) -> str:
+    if language == "english":
+        return "English only. No Hindi or Roman Hinglish."
+    return "Roman Hinglish or English. No Devanagari script."
 
-    try:
-        groq_llm = LLM(
-            model=f"groq/{settings.groq_llm_turn.removeprefix('groq/')}",
-            api_key=settings.groq_api_key,
-            temperature=0.2,
+
+def _dimension_hint(
+    session: SessionState,
+    subtype: ComplaintSubtype,
+    target: str,
+) -> str:
+    blob = " ".join(
+        filter(
+            None,
+            [session.chief_complaint, *(t.content for t in session.transcript if t.role == "patient")],
         )
-        physician = Agent(
-            role="Intake Physician",
-            goal=(
-                "Ask one warm, medically relevant follow-up tied to the chief complaint."
-            ),
-            backstory=(
-                "Real clinic intake physician. Roman Hinglish or English only. "
-                "Never Devanagari. No diagnosis."
-            ),
-            llm=groq_llm,
-            verbose=False,
-            max_iter=1,
-            allow_delegation=False,
-        )
-        task = Task(
-            description=_physician_prompt(session, patient_text, subtype, plan, assessor),
-            expected_output='JSON: {"assistant_message": str}',
-            agent=physician,
-        )
-        crew = Crew(agents=[physician], tasks=[task], process=Process.sequential, verbose=False)
-        crew.kickoff()
-        raw = task.output.raw if task.output else ""
-        data = _extract_json_object(str(raw)) or {}
-        msg = (data.get("assistant_message") or "").strip()
-        return msg or None
-    except Exception:
-        logger.exception("CrewAI physician message failed")
-    return None
+    )
+    trauma = has_trauma_context(blob, session.slots.site) or bool(
+        (session.metadata or {}).get("trauma_context")
+    )
+    if target == "ayush_vikriti" and trauma:
+        return "weakness or feeling different from usual since the injury"
+    if target == "ayush_agni" and trauma:
+        return "appetite or digestion only if changed since injury"
+    return DIMENSION_HINTS.get(target, target)
 
 
 def _run_physician_groq(
@@ -368,6 +376,7 @@ def _run_physician_groq(
     subtype: ComplaintSubtype,
     plan: InterviewPlan,
     assessor: dict,
+    language: PatientLanguage,
 ) -> str | None:
     settings = get_settings()
     if not settings.groq_api_key:
@@ -376,15 +385,19 @@ def _run_physician_groq(
         completion = Groq(api_key=settings.groq_api_key).chat.completions.create(
             model=settings.groq_llm_turn.removeprefix("groq/"),
             temperature=0.2,
-            response_format={"type": "json_object"},
             messages=[
                 {
                     "role": "system",
-                    "content": "Return JSON with assistant_message only. Roman script.",
+                    "content": (
+                        "Return JSON with assistant_message only. "
+                        f"{_language_instruction(language)} One sentence."
+                    ),
                 },
                 {
                     "role": "user",
-                    "content": _physician_prompt(session, patient_text, subtype, plan, assessor),
+                    "content": _slim_physician_prompt(
+                        session, patient_text, subtype, plan, assessor, language
+                    ),
                 },
             ],
         )
@@ -397,67 +410,33 @@ def _run_physician_groq(
     return None
 
 
-def _physician_prompt(
+def _slim_physician_prompt(
     session: SessionState,
     patient_text: str,
     subtype: ComplaintSubtype,
     plan: InterviewPlan,
     assessor: dict,
+    language: PatientLanguage,
 ) -> str:
     target = plan.target_dimension or ""
-    hint = DIMENSION_HINTS.get(target, target)
-    action = plan.action
+    hint = _dimension_hint(session, subtype, target)
+    filled = sorted(filled_dimensions(session))
     quality = assessor.get("answer_quality", "answered")
-    lang = assessor.get("detected_language", "hinglish")
-    filled = sorted(filled_dimensions(session))
-
-    if action == "reprompt":
-        instruction = (
-            f"The patient's answer was {quality}. Gently clarify and re-ask ONLY about "
-            f"'{target}' ({hint}). Use simpler words. Do not switch topics."
-        )
-    else:
-        instruction = (
-            f"Ask ONE follow-up about '{target}' ({hint}) for this {subtype} complaint. "
-            f"Tie wording to chief complaint: {session.chief_complaint!r}. "
-            "Do not repeat topics already covered in transcript."
-        )
-
-    return (
-        f"{_assessor_context(session, patient_text, subtype)}\n"
-        f"Filled dimensions (do NOT re-ask): {filled}\n"
-        f"Target dimension: {target}\n"
-        f"Action: {action}\n"
-        f"Patient language: {lang}\n\n"
-        f"{instruction}\n\n"
-        'Return JSON: {"assistant_message": "..."}\n'
-        "Rules: Roman Hinglish or English ONLY — never Devanagari. "
-        "One sentence. No diagnosis or treatment."
+    action_line = (
+        f"action=reprompt; patient's last answer was {quality}; "
+        f"ask again for '{target}' only; do not change topic."
+        if plan.action == "reprompt"
+        else f"Ask ONE warm follow-up about '{target}' tied to the chief complaint."
     )
-
-
-def _assessor_context(
-    session: SessionState,
-    patient_text: str,
-    subtype: ComplaintSubtype,
-) -> str:
-    safe_text = redact_pii(patient_text)
-    bank = probe_order_for_subtype(subtype, site=session.slots.site)
-    filled = sorted(filled_dimensions(session))
     return (
-        f"Patient utterance (PII-redacted): {safe_text}\n"
         f"Chief complaint: {session.chief_complaint}\n"
-        f"Complaint subtype: {subtype}\n"
-        f"Last asked dimension: {session.last_asked_dimension}\n"
-        f"Dimension hint: {DIMENSION_HINTS.get(session.last_asked_dimension or '', 'opening/chief complaint')}\n"
-        f"Required probe bank (in order): {bank}\n"
-        f"Already filled dimensions: {filled}\n"
-        f"Current SOCRATES: {session.slots.model_dump_json()}\n"
-        f"prior_medications: {session.prior_medications}\n"
-        f"prior_consult: {session.prior_consult}\n"
-        f"ayush_vaya: {session.ayush_vaya}\n"
-        f"ayush_prakriti: {session.ayush_prakriti}\n"
-        f"Transcript:\n{_format_transcript(session)}"
+        f"Subtype: {subtype}\n"
+        f"Target dimension: {target} ({hint})\n"
+        f"Already filled (do NOT re-ask): {filled}\n"
+        f"Patient language: {language}\n"
+        f"Last patient line: {redact_pii(patient_text)}\n\n"
+        f"{action_line} {_language_instruction(language)} No diagnosis.\n"
+        'Return JSON: {"assistant_message": "..."}'
     )
 
 
@@ -500,7 +479,8 @@ def _assessor_to_interpreter(data: dict, session: SessionState) -> InterpreterOu
         "notes": data.get("notes") or "",
         "answer_quality": quality,
         "inconsistencies": data.get("inconsistencies") or [],
-        "detected_language": data.get("detected_language") or "hinglish",
+        "detected_language": data.get("detected_language")
+        or session_patient_language(session),
     }
     return _coerce_pydantic(payload, InterpreterOutput)
 
@@ -540,6 +520,7 @@ def _build_plan(
             closing_message,
             urgent_closing_message,
             force_advance=True,
+            assessor=assessor,
         )
 
     return _advance_plan(
@@ -548,6 +529,7 @@ def _build_plan(
         closing_message,
         urgent_closing_message,
         force_advance=False,
+        assessor=assessor,
     )
 
 
@@ -558,21 +540,31 @@ def _advance_plan(
     urgent_closing_message: str,
     *,
     force_advance: bool,
+    assessor: dict | None = None,
 ) -> InterviewPlan:
-    next_dim = next_subtype_dimension(session, subtype)
+    quality = (assessor or {}).get("answer_quality")
+    filled = planning_filled_dimensions(
+        session,
+        answer_quality=str(quality) if quality else None,
+        force_advance=force_advance,
+    )
+    next_dim = next_subtype_dimension(session, subtype, filled=filled)
     if next_dim is None:
         return _close_plan(subtype, closing_message, urgent_closing_message)
 
-    bank = set(probe_order_for_subtype(subtype, site=session.slots.site))
+    bank = set(probe_order_for_session(session, subtype))
     if next_dim not in bank:
         return _close_plan(subtype, closing_message, urgent_closing_message)
 
-    filled = filled_dimensions(session)
-    if next_dim in filled:
-        for dim in probe_order_for_subtype(subtype, site=session.slots.site):
-            if dim not in filled:
-                next_dim = dim
-                break
+    filled_now = filled_dimensions(session)
+    if next_dim in filled_now:
+        for dim in probe_order_for_session(session, subtype):
+            if dim in filled_now:
+                continue
+            if not should_ask_dimension(dim, session, subtype):
+                continue
+            next_dim = dim
+            break
         else:
             return _close_plan(subtype, closing_message, urgent_closing_message)
 
@@ -621,7 +613,7 @@ def _deterministic_plan(
     next_dim = next_subtype_dimension(session, subtype)
     if next_dim is None:
         return _close_plan(subtype, closing_message, urgent_closing_message)
-    bank = set(probe_order_for_subtype(subtype, site=session.slots.site))
+    bank = set(probe_order_for_session(session, subtype))
     if next_dim not in bank:
         return _close_plan(subtype, closing_message, urgent_closing_message)
     return InterviewPlan(

@@ -11,6 +11,7 @@ from app.flows.intake_flow import CLOSING_MESSAGE, IntakeFlow
 from app.schemas.intake import RedFlagResult, SessionState
 from app.schemas.socrates import SocratesSlots
 from app.services.slot_fill import (
+    effective_answer_quality,
     should_finalize_dimension,
     should_store_patient_extra,
 )
@@ -39,6 +40,61 @@ def _mock_interview(
 
 
 class InterviewRelevanceTests(unittest.TestCase):
+    def test_rule_based_quality_rejects_burger_for_agni(self):
+        self.assertEqual(
+            effective_answer_quality(
+                "ayush_agni", "Im hungryyyy give me burger", "answered"
+            ),
+            "off_topic",
+        )
+
+    def test_rule_based_quality_rejects_happy_day(self):
+        self.assertEqual(
+            effective_answer_quality("severity", "happy day", "answered"),
+            "off_topic",
+        )
+
+    def test_rule_based_quality_rejects_abcd(self):
+        self.assertEqual(
+            effective_answer_quality("associations", "abcd", "answered"),
+            "off_topic",
+        )
+
+    def test_rule_based_quality_rejects_papa_said_coffee(self):
+        self.assertEqual(
+            effective_answer_quality("associations", "papa said coffee", "answered"),
+            "off_topic",
+        )
+
+    def test_rule_based_quality_rejects_papa_study_for_age(self):
+        self.assertEqual(
+            effective_answer_quality(
+                "ayush_vaya", "papa said to study well", "answered"
+            ),
+            "off_topic",
+        )
+
+    def test_rule_based_quality_rejects_mom_engineer_for_age(self):
+        self.assertEqual(
+            effective_answer_quality(
+                "ayush_vaya", "mom said become an engineer", "answered"
+            ),
+            "off_topic",
+        )
+
+    def test_rule_based_assessor_extracts_severity(self):
+        from app.crews.interview_crew import _rule_based_assessor
+
+        session = SessionState(last_asked_dimension="severity")
+        data = _rule_based_assessor(session, "8", "pain")
+        self.assertEqual(data["answer_quality"], "answered")
+        self.assertEqual(data["slots"]["severity"], 8)
+
+    def test_shin_site_not_mapped_to_forehead(self):
+        from app.crews.close_crew import _clinical_en
+
+        self.assertIn("shin", (_clinical_en("site", "closer to shin") or "").lower())
+
     def test_should_not_store_off_topic_extra(self):
         self.assertFalse(should_store_patient_extra("off_topic"))
         self.assertFalse(should_store_patient_extra("vague"))
@@ -288,6 +344,23 @@ class InterviewRelevanceTests(unittest.TestCase):
             flow._process_utterance(session, "lagataar h")
         self.assertEqual(session.slots.time_course, "continuous")
         self.assertEqual(session.last_asked_dimension, "ayush_vaya")
+
+    def test_advance_plan_skips_answered_site_before_apply(self):
+        from app.crews.interview_crew import _advance_plan
+
+        session = SessionState(
+            last_asked_dimension="site",
+            metadata={"complaint_subtype": "limb_pain", "trauma_context": True},
+        )
+        plan = _advance_plan(
+            session,
+            "limb_pain",
+            CLOSING_MESSAGE,
+            "urgent",
+            force_advance=False,
+            assessor={"answer_quality": "answered"},
+        )
+        self.assertEqual(plan.target_dimension, "onset")
 
     def test_advance_plan_skips_filled_time_course(self):
         from app.crews.interview_crew import _advance_plan

@@ -244,7 +244,17 @@ def _fmt_slot(value: str | None) -> str:
         return "not obtained"
     if _looks_like_garbage_quote(value):
         return "not obtained"
-    if low in {"none", "no", "nil", "nothing", "null"}:
+    if re.fullmatch(r"noo+", low) or low in {
+        "none",
+        "no",
+        "nil",
+        "nothing",
+        "null",
+        "nope",
+        "nah",
+        "nahi",
+        "nhi",
+    }:
         return "denied / none reported when asked"
     if low in {"yes", "y", "haan", "haa", "ji"}:
         return "yes"
@@ -261,7 +271,21 @@ def _clinical_en(field: str, value: str | None) -> str | None:
     if field == "site":
         if re.search(r"poora\s*sir|pura\s*sir|whole\s*head|entire\s*head", low):
             return "whole head"
-        if re.search(r"\baage\b|forehead|frontal", low):
+        if re.search(r"shin|calf|taang|leg|frontal\s*edge", low):
+            if re.search(r"frontal", low):
+                return "anterior shin / frontal aspect of leg"
+            if re.search(r"shin", low):
+                return "shin"
+            if re.search(r"calf", low):
+                return "calf"
+            return raw
+        if re.search(r"\bfrontal\b", low) and re.search(
+            r"head|sir|skull|forehead", low
+        ):
+            return "forehead"
+        if re.search(r"\baage\b|forehead", low) and not re.search(
+            r"leg|shin|taang|pair|calf", low
+        ):
             return "forehead"
         if re.search(r"peeche|occipital|back\s*of\s*(the\s*)?head", low):
             return "back of head"
@@ -427,94 +451,6 @@ def run_close_crew(session: SessionState) -> CloseCrewResult:
         patient_history=history,
         physician_summary=draft_physician_summary(session, history, fallback_summary),
     )
-
-    seed_en = compose_hpi_en(session)
-    seed_hi = compose_hpi_hi(session)
-
-    structurer = create_history_structurer_agent()
-    summarizer = create_physician_summarizer_agent()
-
-    structure_task = Task(
-        description=(
-            f"Chief complaint: {session.chief_complaint}\n"
-            f"SOCRATES slots JSON: {slots_json}\n"
-            f"Known allergies: {session.allergies}\n"
-            f"Known medications: {session.medications}\n"
-            f"Known comorbidities: {session.comorbidities}\n"
-            f"prior_medications: {session.prior_medications}\n"
-            f"prior_consult: {session.prior_consult}\n"
-            f"pain_now: {session.pain_now}\n"
-            f"mechanism: {session.mechanism}\n"
-            f"bleeding_now: {session.bleeding_now}\n"
-            f"consciousness: {session.consciousness}\n"
-            f"blood_thinners: {session.blood_thinners}\n"
-            f"Dashavidha AYUSH JSON: {ayush_json}\n"
-            f"Red flags seen: {red_flags}\n"
-            f"Full transcript (redacted):\n{transcript}\n\n"
-            "Build PatientHistory JSON with fields: chief_complaint, hpi (SOCRATES slots), "
-            "allergies, medications, comorbidities, review_of_systems, "
-            "prior_medications, prior_consult, pain_now, mechanism, bleeding_now, "
-            "consciousness, blood_thinners, ayush (Dashavidha block from provided JSON), "
-            "source_transcript_refs (short quotes), red_flags. Never diagnose. "
-            "Do not invent fields that were not stated. Copy ayush from the provided JSON."
-        ),
-        expected_output="Valid PatientHistory JSON only.",
-        agent=structurer,
-        output_pydantic=PatientHistory,
-    )
-
-    summary_task = Task(
-        description=(
-            "Polish the following slot-based DRAFT HPI into bilingual PhysicianSummary JSON. "
-            "Preserve the opening problem statement from the seed (do not invent pain at an "
-            "unspecified site when the seed describes fever, diarrhea, cough, or another "
-            "non-pain chief). Do NOT invent findings. Do NOT paste raw patient chat verbatim "
-            "when the seed already has clinical phrasing. Keep Dashavidha concise — omit "
-            "fields marked not stated; do not repeat the same sentence under multiple labels.\n\n"
-            f"EN seed:\n{seed_en}\n\nHI seed:\n{seed_hi}\n\n"
-            "Return PhysicianSummary JSON with: en, hi, is_draft=true, disclaimer, "
-            "highlights[] (short bullets from seed only), red_flags[]. "
-            "No treatment orders. No definitive diagnosis."
-        ),
-        expected_output="Valid PhysicianSummary JSON only.",
-        agent=summarizer,
-        context=[structure_task],
-        output_pydantic=PhysicianSummary,
-    )
-
-    crew = Crew(
-        agents=[structurer, summarizer],
-        tasks=[structure_task, summary_task],
-        process=Process.sequential,
-        verbose=False,
-    )
-    crew.kickoff()
-
-    history = _coerce(
-        structure_task.output.pydantic if structure_task.output else None,
-        PatientHistory,
-        fallback=_fallback_history(session, red_flags, transcript),
-    )
-    # Never trust LLM-invented clinical fields — bind HPI/extras to session only
-    history = _bind_history_to_session(history, session, red_flags)
-    # Prefer re-compose from final history so EN always has specifics
-    template = _fallback_summary(session, history, red_flags)
-    summary = _coerce(
-        summary_task.output.pydantic if summary_task.output else None,
-        PhysicianSummary,
-        fallback=template,
-    )
-    # Always prefer deterministic slot-first HPI body (prevents invented negatives)
-    summary.en = template.en
-    summary.hi = template.hi
-    if not summary.highlights:
-        summary.highlights = template.highlights
-    summary.is_draft = True
-    if not summary.disclaimer:
-        summary.disclaimer = PhysicianSummary.model_fields["disclaimer"].default
-    if not summary.red_flags:
-        summary.red_flags = red_flags
-    return CloseCrewResult(patient_history=history, physician_summary=summary)
 
 
 def _session_as_history(session: SessionState, red_flags: list[str]) -> PatientHistory:

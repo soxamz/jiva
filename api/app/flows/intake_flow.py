@@ -19,12 +19,16 @@ from app.services.intake_pathways import (
     asserts_non_pain_chief,
     classify_complaint_subtype,
     classify_pathway,
+    compose_probe_fallback,
     denies_pain_frame,
+    has_trauma_context,
     looks_like_new_symptom,
     post_close_followup_question,
     probe_order_for_subtype,
-    probe_question_for,
+    session_patient_language,
+    update_session_language,
 )
+from app.services.transcript_infer import apply_transcript_inferences
 from app.services.red_flags import (
     evaluate_red_flags,
     get_emergency_redirect_message,
@@ -35,6 +39,7 @@ from app.services.slot_fill import (
     SOCRATES_FIELDS,
     apply_denial_fill,
     apply_session_denial_fill,
+    effective_max_turns,
     force_fill_session_unclear,
     force_fill_unclear,
     is_denial,
@@ -43,6 +48,7 @@ from app.services.slot_fill import (
     patient_extra_value,
     patient_slot_value,
     progress_map,
+    probe_order_for_session,
     restrict_interpreter_extras,
     restrict_interpreter_slots,
     should_finalize_dimension,
@@ -64,6 +70,7 @@ URGENT_CLOSING_MESSAGE = (
     "staff ko alert kar diya gaya hai."
 )
 
+
 ALREADY_COMPLETE_MESSAGE = "Intake complete ho chuka hai — doctor jaldi dekhenge."
 
 ACK_MESSAGE = (
@@ -73,55 +80,6 @@ ACK_MESSAGE = (
 SOFT_DONE_MESSAGE = (
     "Theek hai. Jab ready ho, Finish intake dabayein — doctor ke liye draft ready ho jayega."
 )
-
-PROBE_QUESTIONS = {
-    "site": "Kahan exactly problem / pareshani feel ho rahi hai?",
-    "onset": "Yeh kab shuru hui — aaj, kuch din pehle, ya dheere-dheere?",
-    "character": "Kaisa feel hota hai — tees, jalan, dabaav, ya kuch aur?",
-    "radiation": "Kya yeh kisi aur jagah failta hai (jaise baaju, peeth, gardan)?",
-    "associations": (
-        "Saath mein koi aur symptoms hain — kamzori, bukhar, "
-        "ulti, khaansi, ya control mein dikkat?"
-    ),
-    "time_course": "Yeh problem lagatar hai ya aata-jata / waves mein? Kitni der rehti hai?",
-    "exacerbating_relieving": (
-        "Kis cheez se problem badhti hai? Kis se aaram milta hai?"
-    ),
-    "severity": "0 se 10 mein, kitna severe hai abhi? (0 = bilkul nahi, 10 = sabse zyada)",
-    "pain_now": "Abhi bhi dard / problem ho rahi hai — halka, madhyam, ya tez?",
-    "prior_medications": "Is problem ke liye koi dawai le rahe ho / le chuke ho?",
-    "prior_consult": "Is problem ke liye pehle kisi doctor se mil chuke ho?",
-    "mechanism": (
-        "Kya koi chot, accident, girna, twist, ya bhari cheez uthane se yeh shuru hua?"
-    ),
-    "bleeding_now": "Khoon abhi ruk gaya hai ya abhi bhi aa raha hai?",
-    "consciousness": "Girne / chot ke baad behoshi, chakkar, ya yaad nahi aana hua?",
-    "blood_thinners": (
-        "Koi khoon patla karne wali dawai (aspirin, warfarin, clopidogrel, etc.) lete ho?"
-    ),
-    # Compact Dashavidha — one simple ask each (avoid multi-part jargon)
-    "ayush_vaya": "Aapki umar kitni hai? (sirf number batayein, jaise 20)",
-    "ayush_prakriti": (
-        "Aam dinon mein aapka shareer kaisa rehta hai — "
-        "garam/thanda, patla/madhyam/bhari? Short mein batayein."
-    ),
-    "ayush_vikriti": (
-        "Is bimari mein aap usual se kaise alag feel kar rahe ho "
-        "(thakaan, garam/thanda, dryness)? Agar farak nahi, 'none' likhein."
-    ),
-    "ayush_agni": (
-        "Abhi bhookh kaisi hai — normal, kam, ya bilkul nahi? "
-        "Hazma / gas-acidity bhi short mein batayein."
-    ),
-    "ayush_bala": (
-        "Height aur weight approx batayein (jaise 5.8 ft, 70 kg). "
-        "Agar patla/mazboot feel ho to woh bhi."
-    ),
-    "ayush_manas_vyayam": (
-        "Exercise / chalna-phirna kitna kar paate ho "
-        "(mild / moderate / zyada)? Stress alag se batayein agar hai."
-    ),
-}
 
 
 class IntakeFlow:
@@ -210,6 +168,9 @@ class IntakeFlow:
         session.transcript.append(TranscriptTurn(role="patient", content=text))
 
         self._update_subtype(session, text)
+        self._reconcile_subtype(session)
+        apply_transcript_inferences(session)
+        update_session_language(session, text)
 
         rule_result = evaluate_red_flags(text, severity=session.slots.severity)
         session.red_flag_history.append(rule_result)
@@ -226,10 +187,19 @@ class IntakeFlow:
             text,
             rule_result,
             subtype=self._current_subtype(session),
-            probe_text_fn=self._probe_text,
+            probe_text_fn=lambda d, st: compose_probe_fallback(
+                d,
+                st,
+                chief_complaint=session.chief_complaint or "",
+                language=session_patient_language(session),
+            ),
             closing_message=CLOSING_MESSAGE,
             urgent_closing_message=URGENT_CLOSING_MESSAGE,
-            max_intake_turns=settings.max_intake_turns,
+            max_intake_turns=effective_max_turns(
+                session,
+                self._current_subtype(session),
+                settings.max_intake_turns,
+            ),
         )
         self._apply_interpreter(
             session,
@@ -238,6 +208,7 @@ class IntakeFlow:
             answer_quality=turn.interpreter.answer_quality,
             force_advance=turn.plan.force_advance,
         )
+        apply_transcript_inferences(session)
         session.red_flag_history.append(turn.merged_red_flags)
 
         if turn.merged_red_flags.is_emergency:
@@ -404,6 +375,10 @@ class IntakeFlow:
             self._skip_irrelevant_pain_dims(session, subtype)
 
         session.metadata["complaint_subtype"] = subtype
+        session.metadata["trauma_context"] = has_trauma_context(
+            " ".join(filter(None, [session.chief_complaint or "", text])),
+            session.slots.site,
+        )
         # Keep pathway aligned with sticky subtype (do not re-detect from scratch)
         if subtype == "urgent_trauma":
             session.metadata["pathway"] = "urgent_trauma"
@@ -419,11 +394,27 @@ class IntakeFlow:
             session.metadata["pathway"] = "general"
         return subtype
 
+    def _reconcile_subtype(self, session: SessionState) -> None:
+        """Upgrade urgent_trauma → limb_pain once limb site is known."""
+        subtype = self._current_subtype(session)
+        if subtype != "urgent_trauma":
+            return
+        blob = " ".join(
+            filter(None, [session.chief_complaint or "", session.slots.site or ""])
+        )
+        upgraded = classify_complaint_subtype(
+            blob, existing_subtype="urgent_trauma", site=session.slots.site
+        )
+        if upgraded != subtype:
+            session.metadata["complaint_subtype"] = upgraded
+            session.metadata["trauma_context"] = True
+            session.metadata["pathway"] = "pain"
+
     def _skip_irrelevant_pain_dims(
         self, session: SessionState, new_subtype: ComplaintSubtype
     ) -> None:
         """Mark pain-only dims not in the new bank as not applicable."""
-        bank = set(probe_order_for_subtype(new_subtype, site=session.slots.site))
+        bank = set(probe_order_for_session(session, new_subtype))
         data = session.slots.model_dump()
         changed = False
         for dim in PAIN_ONLY_DIMS:
@@ -445,18 +436,21 @@ class IntakeFlow:
             return value  # type: ignore[return-value]
         return "general"
 
-    def _probe_text(self, dim: str, subtype: ComplaintSubtype) -> str:
-        override = probe_question_for(dim, subtype)
-        if override:
-            return override
-        return PROBE_QUESTIONS[dim]
+    def _probe_text(
+        self, dim: str, subtype: ComplaintSubtype, session: SessionState
+    ) -> str:
+        return compose_probe_fallback(
+            dim, subtype, chief_complaint=session.chief_complaint or ""
+        )
 
     def _next_assistant_message(
         self, session: SessionState, settings
     ) -> tuple[str, bool, bool]:
         """Subtype probe bank. Returns (message, complete, urgent_bypass)."""
         subtype = self._current_subtype(session)
-        hit_max = session.turn_count >= settings.max_intake_turns
+        hit_max = session.turn_count >= effective_max_turns(
+            session, subtype, settings.max_intake_turns
+        )
         done = hit_max or subtype_complete(session, subtype)
         next_dim = None if done else next_subtype_dimension(session, subtype)
 
@@ -471,12 +465,12 @@ class IntakeFlow:
             return CLOSING_MESSAGE, True, False
 
         # Only force-fill / ask dims that belong to this bank
-        bank = set(probe_order_for_subtype(subtype, site=session.slots.site))
+        bank = set(probe_order_for_session(session, subtype))
         if next_dim not in bank:
             return CLOSING_MESSAGE, True, False
 
         session.last_asked_dimension = next_dim
-        return self._probe_text(next_dim, subtype), False, False
+        return self._probe_text(next_dim, subtype, session), False, False
 
     def _emergency_turn(
         self,
@@ -528,11 +522,7 @@ class IntakeFlow:
                     break
 
         last_dim = session.last_asked_dimension
-        bank = set(
-            probe_order_for_subtype(
-                self._current_subtype(session), site=session.slots.site
-            )
-        )
+        bank = set(probe_order_for_session(session, self._current_subtype(session)))
 
         # Patient denied pain while a pain-only probe was asked → mark none and move on
         if (
