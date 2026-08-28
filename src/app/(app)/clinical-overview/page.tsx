@@ -6,7 +6,7 @@ import { MedicationsPanel } from "@/components/clinical-overview/medications-pan
 import { OverviewActions } from "@/components/clinical-overview/overview-actions";
 import { OverviewRangeSelector } from "@/components/clinical-overview/range-selector";
 import { SummaryEnginePanel } from "@/components/clinical-overview/summary-engine-panel";
-import { VitalsRow } from "@/components/clinical-overview/vitals-row";
+// import { VitalsRow } from "@/components/clinical-overview/vitals-row";
 import { PageHeader } from "@/components/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -146,7 +146,7 @@ export default async function ClinicalOverviewPage({
               sourceNote={sourceNote}
               title={t("overview.summaryTitle")}
             />
-            <VitalsRow
+            {/* <VitalsRow
               labels={{
                 bp: t("overview.vitalBp"),
                 hr: t("overview.vitalHr"),
@@ -160,7 +160,7 @@ export default async function ClinicalOverviewPage({
                 stable: t("overview.vitalStable"),
                 not_recorded: t("overview.vitalNotRecorded"),
               }}
-            />
+            /> */}
           </div>
           <div className="flex min-w-0 flex-col gap-4">
             <MedicationsPanel
