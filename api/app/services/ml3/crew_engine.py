@@ -15,6 +15,39 @@ def _context_from_payload(payload: dict[str, Any]) -> str:
     return json.dumps(payload, indent=2, default=str, ensure_ascii=False)
 
 
+def _format_structured_context(payload: dict[str, Any]) -> str:
+    """Prefer labeled ML1/ML2 sections when structured blobs are present."""
+    ml1 = payload.get("ml1_histories") or []
+    ml2 = payload.get("ml2_documents") or []
+    if not ml1 and not ml2:
+        return _context_from_payload(payload)
+
+    sections: list[str] = []
+    if ml1:
+        sections.append("=== ML1: Conversational History (Voice/Chat Intake) ===")
+        sections.append(json.dumps(ml1, indent=2, default=str, ensure_ascii=False))
+
+    flat_summary = {
+        k: v
+        for k, v in payload.items()
+        if k not in ("ml1_histories", "ml2_documents", "ocr_documents")
+    }
+    if flat_summary:
+        sections.append("=== Merged Flat Fields (backward compat) ===")
+        sections.append(json.dumps(flat_summary, indent=2, default=str, ensure_ascii=False))
+
+    if ml2:
+        sections.append("=== ML2: Digitized Medical Documents (OCR) ===")
+        sections.append(json.dumps(ml2, indent=2, default=str, ensure_ascii=False))
+
+    lab_reports = payload.get("lab_reports")
+    if lab_reports:
+        sections.append("=== ML2: Lab Reports (parsed) ===")
+        sections.append(json.dumps(lab_reports, indent=2, default=str, ensure_ascii=False))
+
+    return "\n\n".join(sections)
+
+
 def run_synthesis_crew(
     clinical_context: str | dict[str, Any] | None = None,
     *,
@@ -41,7 +74,7 @@ def run_synthesis_crew(
         raise ValueError("clinical_context is required")
 
     if isinstance(clinical_context, dict):
-        context_text = _context_from_payload(clinical_context)
+        context_text = _format_structured_context(clinical_context)
     else:
         context_text = str(clinical_context)
 
@@ -86,6 +119,9 @@ def run_synthesis_crew(
     audit_task = Task(
         description=(
             f"Analyze this clinical intake payload:\n{context_text}\n\n"
+            "When ML1 (conversational history) and ML2 (digitized documents) sections "
+            "are present, compare them for contradictions between what the patient said "
+            "and what documents record.\n"
             "List any contradictions between symptoms, history, medications, allergies, "
             "OCR/lab reports, and red flags. If none, state 'No contradictions found.'"
         ),
@@ -96,6 +132,8 @@ def run_synthesis_crew(
     synthesis_task = Task(
         description=(
             "Using the clinical payload and audit results:\n"
+            "When ML1 and ML2 sections are present, synthesize a single physician-ready "
+            "summary that combines conversational history with digitized document findings.\n"
             "1. Translate colloquial terms/Hinglish (e.g., 'aaj' -> 'today', "
             "'boht painful' -> 'severe pain') to medical English.\n"
             "2. Populate SOCRATES history and extract medications.\n"

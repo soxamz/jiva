@@ -3,14 +3,13 @@ import 'server-only';
 import {
   asClinicalSummary,
   mergeMedications,
-  shouldPreferLocalDigestNarrative,
   type ClinicalAbnormalLab,
   type ClinicalContradiction,
   type ClinicalSummary,
 } from '@/lib/clinical-summary';
 import { getOcrExtractionsSince, getPatientWeekClinicalContext } from '@/lib/dal';
 import { buildLocalClinicalSummary } from '@/lib/local-clinical-summary';
-import { labReportsFromExtractions, synthesizeClinicalSummary } from '@/lib/ml3-api';
+import { buildMl3Payload, synthesizeClinicalSummary } from '@/lib/ml3-api';
 
 export const OVERVIEW_RANGES = [7, 30, 90] as const;
 export type OverviewRangeDays = (typeof OVERVIEW_RANGES)[number];
@@ -59,7 +58,7 @@ function medicationsFromOcr(extractions: Record<string, unknown>[]) {
     meds.push(
       ...asStringArray(extracted.extracted_medications),
       ...asStringArray(extracted.medications),
-      ...asStringArray(clinicalData?.medications)
+      ...asStringArray(clinicalData?.medications),
     );
   }
   return meds;
@@ -70,96 +69,52 @@ function buildWeekPayload(context: Awaited<ReturnType<typeof getPatientWeekClini
     .map(({ structured }) => structured?.extractedJson)
     .filter((value): value is Record<string, unknown> => Boolean(value) && typeof value === 'object');
 
-  const complaints = [
-    ...new Set(context.weekIntakes.map((intake) => intake.chiefComplaint.trim()).filter(Boolean)),
-  ];
+  const ml1Histories = context.weekIntakes
+    .map((intake) => intake.patientHistory)
+    .filter((value): value is Record<string, unknown> => Boolean(value) && typeof value === 'object');
 
-  const allergies = new Set<string>(context.profile?.allergies ?? []);
-  const medications = new Set<string>(context.profile?.currentMedications ?? []);
-  const comorbidities = new Set<string>(context.profile?.criticalConditions ?? []);
-  const redFlags: string[] = [];
-  const transcriptRefs: string[] = [];
-  let hpi: Record<string, unknown> | null = null;
-  let reviewOfSystems: Record<string, unknown> | null = null;
-  let ayush: Record<string, unknown> | null = null;
-
+  const intakeRedFlags: string[] = [];
   for (const intake of context.weekIntakes) {
     if (intake.redFlag && intake.redFlagReason) {
-      redFlags.push(intake.redFlagReason);
+      intakeRedFlags.push(intake.redFlagReason);
     }
     if (Array.isArray(intake.redFlagDetails)) {
-      redFlags.push(...intake.redFlagDetails.filter((item): item is string => typeof item === 'string'));
-    }
-
-    transcriptRefs.push(
-      `Intake ${intake.createdAt.toISOString()}: ${intake.chiefComplaint}. ${intake.summary}`
-    );
-
-    const history = (intake.patientHistory ?? null) as Record<string, unknown> | null;
-    if (!history) continue;
-
-    for (const allergy of asStringArray(history.allergies)) allergies.add(allergy);
-    for (const med of asStringArray(history.medications)) medications.add(med);
-    for (const med of asStringArray(history.prior_medications ? [history.prior_medications] : [])) {
-      medications.add(med);
-    }
-    for (const condition of asStringArray(history.comorbidities)) comorbidities.add(condition);
-
-    if (Array.isArray(history.source_transcript_refs)) {
-      transcriptRefs.push(
-        ...history.source_transcript_refs.filter((item): item is string => typeof item === 'string')
+      intakeRedFlags.push(
+        ...intake.redFlagDetails.filter((item): item is string => typeof item === 'string'),
       );
     }
-
-    if (!hpi && history.hpi && typeof history.hpi === 'object') {
-      hpi = history.hpi as Record<string, unknown>;
-    }
-    if (!reviewOfSystems && history.review_of_systems && typeof history.review_of_systems === 'object') {
-      reviewOfSystems = history.review_of_systems as Record<string, unknown>;
-    }
-    if (!ayush && history.ayush && typeof history.ayush === 'object') {
-      ayush = history.ayush as Record<string, unknown>;
-    }
   }
 
-  for (const med of medicationsFromOcr(extractions)) {
-    medications.add(med);
-  }
+  const firstIntake = context.weekIntakes[0];
 
-  return {
-    patient_id: context.user.id,
-    intake_session_id: context.weekIntakes[0]?.id,
-    chief_complaint:
-      complaints.length > 0
-        ? complaints.join('; ')
-        : `Clinical overview (past ${context.days} days)`,
-    hpi:
-      hpi ??
-      (context.weekIntakes[0]
+  return buildMl3Payload({
+    ml1Histories,
+    ml2Documents: extractions,
+    meta: {
+      patient_id: context.user.id,
+      intake_session_id: firstIntake?.id,
+      days: context.days,
+      profileAllergies: context.profile?.allergies,
+      profileMedications: context.profile?.currentMedications,
+      profileComorbidities: context.profile?.criticalConditions,
+      intakeRedFlags,
+      intakeColumns: firstIntake
         ? {
-            duration: context.weekIntakes[0].symptomDuration,
-            location: context.weekIntakes[0].location,
-            character: context.weekIntakes[0].character,
-            severity: context.weekIntakes[0].severity,
-            aggravating: context.weekIntakes[0].aggravatingFactors,
-            relieving: context.weekIntakes[0].relievingFactors,
-            associated: context.weekIntakes[0].associatedSymptoms,
+            symptomDuration: firstIntake.symptomDuration,
+            location: firstIntake.location,
+            character: firstIntake.character,
+            severity: firstIntake.severity,
+            aggravatingFactors: firstIntake.aggravatingFactors,
+            relievingFactors: firstIntake.relievingFactors,
+            associatedSymptoms: firstIntake.associatedSymptoms,
           }
-        : null),
-    allergies: [...allergies],
-    medications: [...medications],
-    comorbidities: [...comorbidities],
-    review_of_systems: reviewOfSystems,
-    ayush,
-    source_transcript_refs: transcriptRefs,
-    red_flags: [...new Set(redFlags)],
-    lab_reports: labReportsFromExtractions(extractions),
-    ocr_documents: extractions,
-  };
+        : undefined,
+    },
+  });
 }
 
 function latestStoredWeekSummary(
-  intakes: Awaited<ReturnType<typeof getPatientWeekClinicalContext>>['weekIntakes']
+  intakes: Awaited<ReturnType<typeof getPatientWeekClinicalContext>>['weekIntakes'],
 ) {
   for (const intake of intakes) {
     const clinical = asClinicalSummary(intake.clinicalSummary);
@@ -168,6 +123,16 @@ function latestStoredWeekSummary(
     }
   }
   return null;
+}
+
+function hasNewActivitySince(
+  context: Awaited<ReturnType<typeof getPatientWeekClinicalContext>>,
+  since: Date,
+) {
+  return (
+    context.weekIntakes.some((intake) => intake.createdAt > since) ||
+    context.weekDocuments.some((doc) => doc.createdAt > since)
+  );
 }
 
 function mergeLabFlags(primary: ClinicalAbnormalLab[] = [], secondary: ClinicalAbnormalLab[] = []) {
@@ -184,7 +149,7 @@ function mergeLabFlags(primary: ClinicalAbnormalLab[] = [], secondary: ClinicalA
 
 function mergeContradictions(
   primary: ClinicalContradiction[] = [],
-  secondary: ClinicalContradiction[] = []
+  secondary: ClinicalContradiction[] = [],
 ) {
   const seen = new Set<string>();
   const merged: ClinicalContradiction[] = [];
@@ -197,43 +162,23 @@ function mergeContradictions(
   return merged.slice(0, 12);
 }
 
-function applyLocalDigestIfNeeded(
+function mergeLocalDigestExtras(
   clinical: ClinicalSummary,
-  localDigest: ClinicalSummary
+  localDigest: ClinicalSummary,
 ): ClinicalSummary {
-  if (!shouldPreferLocalDigestNarrative(clinical.doctor_english_summary)) {
-    return {
-      ...clinical,
-      extracted_medications: mergeMedications(
-        clinical.extracted_medications,
-        localDigest.extracted_medications
-      ),
-      abnormal_lab_flags: mergeLabFlags(
-        clinical.abnormal_lab_flags,
-        localDigest.abnormal_lab_flags
-      ),
-      detected_contradictions: mergeContradictions(
-        clinical.detected_contradictions,
-        localDigest.detected_contradictions
-      ),
-    };
-  }
-
   return {
     ...clinical,
-    doctor_english_summary: localDigest.doctor_english_summary,
-    chief_complaint: localDigest.chief_complaint || clinical.chief_complaint,
     extracted_medications: mergeMedications(
       clinical.extracted_medications,
-      localDigest.extracted_medications
+      localDigest.extracted_medications,
     ),
     abnormal_lab_flags: mergeLabFlags(
       clinical.abnormal_lab_flags,
-      localDigest.abnormal_lab_flags
+      localDigest.abnormal_lab_flags,
     ),
     detected_contradictions: mergeContradictions(
       clinical.detected_contradictions,
-      localDigest.detected_contradictions
+      localDigest.detected_contradictions,
     ),
     triage_alert: clinical.triage_alert || localDigest.triage_alert,
     triage_reasons: [
@@ -264,7 +209,7 @@ export async function getWeekClinicalOverview(days: number = 7): Promise<WeekCli
 
   const ocrRows = await getOcrExtractionsSince(context.since);
   const ocrMeds = medicationsFromOcr(
-    ocrRows.map((row) => row.extractedJson as Record<string, unknown>)
+    ocrRows.map((row) => row.extractedJson as Record<string, unknown>),
   );
 
   const localDigest = buildLocalClinicalSummary({
@@ -279,20 +224,27 @@ export async function getWeekClinicalOverview(days: number = 7): Promise<WeekCli
   let source: WeekClinicalOverview['source'] = 'local';
   let error: string | null = null;
 
-  try {
-    const synthesized = await synthesizeClinicalSummary(buildWeekPayload(context));
-    clinical = asClinicalSummary(synthesized);
-    if (clinical) {
-      generatedAt = new Date();
-      source = 'ml3';
-    }
-  } catch (err) {
-    error = err instanceof Error ? err.message : 'ML3 synthesis failed';
-  }
+  const stored = latestStoredWeekSummary(context.weekIntakes);
+  const storedIsFresh =
+    stored !== null && !hasNewActivitySince(context, stored.generatedAt);
 
-  if (!clinical) {
-    const stored = latestStoredWeekSummary(context.weekIntakes);
-    if (stored) {
+  if (storedIsFresh && stored) {
+    clinical = stored.clinical;
+    generatedAt = stored.generatedAt;
+    source = 'stored';
+  } else {
+    try {
+      const synthesized = await synthesizeClinicalSummary(buildWeekPayload(context));
+      clinical = asClinicalSummary(synthesized);
+      if (clinical) {
+        generatedAt = new Date();
+        source = 'ml3';
+      }
+    } catch (err) {
+      error = err instanceof Error ? err.message : 'ML3 synthesis failed';
+    }
+
+    if (!clinical && stored) {
       clinical = stored.clinical;
       generatedAt = stored.generatedAt;
       source = 'stored';
@@ -304,12 +256,12 @@ export async function getWeekClinicalOverview(days: number = 7): Promise<WeekCli
     generatedAt = new Date();
     source = 'local';
   } else if (source === 'ml3' || source === 'stored') {
-    clinical = applyLocalDigestIfNeeded(clinical, localDigest);
+    clinical = mergeLocalDigestExtras(clinical, localDigest);
   }
 
   const medications = mergeMedications(
     clinical?.extracted_medications,
-    [...(context.profile?.currentMedications ?? []), ...ocrMeds]
+    [...(context.profile?.currentMedications ?? []), ...ocrMeds],
   );
 
   return {
