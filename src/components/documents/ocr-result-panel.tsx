@@ -1,10 +1,12 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useState, useTransition } from "react";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 
+import { setDocumentDoctorSharingAction } from "@/lib/actions";
 import { Badge } from "@/components/ui/badge";
 import { OpenUploadedFileLink } from "@/components/documents/open-uploaded-file-link";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -66,6 +68,50 @@ function OcrResultPanel({
   );
 }
 
+function DocumentSharingSwitch({ item }: { item: DocumentListItem }) {
+  const { t } = useI18n();
+  const [shared, setShared] = useState(item.shareWithDoctor);
+  const [isPending, startTransition] = useTransition();
+  const switchId = `share-document-${item.id}`;
+
+  function setSharing(shareWithDoctor: boolean) {
+    const previous = shared;
+    setShared(shareWithDoctor);
+
+    startTransition(async () => {
+      const result = await setDocumentDoctorSharingAction({
+        documentId: item.id,
+        shareWithDoctor,
+      });
+
+      if (result.message) {
+        setShared(previous);
+      }
+    });
+  }
+
+  return (
+    <div
+      className="flex min-w-40 items-center justify-end gap-2"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <label
+        className="text-muted-foreground cursor-pointer text-xs"
+        htmlFor={switchId}
+      >
+        {shared ? t("documents.sharedWithDoctor") : t("documents.privateToYou")}
+      </label>
+      <Switch
+        aria-label={t("documents.shareWithDoctor")}
+        checked={shared}
+        disabled={isPending}
+        id={switchId}
+        onCheckedChange={setSharing}
+      />
+    </div>
+  );
+}
+
 export function DocumentsTable({ items }: { items: DocumentListItem[] }) {
   const { t } = useI18n();
   const [openId, setOpenId] = useState<string | null>(null);
@@ -90,6 +136,9 @@ export function DocumentsTable({ items }: { items: DocumentListItem[] }) {
           <TableHead>{t("documents.type")}</TableHead>
           <TableHead>{t("documents.confidence")}</TableHead>
           <TableHead>{t("documents.status")}</TableHead>
+          <TableHead className="text-right">
+            {t("documents.shareWithDoctor")}
+          </TableHead>
           <TableHead className="pe-6 text-right">
             {t("documents.uploaded")}
           </TableHead>
@@ -136,13 +185,16 @@ export function DocumentsTable({ items }: { items: DocumentListItem[] }) {
                         : t("documents.processing")}
                   </Badge>
                 </TableCell>
+                <TableCell>
+                  <DocumentSharingSwitch item={item} />
+                </TableCell>
                 <TableCell className="text-muted-foreground pe-6 text-right text-sm">
                   {item.uploadedLabel}
                 </TableCell>
               </TableRow>
               {open ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell className="bg-muted/20 p-4" colSpan={6}>
+                  <TableCell className="bg-muted/20 p-4" colSpan={7}>
                     <OcrResultPanel
                       abnormalValues={item.abnormalValues}
                       highlights={item.highlights}

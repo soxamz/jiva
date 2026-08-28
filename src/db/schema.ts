@@ -112,6 +112,7 @@ export const documents = pgTable(
     storageUrl: text("storage_url"),
     mockFileUri: text("mock_file_uri"),
     notes: text("notes"),
+    shareWithDoctor: boolean("share_with_doctor").notNull().default(false),
     status: documentStatus("status").notNull().default("processed"),
     uploadedAt: timestamp("uploaded_at", { withTimezone: true })
       .defaultNow()

@@ -1,0 +1,1 @@
+ALTER TABLE "documents" ADD COLUMN "share_with_doctor" boolean DEFAULT false NOT NULL;

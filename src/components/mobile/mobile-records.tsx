@@ -1,11 +1,27 @@
 "use client";
 
-import { useState, useRef, FormEvent } from "react";
+import { useState, useRef, FormEvent, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useUploadThing } from "@/lib/uploadthing-client";
-import { processStoredDocumentAction } from "@/lib/actions";
-import { allowedDocumentMimeTypes, maxDocumentSizeBytes, type DocumentType } from "@/lib/document-upload";
-import { FileText, Plus, Sparkles, Calendar, Loader2, LinkIcon, FileHeart, ChevronRight } from "lucide-react";
+import {
+  processStoredDocumentAction,
+  setDocumentDoctorSharingAction,
+} from "@/lib/actions";
+import { useI18n } from "@/components/i18n-provider";
+import { Switch } from "@/components/ui/switch";
+import {
+  allowedDocumentMimeTypes,
+  maxDocumentSizeBytes,
+  type DocumentType,
+} from "@/lib/document-upload";
+import {
+  Plus,
+  Sparkles,
+  Calendar,
+  Loader2,
+  LinkIcon,
+  FileHeart,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MobileHeader } from "./mobile-header";
 
@@ -22,6 +38,7 @@ interface MobileRecordsProps {
         storageUrl: string | null;
         fileSizeBytes: number;
         notes: string | null;
+        shareWithDoctor: boolean;
       };
       structured: {
         aiConfidenceScore: number | null;
@@ -39,7 +56,12 @@ const DOC_TYPES: Array<{ value: DocumentType; label: string }> = [
 
 export function MobileRecords({ data }: MobileRecordsProps) {
   const router = useRouter();
+  const { t } = useI18n();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isSharingPending, startSharingTransition] = useTransition();
+  const [sharingByDocumentId, setSharingByDocumentId] = useState<
+    Record<string, boolean>
+  >({});
 
   // Filters
   const [activeFilter, setActiveFilter] = useState<"all" | DocumentType>("all");
@@ -119,7 +141,9 @@ export function MobileRecords({ data }: MobileRecordsProps) {
       setNotes("");
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
-      setErrors(err instanceof Error ? err.message : "Unable to upload this document.");
+      setErrors(
+        err instanceof Error ? err.message : "Unable to upload this document.",
+      );
     } finally {
       setIsFinalizing(false);
     }
@@ -139,12 +163,40 @@ export function MobileRecords({ data }: MobileRecordsProps) {
     }
   };
 
+  function setDocumentSharing(
+    documentId: string,
+    currentValue: boolean,
+    shareWithDoctor: boolean,
+  ) {
+    setSharingByDocumentId((current) => ({
+      ...current,
+      [documentId]: shareWithDoctor,
+    }));
+
+    startSharingTransition(async () => {
+      const result = await setDocumentDoctorSharingAction({
+        documentId,
+        shareWithDoctor,
+      });
+
+      if (result.message) {
+        setSharingByDocumentId((current) => ({
+          ...current,
+          [documentId]: currentValue,
+        }));
+        setErrors(result.message);
+        return;
+      }
+
+      router.refresh();
+    });
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-[#F8FAFC] pb-24 md:hidden">
       <MobileHeader title="Medical records" showBack backHref="/dashboard" />
 
       <div className="p-4 flex flex-col gap-5">
-        
         {/* Title and Intro */}
         <div>
           <h2 className="text-[24px] font-extrabold text-[#111827] tracking-tight">
@@ -169,7 +221,10 @@ export function MobileRecords({ data }: MobileRecordsProps) {
           <form className="flex flex-col gap-4 mt-4" onSubmit={handleSubmit}>
             {/* Title Input */}
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="mobile-doc-title" className="text-[11px] font-bold text-[#111827] uppercase tracking-wider">
+              <label
+                htmlFor="mobile-doc-title"
+                className="text-[11px] font-bold text-[#111827] uppercase tracking-wider"
+              >
                 Document
               </label>
               <input
@@ -200,7 +255,7 @@ export function MobileRecords({ data }: MobileRecordsProps) {
                         "px-4 py-2 rounded-full text-xs font-bold border transition-colors capitalize",
                         active
                           ? "bg-[#0D5F5A] border-[#0D5F5A] text-white"
-                          : "bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B]"
+                          : "bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B]",
                       )}
                     >
                       {t.label}
@@ -212,7 +267,10 @@ export function MobileRecords({ data }: MobileRecordsProps) {
 
             {/* Notes Input */}
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="mobile-doc-notes" className="text-[11px] font-bold text-[#111827] uppercase tracking-wider">
+              <label
+                htmlFor="mobile-doc-notes"
+                className="text-[11px] font-bold text-[#111827] uppercase tracking-wider"
+              >
                 Notes
               </label>
               <textarea
@@ -253,8 +311,16 @@ export function MobileRecords({ data }: MobileRecordsProps) {
               </div>
             )}
 
-            {errors && <p className="text-red-500 text-[11px] font-bold mt-1">{errors}</p>}
-            {message && <p className="text-teal-600 text-[11px] font-bold mt-1">{message}</p>}
+            {errors && (
+              <p className="text-red-500 text-[11px] font-bold mt-1">
+                {errors}
+              </p>
+            )}
+            {message && (
+              <p className="text-teal-600 text-[11px] font-bold mt-1">
+                {message}
+              </p>
+            )}
 
             <button
               type="submit"
@@ -285,7 +351,7 @@ export function MobileRecords({ data }: MobileRecordsProps) {
               "px-4 py-2 rounded-full text-xs font-bold border transition-colors flex-shrink-0",
               activeFilter === "all"
                 ? "bg-[#0D5F5A] border-[#0D5F5A] text-white"
-                : "bg-white border-[#E2E8F0] text-[#64748B]"
+                : "bg-white border-[#E2E8F0] text-[#64748B]",
             )}
           >
             All
@@ -298,7 +364,7 @@ export function MobileRecords({ data }: MobileRecordsProps) {
                 "px-4 py-2 rounded-full text-xs font-bold border transition-colors flex-shrink-0 capitalize",
                 activeFilter === type.value
                   ? "bg-[#0D5F5A] border-[#0D5F5A] text-white"
-                  : "bg-white border-[#E2E8F0] text-[#64748B]"
+                  : "bg-white border-[#E2E8F0] text-[#64748B]",
               )}
             >
               {type.label}
@@ -313,85 +379,115 @@ export function MobileRecords({ data }: MobileRecordsProps) {
               No records matching the filter.
             </div>
           ) : (
-            filteredDocs.map(({ document, structured }) => (
-              <div
-                key={document.id}
-                className="bg-white border border-[#E2E8F0] rounded-[16px] p-4 shadow-sm flex items-start gap-3.5"
-              >
+            filteredDocs.map(({ document, structured }) => {
+              const shareWithDoctor =
+                sharingByDocumentId[document.id] ?? document.shareWithDoctor;
+
+              return (
                 <div
-                  className={cn(
-                    "size-10 rounded-[10px] flex items-center justify-center shrink-0 border border-transparent",
-                    getDocTypeColor(document.docType)
-                  )}
+                  key={document.id}
+                  className="bg-white border border-[#E2E8F0] rounded-[16px] p-4 shadow-sm flex items-start gap-3.5"
                 >
-                  <FileHeart className="size-5" />
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 justify-between">
-                    <h3 className="text-xs font-extrabold text-[#111827] truncate">
-                      {document.title}
-                    </h3>
-                    {structured?.aiConfidenceScore && (
-                      <div className="bg-[#E6F4F1] text-[#0D5F5A] text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 flex items-center gap-0.5">
-                        <Sparkles className="size-2" />
-                        <span>{structured.aiConfidenceScore}%</span>
-                      </div>
+                  <div
+                    className={cn(
+                      "size-10 rounded-[10px] flex items-center justify-center shrink-0 border border-transparent",
+                      getDocTypeColor(document.docType),
                     )}
+                  >
+                    <FileHeart className="size-5" />
                   </div>
 
-                  <p className="text-[10px] text-[#64748B] mt-0.5 uppercase tracking-wide font-bold">
-                    {document.docType === "rx" ? "prescription" : document.docType}
-                  </p>
-
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <Calendar className="size-3 text-[#64748B]/70" />
-                    <span className="text-[10px] text-[#64748B] font-semibold">
-                      {new Date(document.uploadedAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </span>
-                    <div className="size-1 rounded-full bg-[#E2E8F0]" />
-                    <span
-                      className={cn(
-                        "text-[10px] font-bold capitalize",
-                        document.status === "processed"
-                          ? "text-emerald-600"
-                          : document.status === "processing"
-                          ? "text-amber-500 animate-pulse"
-                          : "text-red-500"
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 justify-between">
+                      <h3 className="text-xs font-extrabold text-[#111827] truncate">
+                        {document.title}
+                      </h3>
+                      {structured?.aiConfidenceScore && (
+                        <div className="bg-[#E6F4F1] text-[#0D5F5A] text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 flex items-center gap-0.5">
+                          <Sparkles className="size-2" />
+                          <span>{structured.aiConfidenceScore}%</span>
+                        </div>
                       )}
-                    >
-                      {document.status}
-                    </span>
+                    </div>
+
+                    <p className="text-[10px] text-[#64748B] mt-0.5 uppercase tracking-wide font-bold">
+                      {document.docType === "rx"
+                        ? "prescription"
+                        : document.docType}
+                    </p>
+
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <Calendar className="size-3 text-[#64748B]/70" />
+                      <span className="text-[10px] text-[#64748B] font-semibold">
+                        {new Date(document.uploadedAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          },
+                        )}
+                      </span>
+                      <div className="size-1 rounded-full bg-[#E2E8F0]" />
+                      <span
+                        className={cn(
+                          "text-[10px] font-bold capitalize",
+                          document.status === "processed"
+                            ? "text-emerald-600"
+                            : document.status === "processing"
+                              ? "text-amber-500 animate-pulse"
+                              : "text-red-500",
+                        )}
+                      >
+                        {document.status}
+                      </span>
+                    </div>
+
+                    {document.notes && (
+                      <p className="text-[#64748B] text-[10px] bg-[#F8FAFC] border border-[#F1F5F9] rounded-[8px] p-2 mt-2 leading-relaxed italic">
+                        &ldquo;{document.notes}&rdquo;
+                      </p>
+                    )}
+
+                    <div className="mt-3 flex items-center justify-between gap-3 rounded-[10px] bg-[#F8FAFC] px-2.5 py-2">
+                      <span className="text-[10px] font-semibold text-[#64748B]">
+                        {shareWithDoctor
+                          ? t("documents.sharedWithDoctor")
+                          : t("documents.privateToYou")}
+                      </span>
+                      <Switch
+                        aria-label={t("documents.shareWithDoctor")}
+                        checked={shareWithDoctor}
+                        disabled={isSharingPending}
+                        onCheckedChange={(checked) =>
+                          setDocumentSharing(
+                            document.id,
+                            document.shareWithDoctor,
+                            checked,
+                          )
+                        }
+                        size="sm"
+                      />
+                    </div>
                   </div>
 
-                  {document.notes && (
-                    <p className="text-[#64748B] text-[10px] bg-[#F8FAFC] border border-[#F1F5F9] rounded-[8px] p-2 mt-2 leading-relaxed italic">
-                      &ldquo;{document.notes}&rdquo;
-                    </p>
+                  {document.storageUrl && (
+                    <a
+                      href={document.storageUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex size-8 items-center justify-center rounded-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0D5F5A] active:scale-90 transition-transform shrink-0"
+                      title="Open document file"
+                      aria-label="Open document file"
+                    >
+                      <LinkIcon className="size-3.5" />
+                    </a>
                   )}
                 </div>
-
-                {document.storageUrl && (
-                  <a
-                    href={document.storageUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex size-8 items-center justify-center rounded-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0D5F5A] active:scale-90 transition-transform shrink-0"
-                    title="Open document file"
-                    aria-label="Open document file"
-                  >
-                    <LinkIcon className="size-3.5" />
-                  </a>
-                )}
-              </div>
-            ))
+              );
+            })
           )}
         </div>
-
       </div>
     </div>
   );

@@ -36,6 +36,7 @@ export default async function DocumentsPage() {
         title: document.title,
         fileName: document.fileName,
         fileUrl: document.storageUrl,
+        shareWithDoctor: document.shareWithDoctor,
         docType: document.docType,
         fileSizeLabel: formatBytes(document.fileSizeBytes),
         status: document.status,
@@ -73,7 +74,9 @@ export default async function DocumentsPage() {
           <Card className="rounded-2xl shadow-sm">
             <CardHeader>
               <CardTitle>{t("documents.saved")}</CardTitle>
-              <CardDescription>{t("documents.savedDescription")}</CardDescription>
+              <CardDescription>
+                {t("documents.savedDescription")}
+              </CardDescription>
             </CardHeader>
             <CardContent className="px-0 pb-0">
               <ScrollArea className="h-[34rem]">
@@ -86,4 +89,3 @@ export default async function DocumentsPage() {
     </>
   );
 }
-

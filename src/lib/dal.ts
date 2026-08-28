@@ -1215,7 +1215,12 @@ export async function getDoctorAccessData(code: string) {
     .select({ document: documents, structured: structuredData })
     .from(documents)
     .leftJoin(structuredData, eq(structuredData.docId, documents.id))
-    .where(eq(documents.userId, patient.id))
+    .where(
+      and(
+        eq(documents.userId, patient.id),
+        eq(documents.shareWithDoctor, true),
+      ),
+    )
     .orderBy(desc(documents.uploadedAt));
 
   const intakes = await db
@@ -1252,6 +1257,7 @@ export async function addDoctorNoteForConsent(
       fileType: "text/plain",
       fileSizeBytes: input.note.length,
       notes: input.note,
+      shareWithDoctor: true,
       status: "processed",
     })
     .returning();
@@ -1271,6 +1277,35 @@ export async function addDoctorNoteForConsent(
     documentId: document.id,
     consentId: consent.id,
   });
+
+  return document;
+}
+
+export async function setDocumentDoctorSharingForCurrentPatient(
+  documentId: string,
+  shareWithDoctor: boolean,
+) {
+  const user = await requireUser(["patient"]);
+  const [document] = await db
+    .update(documents)
+    .set({ shareWithDoctor })
+    .where(and(eq(documents.id, documentId), eq(documents.userId, user.id)))
+    .returning({ id: documents.id, title: documents.title });
+
+  if (!document) {
+    throw new Error("Medical record not found.");
+  }
+
+  await logAudit(
+    user.id,
+    "DOCUMENT_DOCTOR_SHARING_UPDATED",
+    "document",
+    document.id,
+    {
+      shareWithDoctor,
+      title: document.title,
+    },
+  );
 
   return document;
 }

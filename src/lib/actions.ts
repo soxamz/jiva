@@ -15,6 +15,7 @@ import {
   getRecentOcrExtractionsForCurrentPatient,
   revokeConsentForCurrentPatient,
   saveAiIntakeForCurrentPatient,
+  setDocumentDoctorSharingForCurrentPatient,
   submitIntakeForCurrentPatient,
   updateMedicalProfileForCurrentPatient,
 } from "@/lib/dal";
@@ -120,6 +121,10 @@ const breakGlassSchema = z.object({
 });
 
 const consentIdSchema = z.string().uuid("Invalid access record.");
+const documentSharingSchema = z.object({
+  documentId: z.string().uuid("Invalid medical record."),
+  shareWithDoctor: z.boolean(),
+});
 
 const listItemSchema = z.string().trim().min(1).max(100);
 
@@ -467,6 +472,30 @@ export async function revokeConsentAction(formData: FormData) {
   await revokeConsentForCurrentPatient(parsed.data);
   revalidatePath("/share");
   redirect("/share");
+}
+
+export async function setDocumentDoctorSharingAction(input: unknown) {
+  const parsed = documentSharingSchema.safeParse(input);
+  if (!parsed.success) {
+    return { message: "Invalid medical record." };
+  }
+
+  try {
+    await setDocumentDoctorSharingForCurrentPatient(
+      parsed.data.documentId,
+      parsed.data.shareWithDoctor,
+    );
+  } catch (error) {
+    return {
+      message:
+        error instanceof Error ? error.message : "Unable to update sharing.",
+    };
+  }
+
+  revalidatePath("/documents");
+  revalidatePath("/doctor");
+  revalidatePath("/doctor/access/[code]", "page");
+  return { success: true };
 }
 
 export async function addDoctorNoteAction(

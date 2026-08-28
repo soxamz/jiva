@@ -225,30 +225,41 @@ export default async function DoctorAccessPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.documents.map(({ document, structured }) => (
-                  <TableRow className="h-12" key={document.id}>
-                    <TableCell className="max-w-80 ps-6">
-                      <p className="truncate font-medium">{document.title}</p>
-                      <p className="text-muted-foreground truncate text-xs">
-                        {document.notes}
-                      </p>
-                      <OpenUploadedFileLink
-                        className="mt-1.5"
-                        href={document.storageUrl}
-                        label={t("documents.openFile")}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{document.docType}</Badge>
-                    </TableCell>
-                    <TableCell className="tabular-nums">
-                      {structured?.aiConfidenceScore ?? 0}%
-                    </TableCell>
-                    <TableCell className="text-muted-foreground pe-6 text-right">
-                      {formatDateTime(document.uploadedAt, locale)}
+                {data.documents.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      className="text-muted-foreground px-6 py-8 text-sm"
+                      colSpan={4}
+                    >
+                      {t("documents.noSharedWithDoctor")}
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  data.documents.map(({ document, structured }) => (
+                    <TableRow className="h-12" key={document.id}>
+                      <TableCell className="max-w-80 ps-6">
+                        <p className="truncate font-medium">{document.title}</p>
+                        <p className="text-muted-foreground truncate text-xs">
+                          {document.notes}
+                        </p>
+                        <OpenUploadedFileLink
+                          className="mt-1.5"
+                          href={document.storageUrl}
+                          label={t("documents.openFile")}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{document.docType}</Badge>
+                      </TableCell>
+                      <TableCell className="tabular-nums">
+                        {structured?.aiConfidenceScore ?? 0}%
+                      </TableCell>
+                      <TableCell className="text-muted-foreground pe-6 text-right">
+                        {formatDateTime(document.uploadedAt, locale)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
