@@ -9,11 +9,11 @@ from app.crews.turn_crew import InterpreterOutput
 from app.flows.intake_flow import (
     ALREADY_COMPLETE_MESSAGE,
     CLOSING_MESSAGE,
-    PROBE_QUESTIONS,
     IntakeFlow,
 )
 from app.schemas.intake import PhysicianSummary, RedFlagResult, SessionState
 from app.schemas.socrates import SocratesSlots
+from app.services.intake_pathways import PROBE_QUESTIONS
 from app.services.slot_fill import (
     apply_denial_fill,
     core_complete,

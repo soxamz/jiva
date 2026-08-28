@@ -15,14 +15,17 @@ from app.flows.intake_flow import (
 from app.schemas.intake import RedFlagResult, SessionState
 from app.schemas.socrates import SocratesSlots
 from app.services.intake_pathways import (
+    DASHAVIDHA_ORDER,
     classify_complaint_subtype,
     probe_order_for_subtype,
+    relevant_ayush_dimensions,
 )
 from app.services.slot_fill import (
     apply_session_denial_fill,
     next_subtype_dimension,
     progress_map,
 )
+from app.services.transcript_infer import apply_transcript_inferences
 
 
 def _flags_continue() -> RedFlagResult:
@@ -45,6 +48,12 @@ class PhysicianLikeTests(unittest.TestCase):
             classify_complaint_subtype("pain in my left hand"), "limb_pain"
         )
         self.assertEqual(
+            classify_complaint_subtype(
+                "i fell from stairs and now have pain in my left leg"
+            ),
+            "limb_pain",
+        )
+        self.assertEqual(
             classify_complaint_subtype("halka pet dard"), "abdominal_pain"
         )
 
@@ -56,6 +65,47 @@ class PhysicianLikeTests(unittest.TestCase):
         self.assertNotIn("bleeding_now", order)
         self.assertNotIn("blood_thinners", order)
         self.assertNotIn("consciousness", order)
+
+    def test_limb_trauma_bank_includes_bleeding_and_ayush(self):
+        order = probe_order_for_subtype(
+            "limb_pain", site="left leg", trauma_context=True
+        )
+        self.assertIn("bleeding_now", order)
+        self.assertIn("consciousness", order)
+        self.assertIn("ayush_vaya", order)
+        self.assertLess(order.index("bleeding_now"), order.index("ayush_vaya"))
+
+    def test_trauma_ayush_subset_excludes_agni_and_prakriti(self):
+        session = SessionState(
+            chief_complaint="fell from stairs and now left leg pains",
+            metadata={"complaint_subtype": "limb_pain", "trauma_context": True},
+            slots=SocratesSlots(site="left leg", onset="today"),
+        )
+        apply_transcript_inferences(session)
+        ayush = relevant_ayush_dimensions(session, "limb_pain")
+        self.assertIn("ayush_vaya", ayush)
+        self.assertIn("ayush_vikriti", ayush)
+        self.assertIn("ayush_bala", ayush)
+        self.assertIn("ayush_manas_vyayam", ayush)
+        self.assertNotIn("ayush_agni", ayush)
+        self.assertNotIn("ayush_prakriti", ayush)
+        from app.services.slot_fill import probe_order_for_session
+
+        order = probe_order_for_session(session, "limb_pain")
+        self.assertNotIn("ayush_agni", order)
+        self.assertNotIn("ayush_prakriti", order)
+
+    def test_fall_leg_skips_mechanism_when_stated_in_opening(self):
+        session = SessionState(
+            chief_complaint="fell from stairs and now have pain in my left leg",
+            metadata={"complaint_subtype": "limb_pain", "trauma_context": True},
+            slots=SocratesSlots(site="left leg", onset="today"),
+        )
+        apply_transcript_inferences(session)
+        self.assertEqual(session.mechanism, "fall")
+        nxt = next_subtype_dimension(session, "limb_pain")
+        self.assertNotEqual(nxt, "mechanism")
+        self.assertEqual(nxt, "bleeding_now")
 
     def test_headache_progress_excludes_bleeding(self):
         session = SessionState(

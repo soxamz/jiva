@@ -4,22 +4,34 @@ import unittest
 
 from app.crews.close_crew import compose_hpi_en
 from app.crews.turn_crew import InterpreterOutput
-from app.flows.intake_flow import PROBE_QUESTIONS, IntakeFlow
+from app.flows.intake_flow import IntakeFlow
 from app.schemas.intake import SessionState
 from app.schemas.socrates import SocratesSlots
 from app.services.ayush_analysis import build_ayush_block, provisional_ayush_notes
-from app.services.intake_pathways import DASHAVIDHA_ORDER, probe_order_for_subtype
+from app.services.intake_pathways import DASHAVIDHA_ORDER, PROBE_QUESTIONS, probe_order_for_subtype
 from app.services.slot_fill import progress_map
 
 
 class AyushDashavidhaTests(unittest.TestCase):
     def test_non_urgent_orders_include_dashavidha_before_priors(self):
-        for subtype in ("headache", "pain", "limb_pain", "general", "abdominal_pain"):
+        for subtype in ("headache", "pain", "general", "abdominal_pain"):
             order = probe_order_for_subtype(subtype, site="lower back")
             for dim in DASHAVIDHA_ORDER:
                 self.assertIn(dim, order)
             self.assertLess(order.index("ayush_vaya"), order.index("prior_medications"))
             self.assertEqual(order[-2:], ["prior_medications", "prior_consult"])
+
+    def test_limb_trauma_session_ayush_is_moderate_subset(self):
+        from app.services.intake_pathways import relevant_ayush_dimensions
+
+        session = SessionState(
+            chief_complaint="fell from stairs left leg pain",
+            metadata={"trauma_context": True},
+        )
+        ayush = relevant_ayush_dimensions(session, "limb_pain")
+        self.assertNotIn("ayush_agni", ayush)
+        self.assertNotIn("ayush_prakriti", ayush)
+        self.assertIn("ayush_vaya", ayush)
 
     def test_urgent_trauma_excludes_dashavidha(self):
         order = probe_order_for_subtype("urgent_trauma")

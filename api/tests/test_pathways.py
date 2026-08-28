@@ -6,13 +6,13 @@ from types import SimpleNamespace
 from app.flows.intake_flow import (
     ACK_MESSAGE,
     CLOSING_MESSAGE,
-    PROBE_QUESTIONS,
     URGENT_CLOSING_MESSAGE,
     IntakeFlow,
 )
 from app.schemas.intake import SessionState
 from app.schemas.socrates import SocratesSlots
 from app.services.intake_pathways import (
+    PROBE_QUESTIONS,
     classify_pathway,
     probe_order_for_pathway,
     should_ask_radiation,

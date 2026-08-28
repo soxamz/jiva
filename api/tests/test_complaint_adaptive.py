@@ -3,7 +3,7 @@
 import unittest
 from types import SimpleNamespace
 
-from app.flows.intake_flow import PROBE_QUESTIONS, IntakeFlow
+from app.flows.intake_flow import IntakeFlow
 from app.schemas.intake import SessionState
 from app.schemas.socrates import SocratesSlots
 from app.services.intake_pathways import (
