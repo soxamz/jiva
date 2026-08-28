@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from app.config import get_settings
 from app.crews.close_crew import run_close_crew
-from app.crews.turn_crew import run_turn_crew
+from app.crews.interview_crew import run_interview_crew
 from app.schemas.intake import (
     FinalizeResponse,
     SessionCreateResponse,
@@ -41,9 +41,12 @@ from app.services.slot_fill import (
     is_sentinel_none,
     next_subtype_dimension,
     patient_extra_value,
+    patient_slot_value,
     progress_map,
     restrict_interpreter_extras,
     restrict_interpreter_slots,
+    should_finalize_dimension,
+    should_store_patient_extra,
     subtype_complete,
 )
 
@@ -218,8 +221,23 @@ class IntakeFlow:
         if session.complete and session.physician_summary is None:
             return self._handle_post_close_turn(session, text, rule_result, transcript_preview)
 
-        turn = run_turn_crew(session, text, rule_result)
-        self._apply_interpreter(session, turn.interpreter, text)
+        turn = run_interview_crew(
+            session,
+            text,
+            rule_result,
+            subtype=self._current_subtype(session),
+            probe_text_fn=self._probe_text,
+            closing_message=CLOSING_MESSAGE,
+            urgent_closing_message=URGENT_CLOSING_MESSAGE,
+            max_intake_turns=settings.max_intake_turns,
+        )
+        self._apply_interpreter(
+            session,
+            turn.interpreter,
+            text,
+            answer_quality=turn.interpreter.answer_quality,
+            force_advance=turn.plan.force_advance,
+        )
         session.red_flag_history.append(turn.merged_red_flags)
 
         if turn.merged_red_flags.is_emergency:
@@ -229,9 +247,15 @@ class IntakeFlow:
                 transcript_preview,
             )
 
-        assistant_message, complete, urgent_bypass = self._next_assistant_message(
-            session, settings
-        )
+        plan = turn.plan
+        assistant_message = plan.assistant_message
+        complete = plan.complete
+        urgent_bypass = plan.urgent_bypass
+        if plan.action in ("advance", "reprompt") and plan.target_dimension:
+            session.last_asked_dimension = plan.target_dimension
+            asked = session.metadata.setdefault("asked_dimensions", [])
+            if plan.target_dimension not in asked:
+                asked.append(plan.target_dimension)
         session.complete = complete
         if complete:
             session.last_asked_dimension = None
@@ -486,7 +510,15 @@ class IntakeFlow:
             transcript_preview=transcript_preview,
         )
 
-    def _apply_interpreter(self, session: SessionState, interpreter, patient_text: str) -> None:
+    def _apply_interpreter(
+        self,
+        session: SessionState,
+        interpreter,
+        patient_text: str,
+        *,
+        answer_quality: str | None = None,
+        force_advance: bool = False,
+    ) -> None:
         if interpreter.chief_complaint:
             session.chief_complaint = interpreter.chief_complaint
         elif session.chief_complaint is None and session.transcript:
@@ -520,6 +552,20 @@ class IntakeFlow:
         session.slots = session.slots.merge(gated_slots)
         session.slots = apply_denial_fill(session.slots, patient_text, last_dim)
 
+        if (
+            last_dim
+            and last_dim in SOCRATES_FIELDS
+            and patient_text.strip()
+            and not is_denial(patient_text)
+        ):
+            current = getattr(session.slots, last_dim, None)
+            if current is None or current == "":
+                ruled = patient_slot_value(last_dim, patient_text)
+                if ruled:
+                    data = session.slots.model_dump()
+                    data[last_dim] = ruled
+                    session.slots = SocratesSlots.model_validate(data)
+
         raw_extras = {
             f: getattr(interpreter, f, None)
             for f in SESSION_EXTRA_FIELDS
@@ -539,13 +585,16 @@ class IntakeFlow:
             and last_dim in SESSION_EXTRA_FIELDS
             and patient_text.strip()
             and not is_denial(patient_text)
+            and should_store_patient_extra(answer_quality)
         ):
             current = getattr(session, last_dim, None)
             if current is None or current == "" or is_sentinel_none(current):
                 setattr(session, last_dim, patient_extra_value(last_dim, patient_text))
 
-        # Anti-loop only for dimensions in the active bank that were just asked
-        if last_dim and last_dim in bank:
+        finalize = should_finalize_dimension(
+            answer_quality, force_advance=force_advance
+        )
+        if finalize and last_dim and last_dim in bank:
             if last_dim in SOCRATES_FIELDS:
                 if last_dim not in session.slots.filled_fields():
                     session.slots = force_fill_unclear(session.slots, last_dim)

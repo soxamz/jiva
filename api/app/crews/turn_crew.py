@@ -3,10 +3,14 @@ from __future__ import annotations
 import json
 import logging
 import re
-from typing import Any
+from typing import Any, Literal
 
 from groq import Groq
 from pydantic import BaseModel, Field
+
+AnswerQuality = Literal[
+    "answered", "partial", "vague", "off_topic", "confused", "denial"
+]
 
 from app.config import get_settings
 from app.schemas.intake import RedFlagResult, SessionState
@@ -36,6 +40,9 @@ class InterpreterOutput(BaseModel):
     ayush_bala: str | None = None
     ayush_manas_vyayam: str | None = None
     notes: str = ""
+    answer_quality: AnswerQuality = "answered"
+    inconsistencies: list[str] = Field(default_factory=list)
+    detected_language: str = "hinglish"
 
 
 class TurnCrewResult(BaseModel):

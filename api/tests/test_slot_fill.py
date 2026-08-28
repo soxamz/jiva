@@ -261,6 +261,29 @@ class SlotFillTests(unittest.TestCase):
         self.assertTrue(has_explicit_severity("6/10"))
         self.assertFalse(has_explicit_severity("halka pain"))
         self.assertFalse(has_explicit_severity("3 din phlee"))
+        self.assertFalse(has_explicit_severity("i have fever of 102"))
+        self.assertFalse(has_explicit_severity("102°F"))
+
+    def test_coerce_severity_drops_fever_temperature(self):
+        from app.services.slot_fill import (
+            coerce_severity_score,
+            effective_answer_quality,
+            patient_slot_value,
+            sanitize_slots_dict,
+        )
+
+        self.assertIsNone(coerce_severity_score("102°F"))
+        self.assertIsNone(coerce_severity_score(102))
+        self.assertEqual(coerce_severity_score("7/10"), 7)
+        self.assertEqual(coerce_severity_score(8), 8)
+        cleaned = sanitize_slots_dict({"severity": "102°F", "onset": "2 days"})
+        self.assertNotIn("severity", cleaned)
+        self.assertEqual(cleaned["onset"], "2 days")
+        self.assertEqual(patient_slot_value("time_course", "lagataar h"), "continuous")
+        self.assertEqual(
+            effective_answer_quality("time_course", "lagataar h", "vague"),
+            "answered",
+        )
 
 
 if __name__ == "__main__":
