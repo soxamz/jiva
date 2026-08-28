@@ -10,7 +10,10 @@ from uuid import UUID
 
 
 _ROOT = Path(__file__).resolve().parents[3]
-_STORAGE_ROOT = Path(os.getenv("DOCUMENT_AI_STORAGE_ROOT", str(_ROOT / "storage")))
+_DEFAULT_STORAGE_ROOT = (
+    "/tmp/jivahq-document-ai" if os.environ.get("VERCEL") else str(_ROOT / "storage")
+)
+_STORAGE_ROOT = Path(os.getenv("DOCUMENT_AI_STORAGE_ROOT", _DEFAULT_STORAGE_ROOT))
 _DOCS_DIR = _STORAGE_ROOT / "documents"
 _META_DIR = _STORAGE_ROOT / "meta"
 _RESULTS_DIR = _STORAGE_ROOT / "results"
