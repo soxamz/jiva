@@ -42,11 +42,34 @@ def build_ayush_block(session: "SessionState") -> AyushBlock:
         agni_notes=agni,
         ahara_vihara=agni,
     )
-    block.provisional_notes = provisional_ayush_notes(block)
+    block.provisional_notes = provisional_ayush_notes(block, session=session)
     return block
 
 
-def provisional_ayush_notes(block: AyushBlock) -> str:
+_AYUSH_PROBE_FIELDS = (
+    "ayush_vaya",
+    "ayush_prakriti",
+    "ayush_vikriti",
+    "ayush_agni",
+    "ayush_bala",
+    "ayush_manas_vyayam",
+)
+
+
+def _was_asked(session: "SessionState | None", field: str) -> bool:
+    if session is None:
+        return False
+    asked = session.metadata.get("asked_dimensions") or []
+    if field in asked:
+        return True
+    return getattr(session, field, None) not in (None, "")
+
+
+def provisional_ayush_notes(
+    block: AyushBlock,
+    *,
+    session: "SessionState | None" = None,
+) -> str:
     """Keyword-only draft hypotheses — never invent a dosha without cues."""
     cues: list[str] = []
     blob = " ".join(
@@ -105,9 +128,19 @@ def provisional_ayush_notes(block: AyushBlock) -> str:
             + " (not a diagnosis)."
         )
     else:
-        cues.append(
-            "Insufficient distinctive dosha cues for provisional Prakriti/Vikriti typing."
-        )
+        prakriti_asked = _was_asked(session, "ayush_prakriti")
+        vikriti_asked = _was_asked(session, "ayush_vikriti")
+        if prakriti_asked or vikriti_asked:
+            cues.append(
+                "Prakriti/Vikriti: patient answer unclear or insufficient — "
+                "verify with patient."
+            )
+        elif session is not None and any(
+            _was_asked(session, f) for f in _AYUSH_PROBE_FIELDS
+        ):
+            cues.append(
+                "Prakriti/Vikriti: not assessed in this intake (not asked)."
+            )
 
     # Concise facts only — avoid repeating raw multi-field paste
     if block.vaya and re.search(r"\d+", block.vaya):

@@ -144,6 +144,80 @@ def is_affirmative(text: str) -> bool:
     return False
 
 
+def should_store_patient_extra(answer_quality: str | None) -> bool:
+    """Do not persist off-topic chat into clinical extra fields."""
+    if answer_quality is None:
+        return True
+    return answer_quality not in ("off_topic", "vague", "confused")
+
+
+def should_finalize_dimension(
+    answer_quality: str | None,
+    *,
+    force_advance: bool,
+) -> bool:
+    """Only mark a dimension done (incl. unclear sentinel) when advancing, not reprompting."""
+    if force_advance:
+        return True
+    if answer_quality is None:
+        return True
+    return answer_quality in ("answered", "partial", "denial")
+
+
+def patient_slot_value(dimension: str, patient_text: str) -> str | None:
+    """Rule-based SOCRATES capture for short obvious clinical answers."""
+    text = patient_text.strip()
+    if not text:
+        return None
+    low = text.lower()
+
+    if dimension == "time_course":
+        if re.search(
+            r"lagatar|lagataar|constant|continuous|steady|same\s+all\s+day",
+            low,
+        ):
+            return "continuous"
+        if re.search(
+            r"wave|aata.?jata|beech.?beech|intermittent|kabhi.?kabhi|comes?\s+and\s+goes",
+            low,
+        ):
+            return "intermittent / in waves"
+        if re.search(r"^lagatar\s*h?$", low):
+            return "continuous"
+
+    if dimension == "onset":
+        m = re.search(r"(\d+)\s*(din|day|days)", low)
+        if m:
+            return f"{m.group(1)} days ago"
+        if re.search(r"\baaj\b|today|this\s+morning", low):
+            return "onset today"
+        if re.search(r"achanak|sudden", low):
+            return "sudden onset"
+        if re.search(r"dheere|gradual", low):
+            return "gradual onset"
+
+    if dimension == "associations" and len(text) > 2:
+        if is_affirmative(text) or re.search(
+            r"bukhar|fever|pain|dard|khaansi|cough|ulti|vomit|shiver|thand",
+            low,
+        ):
+            return text[:200]
+
+    return None
+
+
+def effective_answer_quality(
+    last_asked_dimension: str | None,
+    patient_text: str,
+    llm_quality: str,
+) -> str:
+    """Override vague LLM quality when rule extract succeeds."""
+    if last_asked_dimension in SOCRATES_FIELDS:
+        if patient_slot_value(last_asked_dimension, patient_text):
+            return "answered"
+    return llm_quality
+
+
 def patient_extra_value(dimension: str, patient_text: str) -> str:
     """Normalize patient utterance into a session-extra value."""
     text = patient_text.strip()
@@ -232,17 +306,68 @@ def force_fill_session_unclear(session: "SessionState", dimension: str) -> None:
 
 
 def has_explicit_severity(text: str) -> bool:
-    """True only when patient states a 0–10 score (not mild/severe adjectives)."""
+    """True only when patient states a 0–10 score (not mild/severe adjectives or fever temps)."""
     if not text or not text.strip():
         return False
     t = text.lower().strip()
+    if re.search(r"°|fahrenheit|\bf\b|celsius|centigrade", t):
+        return False
     if re.fullmatch(r"10|[0-9]", t):
-        return True
-    if re.search(r"\b(10|[0-9])\s*/\s*10\b", t):
-        return True
-    if re.search(r"\b(10|[0-9])\s*out\s*of\s*10\b", t):
-        return True
+        return int(t) <= 10
+    m = re.search(r"\b(10|[0-9])\s*/\s*10\b", t)
+    if m:
+        return int(m.group(1)) <= 10
+    m = re.search(r"\b(10|[0-9])\s*out\s*of\s*10\b", t)
+    if m:
+        return int(m.group(1)) <= 10
     return False
+
+
+def coerce_severity_score(value: object) -> int | None:
+    """Map LLM/patient value to 0–10; drop fever temperatures and out-of-range numbers."""
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value if 0 <= value <= 10 else None
+    if isinstance(value, float):
+        whole = int(value)
+        return whole if 0 <= whole <= 10 else None
+    text = str(value).strip().lower()
+    if not text:
+        return None
+    if re.search(r"°|fahrenheit|\bf\b|celsius|centigrade", text):
+        return None
+    m = re.search(r"\b(10|[0-9])\s*/\s*10\b", text)
+    if m:
+        n = int(m.group(1))
+        return n if 0 <= n <= 10 else None
+    m = re.search(r"\b(10|[0-9])\s*out\s*of\s*10\b", text)
+    if m:
+        n = int(m.group(1))
+        return n if 0 <= n <= 10 else None
+    if re.fullmatch(r"10|[0-9]", text):
+        n = int(text)
+        return n if 0 <= n <= 10 else None
+    m = re.search(r"\b(\d{1,2})\b", text)
+    if m:
+        n = int(m.group(1))
+        if 0 <= n <= 10:
+            return n
+    return None
+
+
+def sanitize_slots_dict(raw: dict) -> dict:
+    """Drop/normalize slot fields before SocratesSlots validation."""
+    out = dict(raw)
+    if "severity" in out:
+        coerced = coerce_severity_score(out["severity"])
+        if coerced is None:
+            out.pop("severity", None)
+        else:
+            out["severity"] = coerced
+    return out
 
 
 # Complaint-defining fields allowed on the opening turn before any probe is asked.

@@ -84,6 +84,14 @@ def compose_hpi_en(session: SessionState, history: PatientHistory | None = None)
     if h.allergies:
         parts.append(f"- **Allergies:** {', '.join(h.allergies)}.")
 
+    inconsistencies = (session.metadata or {}).get("intake_inconsistencies") or []
+    if inconsistencies:
+        parts.append(
+            "- **Verify with patient:** "
+            + "; ".join(str(x) for x in inconsistencies[:5])
+            + "."
+        )
+
     ayush_parts = None
     if _session_has_ayush_probes(session):
         ayush_parts = _compose_ayush_en(h.ayush or session.ayush)
@@ -190,8 +198,34 @@ def _is_positive_clinical(value: str | None) -> bool:
     return not _is_denial_value(value)
 
 
+def _looks_like_garbage_quote(value: str | None) -> bool:
+    """Filter joke/off-topic chat that should not appear in clinician draft."""
+    if value is None:
+        return False
+    low = str(value).strip().lower()
+    if not low:
+        return False
+    garbage_patterns = [
+        r"what do you mean",
+        r"give me burger",
+        r"hungryyyy",
+        r"papa se mila",
+        r"uncle says",
+        r"still hot af",
+        r"pant me huggu",
+    ]
+    for pat in garbage_patterns:
+        if re.search(pat, low):
+            return True
+    if len(low) > 80 and not re.search(r"\d|fever|pain|dard|bukhar|kg|ft|year|saal", low):
+        return True
+    return False
+
+
 def _is_stated(value: str | None) -> bool:
     if value is None or value == "":
+        return False
+    if _looks_like_garbage_quote(value):
         return False
     return str(value).strip().lower() not in {
         "unclear",
@@ -206,6 +240,10 @@ def _fmt_slot(value: str | None) -> str:
     if value is None:
         return ""
     low = str(value).strip().lower()
+    if low in {"unclear", "unknown", "not assessed"}:
+        return "not obtained"
+    if _looks_like_garbage_quote(value):
+        return "not obtained"
     if low in {"none", "no", "nil", "nothing", "null"}:
         return "denied / none reported when asked"
     if low in {"yes", "y", "haan", "haa", "ji"}:
