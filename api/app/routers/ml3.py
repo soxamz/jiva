@@ -38,6 +38,8 @@ class SynthesizeRequest(BaseModel):
     red_flags: list[str] = Field(default_factory=list)
     lab_reports: list[LabReportPanel | dict[str, Any]] = Field(default_factory=list)
     ocr_documents: list[dict[str, Any]] = Field(default_factory=list)
+    ml1_histories: list[dict[str, Any]] = Field(default_factory=list)
+    ml2_documents: list[dict[str, Any]] = Field(default_factory=list)
     voice_transcript: str | None = None
     ocr_data: Any = None
 

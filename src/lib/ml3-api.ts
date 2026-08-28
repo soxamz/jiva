@@ -50,7 +50,13 @@ export type Ml3SynthesizePayload = {
   red_flags?: string[];
   lab_reports?: unknown[];
   ocr_documents?: Record<string, unknown>[];
+  /** Passthrough final ML1 PatientHistory blob(s) for explicit fusion. */
+  ml1_histories?: Record<string, unknown>[];
+  /** Passthrough final ML2 extracted_json blob(s) for explicit fusion. */
+  ml2_documents?: Record<string, unknown>[];
 };
+
+export { buildMl3Payload, type Ml3PayloadInput } from '@/lib/ml3-payload';
 
 /** Map ML2 extracted_json blobs into the lab_reports shape expected by ML3. */
 export function labReportsFromExtractions(extractions: Record<string, unknown>[]) {
