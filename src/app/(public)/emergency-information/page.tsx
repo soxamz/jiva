@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { OpenUploadedFileLink } from "@/components/documents/open-uploaded-file-link";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -34,7 +35,7 @@ function toTitleCase(value: string) {
 }
 
 export default async function EmergencyInformationPage() {
-  const [{ locale }, data] = await Promise.all([
+  const [{ locale, t }, data] = await Promise.all([
     getI18n(),
     getEmergencyPreviewData(),
   ]);
@@ -214,6 +215,10 @@ export default async function EmergencyInformationPage() {
                       <Badge className="shrink-0" variant="secondary">
                         {toTitleCase(document.status)}
                       </Badge>
+                      <OpenUploadedFileLink
+                        href={document.storageUrl}
+                        label={t("documents.openFile")}
+                      />
                     </li>
                   ))}
                 </ul>

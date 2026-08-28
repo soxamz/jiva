@@ -1,16 +1,18 @@
-'use server';
+"use server";
 
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-import { z } from 'zod';
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
 
 import {
   addDoctorNoteForConsent,
   authenticateMockUser,
+  completeStoredDocumentProcessingForCurrentPatient,
   isConsentAccessError,
   createBreakGlassAccess,
-  createDocumentForCurrentPatient,
   createMockUser,
+  failStoredDocumentProcessingForCurrentPatient,
+  getStoredDocumentForCurrentPatient,
   getRecentOcrExtractionsForCurrentPatient,
   grantConsentForCurrentPatient,
   redeemConsentForCurrentUser,
@@ -18,48 +20,51 @@ import {
   saveAiIntakeForCurrentPatient,
   submitIntakeForCurrentPatient,
   updateMedicalProfileForCurrentPatient,
-} from '@/lib/dal';
-import { extractAbnormalValuesFromOcr, uploadAndProcessDocument } from '@/lib/document-api';
-import { labReportsFromExtractions, synthesizeClinicalSummary } from '@/lib/ml3-api';
-import { normalizeIdentifier } from '@/lib/identity';
-import { clearSession, createSession } from '@/lib/session';
-import { isLocale, setLocale } from '@/lib/i18n';
+} from "@/lib/dal";
+import {
+  extractAbnormalValuesFromOcr,
+  uploadAndProcessDocument,
+} from "@/lib/document-api";
+import { storedDocumentIdSchema } from "@/lib/document-upload";
+import {
+  labReportsFromExtractions,
+  synthesizeClinicalSummary,
+} from "@/lib/ml3-api";
+import { normalizeIdentifier } from "@/lib/identity";
+import { clearSession, createSession } from "@/lib/session";
+import { isLocale, setLocale } from "@/lib/i18n";
+import { downloadStoredDocument } from "@/lib/uploadthing-storage";
 
 export type FormState =
   | {
       message?: string;
       errors?: Record<string, string[]>;
-      errorCode?: 'access_unavailable' | 'assigned_to_another_clinician';
+      errorCode?: "access_unavailable" | "assigned_to_another_clinician";
     }
   | undefined;
 
 const signInSchema = z.object({
-  identifier: z.string().regex(/^(\d{10}|\d{12})$/, 'Enter a 10-digit phone or 12-digit Aadhaar.'),
-  otp: z.string().regex(/^\d{6}$/, 'Enter the 6-digit demo OTP.'),
+  identifier: z
+    .string()
+    .regex(/^(\d{10}|\d{12})$/, "Enter a 10-digit phone or 12-digit Aadhaar."),
+  otp: z.string().regex(/^\d{6}$/, "Enter the 6-digit demo OTP."),
 });
 
 const signUpSchema = z.object({
-  name: z.string().trim().min(2, 'Enter the user name.'),
-  phone: z.string().regex(/^\d{10}$/, 'Enter a 10-digit phone number.'),
+  name: z.string().trim().min(2, "Enter the user name."),
+  phone: z.string().regex(/^\d{10}$/, "Enter a 10-digit phone number."),
   aadhaar: z
     .string()
     .optional()
-    .transform((value) => value?.replace(/\D/g, '') ?? '')
-    .refine((value) => value.length === 0 || value.length === 12, 'Aadhaar must be 12 digits.'),
-  role: z.enum(['patient', 'doctor', 'responder']),
-  otp: z.literal('123456', {
-    error: 'Use demo OTP 123456.',
+    .transform((value) => value?.replace(/\D/g, "") ?? "")
+    .refine(
+      (value) => value.length === 0 || value.length === 12,
+      "Aadhaar must be 12 digits.",
+    ),
+  role: z.enum(["patient", "doctor", "responder"]),
+  otp: z.literal("123456", {
+    error: "Use demo OTP 123456.",
   }),
-});
-
-const documentSchema = z.object({
-  title: z
-    .string()
-    .trim()
-    .min(2, 'Enter a document title.')
-    .max(120, 'Use 120 characters or fewer.'),
-  docType: z.enum(['lab', 'rx', 'note', 'discharge', 'other']),
-  notes: z.string().trim().max(1_000, 'Use 1,000 characters or fewer.').optional(),
 });
 
 const intakeSchema = z.object({
@@ -94,12 +99,12 @@ const aiIntakeSchema = z.object({
 });
 
 const consentSchema = z.object({
-  doctorId: z.string().trim().max(80, 'Use 80 characters or fewer.').optional(),
+  doctorId: z.string().trim().max(80, "Use 80 characters or fewer.").optional(),
   durationMinutes: z.coerce
-    .number({ error: 'Choose a valid duration.' })
-    .int('Choose a whole number of minutes.')
-    .min(1, 'Access must last at least 1 minute.')
-    .max(1440, 'Access cannot exceed 24 hours.')
+    .number({ error: "Choose a valid duration." })
+    .int("Choose a whole number of minutes.")
+    .min(1, "Access must last at least 1 minute.")
+    .max(1440, "Access cannot exceed 24 hours.")
     .default(120),
 });
 
@@ -109,29 +114,45 @@ const codeSchema = z.object({
 
 const noteSchema = z.object({
   code: z.string().trim().min(4).max(24),
-  title: z.string().trim().min(2, 'Enter a note title.').max(120, 'Use 120 characters or fewer.'),
+  title: z
+    .string()
+    .trim()
+    .min(2, "Enter a note title.")
+    .max(120, "Use 120 characters or fewer."),
   note: z
     .string()
     .trim()
-    .min(5, 'Enter at least 5 characters.')
-    .max(5_000, 'Use 5,000 characters or fewer.'),
+    .min(5, "Enter at least 5 characters.")
+    .max(5_000, "Use 5,000 characters or fewer."),
 });
 
 const breakGlassSchema = z.object({
-  identifier: z.string().regex(/^(\d{10}|\d{12})$/, 'Enter a 10-digit phone or 12-digit Aadhaar.'),
+  identifier: z
+    .string()
+    .regex(/^(\d{10}|\d{12})$/, "Enter a 10-digit phone or 12-digit Aadhaar."),
   reason: z
     .string()
     .trim()
-    .min(5, 'Explain why emergency access is needed.')
-    .max(500, 'Use 500 characters or fewer.'),
+    .min(5, "Explain why emergency access is needed.")
+    .max(500, "Use 500 characters or fewer."),
 });
 
-const consentIdSchema = z.string().uuid('Invalid access record.');
+const consentIdSchema = z.string().uuid("Invalid access record.");
 
 const listItemSchema = z.string().trim().min(1).max(100);
 
 const profileSchema = z.object({
-  bloodType: z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown']),
+  bloodType: z.enum([
+    "A+",
+    "A-",
+    "B+",
+    "B-",
+    "AB+",
+    "AB-",
+    "O+",
+    "O-",
+    "Unknown",
+  ]),
   allergies: z.array(listItemSchema).max(12),
   criticalConditions: z.array(listItemSchema).max(12),
   currentMedications: z.array(listItemSchema).max(12),
@@ -143,8 +164,8 @@ const profileSchema = z.object({
         phone: z
           .string()
           .trim()
-          .regex(/^[0-9+() -]{7,20}$/, 'Enter a valid contact number.'),
-      })
+          .regex(/^[0-9+() -]{7,20}$/, "Enter a valid contact number."),
+      }),
     )
     .max(5),
 });
@@ -156,73 +177,84 @@ function formErrors(error: z.ZodError): FormState {
 }
 
 function splitCommaSeparatedValues(value: FormDataEntryValue | null) {
-  return String(value ?? '')
-    .split(',')
+  return String(value ?? "")
+    .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
 }
 
 function parseEmergencyContacts(value: FormDataEntryValue | null) {
-  const entries = String(value ?? '')
-    .split('\n')
+  const entries = String(value ?? "")
+    .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => line.split('|').map((part) => part.trim()));
+    .map((line) => line.split("|").map((part) => part.trim()));
 
   if (entries.some((entry) => entry.length !== 3)) {
-    throw new Error('Enter each emergency contact as: Name | relation | phone number.');
+    throw new Error(
+      "Enter each emergency contact as: Name | relation | phone number.",
+    );
   }
 
   return entries.map(([name, relation, phone]) => ({ name, relation, phone }));
 }
 
-export async function signInAction(_state: FormState, formData: FormData): Promise<FormState> {
+export async function signInAction(
+  _state: FormState,
+  formData: FormData,
+): Promise<FormState> {
   const parsed = signInSchema.safeParse({
-    identifier: normalizeIdentifier(formData.get('identifier')),
-    otp: String(formData.get('otp') ?? ''),
+    identifier: normalizeIdentifier(formData.get("identifier")),
+    otp: String(formData.get("otp") ?? ""),
   });
 
   if (!parsed.success) {
     return formErrors(parsed.error);
   }
 
-  let nextPath = '/dashboard';
+  let nextPath = "/dashboard";
 
   try {
-    const user = await authenticateMockUser(parsed.data.identifier, parsed.data.otp);
+    const user = await authenticateMockUser(
+      parsed.data.identifier,
+      parsed.data.otp,
+    );
     await createSession({ userId: user.id, role: user.role });
-    nextPath = user.role === 'patient' ? '/dashboard' : '/doctor';
+    nextPath = user.role === "patient" ? "/dashboard" : "/doctor";
   } catch (error) {
     return {
-      message: error instanceof Error ? error.message : 'Sign-in failed.',
+      message: error instanceof Error ? error.message : "Sign-in failed.",
     };
   }
 
   redirect(nextPath);
 }
 
-export async function signUpAction(_state: FormState, formData: FormData): Promise<FormState> {
+export async function signUpAction(
+  _state: FormState,
+  formData: FormData,
+): Promise<FormState> {
   const parsed = signUpSchema.safeParse({
-    name: formData.get('name'),
-    phone: normalizeIdentifier(formData.get('phone')),
-    aadhaar: normalizeIdentifier(formData.get('aadhaar')),
-    role: formData.get('role') || 'patient',
-    otp: String(formData.get('otp') ?? ''),
+    name: formData.get("name"),
+    phone: normalizeIdentifier(formData.get("phone")),
+    aadhaar: normalizeIdentifier(formData.get("aadhaar")),
+    role: formData.get("role") || "patient",
+    otp: String(formData.get("otp") ?? ""),
   });
 
   if (!parsed.success) {
     return formErrors(parsed.error);
   }
 
-  let nextPath = '/dashboard';
+  let nextPath = "/dashboard";
 
   try {
     const user = await createMockUser(parsed.data);
     await createSession({ userId: user.id, role: user.role });
-    nextPath = user.role === 'patient' ? '/dashboard' : '/doctor';
+    nextPath = user.role === "patient" ? "/dashboard" : "/doctor";
   } catch (error) {
     return {
-      message: error instanceof Error ? error.message : 'Sign-up failed.',
+      message: error instanceof Error ? error.message : "Sign-up failed.",
     };
   }
 
@@ -231,104 +263,110 @@ export async function signUpAction(_state: FormState, formData: FormData): Promi
 
 export async function signOutAction() {
   await clearSession();
-  redirect('/sign-in');
+  redirect("/sign-in");
 }
 
 export async function setLocaleAction(value: string) {
   if (!isLocale(value)) {
-    throw new Error('Unsupported language.');
+    throw new Error("Unsupported language.");
   }
 
   await setLocale(value);
 }
 
-export async function uploadDocumentAction(
-  _state: FormState,
-  formData: FormData
-): Promise<FormState> {
-  const parsed = documentSchema.safeParse({
-    title: formData.get('title'),
-    docType: formData.get('docType') || 'other',
-    notes: formData.get('notes'),
-  });
+export async function processStoredDocumentAction(input: unknown) {
+  const parsed = storedDocumentIdSchema.safeParse(input);
 
   if (!parsed.success) {
-    return formErrors(parsed.error);
+    return { message: "The uploaded document could not be identified." };
   }
 
-  const file = formData.get('file');
-
-  if (!(file instanceof File) || file.size === 0) {
-    return { errors: { file: ['Choose a PDF, JPG, or PNG file.'] } };
-  }
-
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-
-  if (!allowedTypes.includes(file.type)) {
-    return { errors: { file: ['Unsupported file type. Use PDF, JPG, or PNG.'] } };
-  }
-
-  if (file.size > 10 * 1024 * 1024) {
-    return { errors: { file: ['File exceeds the 10MB limit.'] } };
-  }
+  const { documentId } = parsed.data;
 
   try {
+    const document = await getStoredDocumentForCurrentPatient(documentId);
+    const file = await downloadStoredDocument({
+      storageKey: document.storageKey!,
+      fileName: document.fileName,
+      fileType: document.fileType,
+    });
     const aiResult = await uploadAndProcessDocument(file);
     const confidence = aiResult.confidence ?? {};
     const finalConfidence =
-      typeof confidence.final === 'number'
-        ? Math.round(Math.min(100, Math.max(0, confidence.final * (confidence.final <= 1 ? 100 : 1))))
+      typeof confidence.final === "number"
+        ? Math.round(
+            Math.min(
+              100,
+              Math.max(0, confidence.final * (confidence.final <= 1 ? 100 : 1)),
+            ),
+          )
         : 80;
 
-    await createDocumentForCurrentPatient({
-      ...parsed.data,
-      fileName: file.name,
-      fileType: file.type,
-      fileSizeBytes: file.size,
-      apiDocumentId: aiResult.document_id,
-      status: 'processed',
-      extraction: {
-        extractedJson: aiResult as Record<string, unknown>,
-        abnormalValues: extractAbnormalValuesFromOcr(aiResult),
-        aiConfidenceScore: finalConfidence,
-      },
+    await completeStoredDocumentProcessingForCurrentPatient(documentId, {
+      extractedJson: aiResult as Record<string, unknown>,
+      abnormalValues: extractAbnormalValuesFromOcr(aiResult),
+      aiConfidenceScore: finalConfidence,
     });
   } catch (error) {
-    const detail = error instanceof Error ? error.message : 'Unable to save the document.';
+    const detail =
+      error instanceof Error
+        ? error.message
+        : "Document AI could not process this file.";
+
+    try {
+      await failStoredDocumentProcessingForCurrentPatient(documentId, detail);
+    } catch {
+      // Preserve the primary processing failure message.
+    }
+
+    revalidatePath("/documents");
     return {
-      message: `Document AI could not process this file. ${detail}`,
+      message: `Your file is safely stored, but AI extraction could not finish. ${detail}`,
     };
   }
 
-  revalidatePath('/documents');
-  revalidatePath('/timeline');
-  revalidatePath('/clinical-overview');
-  redirect('/documents');
+  revalidatePath("/documents");
+  revalidatePath("/timeline");
+  revalidatePath("/clinical-overview");
+
+  return { success: true };
 }
 
 export async function updateMedicalProfileAction(
   _state: FormState,
-  formData: FormData
+  formData: FormData,
 ): Promise<FormState> {
-  let emergencyContacts: Array<{ name: string; relation: string; phone: string }>;
+  let emergencyContacts: Array<{
+    name: string;
+    relation: string;
+    phone: string;
+  }>;
 
   try {
-    emergencyContacts = parseEmergencyContacts(formData.get('emergencyContacts'));
+    emergencyContacts = parseEmergencyContacts(
+      formData.get("emergencyContacts"),
+    );
   } catch (error) {
     return {
       errors: {
         emergencyContacts: [
-          error instanceof Error ? error.message : 'Enter valid emergency contacts.',
+          error instanceof Error
+            ? error.message
+            : "Enter valid emergency contacts.",
         ],
       },
     };
   }
 
   const parsed = profileSchema.safeParse({
-    bloodType: formData.get('bloodType'),
-    allergies: splitCommaSeparatedValues(formData.get('allergies')),
-    criticalConditions: splitCommaSeparatedValues(formData.get('criticalConditions')),
-    currentMedications: splitCommaSeparatedValues(formData.get('currentMedications')),
+    bloodType: formData.get("bloodType"),
+    allergies: splitCommaSeparatedValues(formData.get("allergies")),
+    criticalConditions: splitCommaSeparatedValues(
+      formData.get("criticalConditions"),
+    ),
+    currentMedications: splitCommaSeparatedValues(
+      formData.get("currentMedications"),
+    ),
     emergencyContacts,
   });
 
@@ -340,42 +378,46 @@ export async function updateMedicalProfileAction(
     await updateMedicalProfileForCurrentPatient(parsed.data);
   } catch (error) {
     return {
-      message: error instanceof Error ? error.message : 'Unable to save health information.',
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to save health information.",
     };
   }
 
-  revalidatePath('/dashboard');
-  revalidatePath('/emergency-card');
-  revalidatePath('/health-information');
-  revalidatePath('/access-log');
-  revalidatePath('/clinical-overview');
-  redirect('/health-information');
+  revalidatePath("/dashboard");
+  revalidatePath("/emergency-card");
+  revalidatePath("/health-information");
+  revalidatePath("/access-log");
+  revalidatePath("/clinical-overview");
+  redirect("/health-information");
 }
 
 export async function submitIntakeAction(formData: FormData) {
   await submitIntakeForCurrentPatient(
     intakeSchema.parse({
-      chiefComplaint: formData.get('chiefComplaint'),
-      symptomDuration: formData.get('symptomDuration'),
-      location: formData.get('location'),
-      character: formData.get('character'),
-      severity: formData.get('severity'),
-      aggravatingFactors: formData.get('aggravatingFactors'),
-      relievingFactors: formData.get('relievingFactors'),
-      associatedSymptoms: formData.get('associatedSymptoms'),
-    })
+      chiefComplaint: formData.get("chiefComplaint"),
+      symptomDuration: formData.get("symptomDuration"),
+      location: formData.get("location"),
+      character: formData.get("character"),
+      severity: formData.get("severity"),
+      aggravatingFactors: formData.get("aggravatingFactors"),
+      relievingFactors: formData.get("relievingFactors"),
+      associatedSymptoms: formData.get("associatedSymptoms"),
+    }),
   );
 
-  revalidatePath('/intake');
-  revalidatePath('/timeline');
-  redirect('/intake');
+  revalidatePath("/intake");
+  revalidatePath("/timeline");
+  redirect("/intake");
 }
 
 export async function saveAiIntakeAction(input: unknown) {
   const parsed = aiIntakeSchema.parse(input);
   const history = parsed.patientHistory as Record<string, unknown>;
 
-  let clinicalSummary: Record<string, unknown> | null = parsed.clinicalSummary ?? null;
+  let clinicalSummary: Record<string, unknown> | null =
+    parsed.clinicalSummary ?? null;
 
   if (!clinicalSummary) {
     try {
@@ -389,11 +431,15 @@ export async function saveAiIntakeAction(input: unknown) {
       clinicalSummary = (await synthesizeClinicalSummary({
         intake_session_id: parsed.apiSessionId,
         chief_complaint:
-          typeof history.chief_complaint === 'string' ? history.chief_complaint : null,
+          typeof history.chief_complaint === "string"
+            ? history.chief_complaint
+            : null,
         hpi: (history.hpi as Record<string, unknown> | null) ?? null,
         allergies: Array.isArray(history.allergies) ? history.allergies : [],
         medications,
-        comorbidities: Array.isArray(history.comorbidities) ? history.comorbidities : [],
+        comorbidities: Array.isArray(history.comorbidities)
+          ? history.comorbidities
+          : [],
         review_of_systems:
           (history.review_of_systems as Record<string, unknown> | null) ?? null,
         ayush: (history.ayush as Record<string, unknown> | null) ?? null,
@@ -415,22 +461,22 @@ export async function saveAiIntakeAction(input: unknown) {
     clinicalSummary,
   });
 
-  revalidatePath('/dashboard');
-  revalidatePath('/intake');
-  revalidatePath('/timeline');
-  revalidatePath('/access-log');
-  revalidatePath('/clinical-overview');
+  revalidatePath("/dashboard");
+  revalidatePath("/intake");
+  revalidatePath("/timeline");
+  revalidatePath("/access-log");
+  revalidatePath("/clinical-overview");
 
   return { id: intake.id, hasClinicalSummary: Boolean(clinicalSummary) };
 }
 
 export async function grantConsentAction(
   _state: FormState,
-  formData: FormData
+  formData: FormData,
 ): Promise<FormState> {
   const parsed = consentSchema.safeParse({
-    doctorId: formData.get('doctorId'),
-    durationMinutes: formData.get('durationMinutes') || 120,
+    doctorId: formData.get("doctorId"),
+    durationMinutes: formData.get("durationMinutes") || 120,
   });
 
   if (!parsed.success) {
@@ -440,30 +486,33 @@ export async function grantConsentAction(
   try {
     await grantConsentForCurrentPatient(parsed.data);
   } catch (error) {
-    return { message: error instanceof Error ? error.message : 'Unable to create access.' };
+    return {
+      message:
+        error instanceof Error ? error.message : "Unable to create access.",
+    };
   }
 
-  revalidatePath('/share');
-  redirect('/share');
+  revalidatePath("/share");
+  redirect("/share");
 }
 
 export async function revokeConsentAction(formData: FormData) {
-  const parsed = consentIdSchema.safeParse(formData.get('consentId'));
+  const parsed = consentIdSchema.safeParse(formData.get("consentId"));
   if (!parsed.success) {
-    throw new Error('Invalid access record.');
+    throw new Error("Invalid access record.");
   }
 
   await revokeConsentForCurrentPatient(parsed.data);
-  revalidatePath('/share');
-  redirect('/share');
+  revalidatePath("/share");
+  redirect("/share");
 }
 
 export async function redeemConsentAction(
   _state: FormState,
-  formData: FormData
+  formData: FormData,
 ): Promise<FormState> {
   const parsed = codeSchema.safeParse({
-    code: formData.get('code'),
+    code: formData.get("code"),
   });
 
   if (!parsed.success) {
@@ -479,7 +528,7 @@ export async function redeemConsentAction(
       return { errorCode: error.code };
     }
 
-    return { errorCode: 'access_unavailable' };
+    return { errorCode: "access_unavailable" };
   }
 
   redirect(`/doctor/access/${normalizedCode}`);
@@ -487,12 +536,12 @@ export async function redeemConsentAction(
 
 export async function addDoctorNoteAction(
   _state: FormState,
-  formData: FormData
+  formData: FormData,
 ): Promise<FormState> {
   const parsed = noteSchema.safeParse({
-    code: formData.get('code'),
-    title: formData.get('title'),
-    note: formData.get('note'),
+    code: formData.get("code"),
+    title: formData.get("title"),
+    note: formData.get("note"),
   });
 
   if (!parsed.success) {
@@ -506,7 +555,10 @@ export async function addDoctorNoteAction(
     });
   } catch (error) {
     return {
-      message: error instanceof Error ? error.message : 'Unable to save the clinical note.',
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to save the clinical note.",
     };
   }
 
@@ -514,10 +566,13 @@ export async function addDoctorNoteAction(
   redirect(`/doctor/access/${parsed.data.code}`);
 }
 
-export async function breakGlassAction(_state: FormState, formData: FormData): Promise<FormState> {
+export async function breakGlassAction(
+  _state: FormState,
+  formData: FormData,
+): Promise<FormState> {
   const parsed = breakGlassSchema.safeParse({
-    identifier: normalizeIdentifier(formData.get('identifier')),
-    reason: formData.get('reason'),
+    identifier: normalizeIdentifier(formData.get("identifier")),
+    reason: formData.get("reason"),
   });
 
   if (!parsed.success) {
@@ -530,7 +585,10 @@ export async function breakGlassAction(_state: FormState, formData: FormData): P
     result = await createBreakGlassAccess(parsed.data);
   } catch (error) {
     return {
-      message: error instanceof Error ? error.message : 'Unable to start emergency access.',
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to start emergency access.",
     };
   }
 

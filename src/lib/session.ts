@@ -49,6 +49,10 @@ export async function createSession(payload: SessionPayload) {
 export async function readSession() {
   const token = (await cookies()).get(sessionCookieName)?.value;
 
+  return readSessionToken(token);
+}
+
+async function readSessionToken(token: string | undefined) {
   if (!token) {
     return null;
   }
@@ -73,6 +77,17 @@ export async function readSession() {
   } catch {
     return null;
   }
+}
+
+export async function readSessionFromRequest(request: Request) {
+  const cookieHeader = request.headers.get("cookie") ?? "";
+  const token = cookieHeader
+    .split(";")
+    .map((cookie) => cookie.trim())
+    .find((cookie) => cookie.startsWith(`${sessionCookieName}=`))
+    ?.slice(sessionCookieName.length + 1);
+
+  return readSessionToken(token);
 }
 
 export async function clearSession() {

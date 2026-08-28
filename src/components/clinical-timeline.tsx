@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import { ActivityIcon, FileTextIcon } from 'lucide-react';
 
 import { StatusPill } from '@/components/status-pill';
+import { OpenUploadedFileLink } from '@/components/documents/open-uploaded-file-link';
 import { cn } from '@/lib/utils';
 
 export type ClinicalTimelineItem = {
@@ -12,6 +13,8 @@ export type ClinicalTimelineItem = {
   status?: string;
   redFlag?: boolean;
   type?: 'intake' | 'document' | string;
+  fileUrl?: string | null;
+  fileLabel?: string;
 };
 
 type ClinicalTimelineProps = {
@@ -88,6 +91,13 @@ export function ClinicalTimeline({
                 {item.body.replaceAll('**', '').replaceAll('\n', ' ')}
               </p>
               <p className="text-primary type-meta mt-2 font-medium">{item.dateLabel}</p>
+              {item.fileUrl && item.fileLabel ? (
+                <OpenUploadedFileLink
+                  className="mt-3"
+                  href={item.fileUrl}
+                  label={item.fileLabel}
+                />
+              ) : null}
             </article>
           </li>
         );

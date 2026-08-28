@@ -2,6 +2,7 @@ export type DocumentListItem = {
   id: string;
   title: string;
   fileName: string;
+  fileUrl: string | null;
   docType: string;
   fileSizeLabel: string;
   status: string;
@@ -9,7 +10,6 @@ export type DocumentListItem = {
   confidence: number | null;
   abnormalValues: Array<{ label: string; value: string; severity: 'low' | 'medium' | 'high' }>;
   highlights: string[];
-  rawJson: string | null;
 };
 
 export function buildOcrHighlights(extracted: Record<string, unknown> | null | undefined) {

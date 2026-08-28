@@ -172,7 +172,7 @@ const english = {
   'documents.uploading': 'Uploading and extracting…',
   'documents.ocrHighlights': 'Extracted details',
   'documents.ocrNoHighlights': 'No structured fields were extracted for this file.',
-  'documents.ocrFullResult': 'View full OCR result',
+  'documents.openFile': 'Open uploaded file',
   'overview.eyebrow': 'Clinical overview',
   'overview.pageTitle': 'Clinical Overview',
   'overview.description':

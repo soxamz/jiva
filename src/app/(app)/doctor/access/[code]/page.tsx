@@ -1,4 +1,5 @@
 import { DoctorNoteForm } from "@/components/forms/doctor-note-form";
+import { OpenUploadedFileLink } from "@/components/documents/open-uploaded-file-link";
 import { CriticalInfoBar } from "@/components/critical-info-bar";
 import { PatientProfileStrip } from "@/components/patient-profile-strip";
 import { StatusPill } from "@/components/status-pill";
@@ -220,6 +221,11 @@ export default async function DoctorAccessPage({
                       <p className="text-muted-foreground truncate text-xs">
                         {document.notes}
                       </p>
+                      <OpenUploadedFileLink
+                        className="mt-1.5"
+                        href={document.storageUrl}
+                        label={t("documents.openFile")}
+                      />
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary">{document.docType}</Badge>

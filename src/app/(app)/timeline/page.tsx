@@ -16,6 +16,8 @@ export default async function TimelinePage() {
     status: item.status,
     redFlag: item.redFlag,
     type: item.type,
+    fileUrl: item.fileUrl,
+    fileLabel: t('documents.openFile'),
   }));
 
   return (

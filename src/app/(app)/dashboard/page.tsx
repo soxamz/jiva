@@ -40,6 +40,8 @@ export default async function DashboardPage() {
     status: item.status,
     redFlag: item.redFlag,
     type: item.type,
+    fileUrl: item.fileUrl,
+    fileLabel: t("documents.openFile"),
   }));
 
   return (

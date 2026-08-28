@@ -52,6 +52,18 @@ type DocumentInput = {
   status?: "processing" | "processed" | "failed";
 };
 
+type UploadThingDocumentInput = {
+  userId: string;
+  title: string;
+  docType: typeof documents.$inferInsert.docType;
+  notes?: string;
+  fileName: string;
+  fileType: string;
+  fileSizeBytes: number;
+  storageKey: string;
+  storageUrl: string;
+};
+
 type IntakeInput = {
   chiefComplaint: string;
   symptomDuration: string;
@@ -437,6 +449,7 @@ export async function getPatientWorkspace() {
       body:
         document.notes ??
         `${document.fileName} processed with Document AI (confidence ${structured?.aiConfidenceScore ?? "n/a"}%).`,
+      fileUrl: document.storageUrl,
       status: document.status,
       confidence: structured?.aiConfidenceScore ?? null,
       redFlag: false,
@@ -447,6 +460,7 @@ export async function getPatientWorkspace() {
       title: intake.chiefComplaint,
       date: intake.createdAt,
       body: intake.summary,
+      fileUrl: null,
       status: intake.redFlag ? "urgent" : intake.status,
       confidence: null,
       redFlag: intake.redFlag,
@@ -642,6 +656,131 @@ export async function createDocumentForCurrentPatient(input: DocumentInput) {
   });
 
   return document;
+}
+
+export async function createUploadThingDocument(
+  input: UploadThingDocumentInput,
+) {
+  const [document] = await db
+    .insert(documents)
+    .values({
+      userId: input.userId,
+      uploadedById: input.userId,
+      title: input.title,
+      docType: input.docType,
+      fileName: input.fileName,
+      fileType: input.fileType,
+      fileSizeBytes: input.fileSizeBytes,
+      storageKey: input.storageKey,
+      storageUrl: input.storageUrl,
+      mockFileUri: input.storageUrl,
+      notes: input.notes,
+      status: "processing",
+    })
+    .onConflictDoNothing({ target: documents.storageKey })
+    .returning();
+
+  if (!document) {
+    const [existingDocument] = await db
+      .select()
+      .from(documents)
+      .where(eq(documents.storageKey, input.storageKey))
+      .limit(1);
+
+    if (!existingDocument || existingDocument.userId !== input.userId) {
+      throw new Error("Unable to save the uploaded document.");
+    }
+
+    return existingDocument;
+  }
+
+  await logAudit(input.userId, "UPLOAD", "document", document.id, {
+    title: document.title,
+    patientId: input.userId,
+    storageKey: input.storageKey,
+    source: "uploadthing",
+  });
+
+  return document;
+}
+
+export async function getStoredDocumentForCurrentPatient(documentId: string) {
+  const user = await requireUser(["patient"]);
+  const [document] = await db
+    .select()
+    .from(documents)
+    .where(and(eq(documents.id, documentId), eq(documents.userId, user.id)))
+    .limit(1);
+
+  if (!document?.storageKey) {
+    throw new Error("Stored document not found.");
+  }
+
+  return document;
+}
+
+export async function completeStoredDocumentProcessingForCurrentPatient(
+  documentId: string,
+  extraction: NonNullable<DocumentInput["extraction"]>,
+) {
+  const user = await requireUser(["patient"]);
+  const [document] = await db
+    .update(documents)
+    .set({ status: "processed" })
+    .where(and(eq(documents.id, documentId), eq(documents.userId, user.id)))
+    .returning();
+
+  if (!document) {
+    throw new Error("Stored document not found.");
+  }
+
+  const [existingExtraction] = await db
+    .select({ id: structuredData.id })
+    .from(structuredData)
+    .where(eq(structuredData.docId, document.id))
+    .limit(1);
+
+  if (existingExtraction) {
+    await db
+      .update(structuredData)
+      .set(extraction)
+      .where(eq(structuredData.id, existingExtraction.id));
+  } else {
+    await db
+      .insert(structuredData)
+      .values({ docId: document.id, ...extraction });
+  }
+
+  await logAudit(user.id, "DOCUMENT_PROCESSED", "document", document.id, {
+    patientId: user.id,
+    source: "uploadthing",
+  });
+}
+
+export async function failStoredDocumentProcessingForCurrentPatient(
+  documentId: string,
+  reason: string,
+) {
+  const user = await requireUser(["patient"]);
+  const [document] = await db
+    .update(documents)
+    .set({ status: "failed" })
+    .where(and(eq(documents.id, documentId), eq(documents.userId, user.id)))
+    .returning({ id: documents.id });
+
+  if (document) {
+    await logAudit(
+      user.id,
+      "DOCUMENT_PROCESSING_FAILED",
+      "document",
+      document.id,
+      {
+        patientId: user.id,
+        source: "uploadthing",
+        reason,
+      },
+    );
+  }
 }
 
 export async function updateMedicalProfileForCurrentPatient(

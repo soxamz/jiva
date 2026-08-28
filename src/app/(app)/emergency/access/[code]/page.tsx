@@ -8,6 +8,7 @@ import {
 import { redirect } from "next/navigation";
 
 import { ClinicalTimeline } from "@/components/clinical-timeline";
+import { OpenUploadedFileLink } from "@/components/documents/open-uploaded-file-link";
 import { CriticalInfoBar } from "@/components/critical-info-bar";
 import { PatientProfileStrip } from "@/components/patient-profile-strip";
 import { StatusPill } from "@/components/status-pill";
@@ -182,7 +183,7 @@ export default async function EmergencyAccessPage({
                       <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                         <FileTextIcon className="size-4" aria-hidden />
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">
                           {document.title}
                         </p>
@@ -191,6 +192,10 @@ export default async function EmergencyAccessPage({
                           {formatDateTime(document.uploadedAt, locale)}
                         </p>
                       </div>
+                      <OpenUploadedFileLink
+                        href={document.storageUrl}
+                        label={t("documents.openFile")}
+                      />
                     </li>
                   ))}
                 </ul>

@@ -52,6 +52,8 @@ export default async function ClinicalOverviewPage({
       dateLabel: formatDateTime(intake.createdAt, locale),
       type: t("overview.historyIntake"),
       title: intake.chiefComplaint,
+      fileUrl: null,
+      fileLabel: undefined,
     })),
     ...overview.weekDocuments.map(({ document }) => ({
       id: `doc-${document.id}`,
@@ -59,10 +61,19 @@ export default async function ClinicalOverviewPage({
       dateLabel: formatDateTime(document.uploadedAt, locale),
       type: `${t("overview.historyDocument")} · ${document.docType}`,
       title: document.title,
+      fileUrl: document.storageUrl,
+      fileLabel: t("documents.openFile"),
     })),
   ]
     .sort((a, b) => b.date.getTime() - a.date.getTime())
-    .map(({ id, dateLabel, type, title }) => ({ id, dateLabel, type, title }));
+    .map(({ id, dateLabel, type, title, fileUrl, fileLabel }) => ({
+      id,
+      dateLabel,
+      type,
+      title,
+      fileUrl,
+      fileLabel,
+    }));
 
   const vitals = extractOverviewVitals(overview.weekDocuments);
   const sourceNote =

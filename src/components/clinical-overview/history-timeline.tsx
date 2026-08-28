@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { OpenUploadedFileLink } from "@/components/documents/open-uploaded-file-link";
 import { cn } from "@/lib/utils";
 
 export type HistoryTimelineItem = {
@@ -6,6 +7,8 @@ export type HistoryTimelineItem = {
   dateLabel: string;
   type: string;
   title: string;
+  fileUrl?: string | null;
+  fileLabel?: string;
 };
 
 export function HistoryTimeline({
@@ -46,6 +49,13 @@ export function HistoryTimeline({
                 <p className="type-card-body mt-1">
                   {item.title}
                 </p>
+                {item.fileUrl && item.fileLabel ? (
+                  <OpenUploadedFileLink
+                    className="mt-2"
+                    href={item.fileUrl}
+                    label={item.fileLabel}
+                  />
+                ) : null}
               </li>
             ))}
           </ol>
