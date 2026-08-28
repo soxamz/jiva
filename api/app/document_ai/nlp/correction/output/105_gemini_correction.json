@@ -1,0 +1,42 @@
+{
+  "document_id": "105",
+  "source": {
+    "provider": "mistral",
+    "model": "mistral-ocr-latest",
+    "ocr_confidence": 0.9680267212568657,
+    "page_count": 1,
+    "block_count": 35
+  },
+  "raw_ocr_text": "Sir Ganga Ram Hospital\n\nSir Ganga Ram Hospital Marg, Rajinder Nagar,\n\nNew Delhi-110060, INDIA Tel : +91-11-4225 4000\n\nMedical Superintendent (Offg.)\n\nSir Ganga Ram Kolmet Hospital, 7-8, Pusa Road,\n\nNew Delhi-110005. Tel : +91-11-45099999, (D) 45099980\n\nDr. Raj Kamal Agarwal\n\nSr. Consultant\n\nDeptt. of Anaesthesiology\n\nPain & Peri Operative Medicine\n\nMobile : +91 98101 52201\n\nE-mail : kamalagarwal300@gmail.com\n\n# TO WHOM IT MAY CONCERN\n\nAs per ICMR guideline, the contacts of\n\nCOVID the cases should be put on HOME\n\nISOLATION even with Mild Symptoms\n\nIt is advised that everybody takes these\n\npreventive medication apart from following\n\nSOCIAL DISTANCING, HAND HYGIENE & WEARING\n\nMASK\n\nRx\n\n- TAB HYDROXYCHLOROQUINE 400mg once a week\n- TAB VITAMIN C one gram once a day\n- TAB ZING 50 mg once a day\n\nIn case of fever\n\n★ • TAB CROCIN/CALPOL 650 mg SOS\n\nIn case of throat pain & cough\n\n★ • TAB CETRIZINE 10mg once a day.\n\n• SYRUP ALEX 2/3 Tea 5poom 3 times a day.\n\nDR. RAJ KAMAL AGARWAL\nMBBS. DA\n\nDr. R. KAMAL AGARWAL\nMBBS. DA\n\nSENIOR CONSULTANT\nDEPTT. OF ANAESTHESIOLOGY\n\nPERIOPERATIVE MEDICINE & PAIN\n\nSIR GANGARAM HOSPITAL\n\nRAJINDER NAGAR, NEW DELHI-110060\n\nResidence :\n\n181, Royalton Tower, Princeton Estate, DLF Phase-V, Gurugram, Haryana PH:2910152201",
+  "correction": {
+    "provider": "gemini",
+    "model": "gemini-3.6-flash",
+    "corrected_text": "Sir Ganga Ram Hospital\n\nSir Ganga Ram Hospital Marg, Rajinder Nagar,\n\nNew Delhi-110060, INDIA Tel : +91-11-4225 4000\n\nMedical Superintendent (Offg.)\n\nSir Ganga Ram Kolmet Hospital, 7-8, Pusa Road,\n\nNew Delhi-110005. Tel : +91-11-45099999, (D) 45099980\n\nDr. Raj Kamal Agarwal\n\nSr. Consultant\n\nDeptt. of Anaesthesiology\n\nPain & Peri Operative Medicine\n\nMobile : +91 98101 52201\n\nE-mail : kamalagarwal300@gmail.com\n\n# TO WHOM IT MAY CONCERN\n\nAs per ICMR guideline, the contacts of\n\nCOVID the cases should be put on HOME\n\nISOLATION even with Mild Symptoms\n\nIt is advised that everybody takes these\n\npreventive medication apart from following\n\nSOCIAL DISTANCING, HAND HYGIENE & WEARING\n\nMASK\n\nRx\n\n- TAB HYDROXYCHLOROQUINE 400mg once a week\n- TAB VITAMIN C one gram once a day\n- TAB ZINC 50 mg once a day\n\nIn case of fever\n\n★ • TAB CROCIN/CALPOL 650 mg SOS\n\nIn case of throat pain & cough\n\n★ • TAB CETIRIZINE 10mg once a day.\n\n• SYRUP ALEX 2/3 Tea Spoon 3 times a day.\n\nDR. RAJ KAMAL AGARWAL\nMBBS. DA\n\nDr. R. KAMAL AGARWAL\nMBBS. DA\n\nSENIOR CONSULTANT\nDEPTT. OF ANAESTHESIOLOGY\n\nPERIOPERATIVE MEDICINE & PAIN\n\nSIR GANGARAM HOSPITAL\n\nRAJINDER NAGAR, NEW DELHI-110060\n\nResidence :\n\n181, Royalton Tower, Princeton Estate, DLF Phase-V, Gurugram, Haryana PH:2910152201",
+    "confidence": 0.9,
+    "changed": true,
+    "requires_review": true,
+    "corrections": [
+      {
+        "raw_text": "TAB ZING 50 mg once a day",
+        "corrected_text": "TAB ZINC 50 mg once a day",
+        "confidence": 0.95,
+        "accepted": true,
+        "reason": "Corrected OCR character substitution 'ZING' to medication name 'ZINC'."
+      },
+      {
+        "raw_text": "TAB CETRIZINE 10mg once a day.",
+        "corrected_text": "TAB CETIRIZINE 10mg once a day.",
+        "confidence": 0.95,
+        "accepted": true,
+        "reason": "Corrected misspelled medication name 'CETRIZINE' to 'CETIRIZINE'."
+      },
+      {
+        "raw_text": "SYRUP ALEX 2/3 Tea 5poom 3 times a day.",
+        "corrected_text": "SYRUP ALEX 2/3 Tea Spoon 3 times a day.",
+        "confidence": 0.95,
+        "accepted": true,
+        "reason": "Corrected OCR error '5poom' to 'Spoon'."
+      }
+    ]
+  }
+}

@@ -25,9 +25,16 @@ import {
 } from "@/lib/week-clinical-overview";
 import { cn } from "@/lib/utils";
 
+import { parseActionItems } from "@/lib/clinical-summary";
+import { MobileClinicalOverview } from "@/components/mobile/mobile-clinical-overview";
+
+interface ClinicalOverviewPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
 export default async function ClinicalOverviewPage({
   searchParams,
-}: PageProps<"/clinical-overview">) {
+}: ClinicalOverviewPageProps) {
   const params = await searchParams;
   const days = parseOverviewRange(params.range);
   const overview = await getWeekClinicalOverview(days);
@@ -90,125 +97,172 @@ export default async function ClinicalOverviewPage({
             : t("overview.sourceLocal")
           : null;
 
+  const mappedClinical = clinical
+    ? {
+        chief_complaint: clinical.chief_complaint ?? "",
+        presentation_summary: clinical.doctor_english_summary ?? "",
+        system_warnings_and_red_flags:
+          clinical.detected_contradictions?.map((c) => ({
+            title: `${c.severity.toUpperCase()} RISK`,
+            detail: c.issue,
+            severity: c.severity,
+          })) ?? [],
+        clinical_recommendations_and_actions: parseActionItems(
+          clinical.doctor_english_summary,
+          clinical.triage_action,
+        ),
+      }
+    : null;
+
+  const mappedMedications = overview.medications.map((med) => {
+    const isContradiction = clinical?.detected_contradictions?.some((c) =>
+      c.issue.toLowerCase().includes(med.toLowerCase()),
+    );
+    return {
+      name: med,
+      status: isContradiction ? "review" : "active",
+      compliance: isContradiction ? "Review recommended" : "Compliant",
+    };
+  });
+
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        actions={
-          <OverviewActions
-            noteLabel={t("overview.addNote")}
-            printLabel={t("overview.print")}
-          />
-        }
-        description={t("overview.windowDescription", { count: overview.days })}
-        title={t("overview.pageTitle")}
+    <>
+      <MobileClinicalOverview
+        days={days}
+        recordCount={recordCount}
+        generatedAt={overview.generatedAt}
+        clinical={mappedClinical}
+        medications={mappedMedications}
+        stats={{
+          symptomChecks: overview.weekIntakes.length,
+          documents: overview.weekDocuments.length,
+          urgentChecks: urgentCheckCount,
+          flaggedLabs: labFlagCount,
+        }}
+        showEmpty={showEmpty}
       />
 
-      <OverviewRangeSelector days={days} labels={rangeLabels} />
 
-      {showEmpty ? (
-        <Card className="rounded-2xl shadow-sm">
-          <CardHeader>
-            <CardTitle>{t("overview.weekEmptyTitle")}</CardTitle>
-            <CardDescription>
-              {t("overview.windowEmptyDescription", { count: overview.days })}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-3">
-            <Link
-              href="/intake"
-              className={cn(buttonVariants(), "inline-flex items-center gap-2")}
-            >
-              <StethoscopeIcon className="size-4" aria-hidden />
-              {t("overview.startIntake")}
-            </Link>
-            <Link
-              href="/documents"
-              className={cn(
-                buttonVariants({ variant: "outline" }),
-                "inline-flex items-center gap-2",
-              )}
-            >
-              <FileTextIcon className="size-4" aria-hidden />
-              {t("overview.uploadLabs")}
-            </Link>
-          </CardContent>
-        </Card>
-      ) : clinical ? (
-        <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,1fr)]">
-          <div className="flex min-w-0 flex-col gap-4">
-            <SummaryEnginePanel
-              clinical={clinical}
-              extractsEmpty={t("overview.extractsEmpty")}
-              extractsTitle={t("overview.extractsTitle")}
-              footerLabel={t("overview.engineFooter")}
-              generatedLabel={t("overview.generated", {
-                date: formatDateTime(
-                  overview.generatedAt ?? new Date(),
-                  locale,
-                ),
-              })}
-              highConfidenceLabel={
-                overview.source === "ml3"
-                  ? t("overview.highConfidence")
-                  : t("overview.sourceLocal")
-              }
-              recordsLabel={t("overview.basedOnRecords", {
-                count: recordCount,
-              })}
-              reportLabel={t("overview.reportInaccuracy")}
-              reviewLabel={t("overview.needsReview")}
-              sourceNote={sourceNote}
-              title={t("overview.summaryTitle")}
+      <div className="hidden md:flex flex-col gap-6">
+        <PageHeader
+          actions={
+            <OverviewActions
+              noteLabel={t("overview.addNote")}
+              printLabel={t("overview.print")}
             />
-            <ClinicalRecordSummary
-              description={t("overview.recordSummaryDescription")}
-              items={[
-                {
-                  kind: "checks",
-                  label: t("overview.symptomChecks"),
-                  value: overview.weekIntakes.length,
-                },
-                {
-                  kind: "documents",
-                  label: t("overview.documentsReviewed"),
-                  value: overview.weekDocuments.length,
-                },
-                {
-                  kind: "urgent",
-                  label: t("overview.urgentChecks"),
-                  value: urgentCheckCount,
-                },
-                {
-                  kind: "labs",
-                  label: t("overview.flaggedLabs"),
-                  value: labFlagCount,
-                },
-              ]}
-              latestCheck={latestIntake?.chiefComplaint ?? null}
-              latestCheckLabel={t("overview.latestCheck")}
-              title={t("overview.recordSummaryTitle")}
-            />
-          </div>
-          <div className="flex min-w-0 flex-col gap-4">
-            <MedicationsPanel
-              compliantLabel={t("overview.medCompliant")}
-              emptyLabel={t("overview.medsEmpty")}
-              footerLabel={t("overview.medsViewAll")}
-              itemsLabel={t("overview.medsItems", {
-                count: overview.medications.length,
-              })}
-              medications={overview.medications}
-              reviewLabel={t("overview.medReview")}
-              title={t("overview.medsTitle")}
-            />
-            <HistoryTimeline
-              emptyLabel={t("overview.historyEmpty")}
-              items={history}
-              title={t("overview.historyTitle")}
-            />
-          </div>
-        </section>
-      ) : null}
-    </div>
+          }
+          description={t("overview.windowDescription", { count: overview.days })}
+          title={t("overview.pageTitle")}
+        />
+
+        <OverviewRangeSelector days={days} labels={rangeLabels} />
+
+        {showEmpty ? (
+          <Card className="rounded-2xl shadow-sm">
+            <CardHeader>
+              <CardTitle>{t("overview.weekEmptyTitle")}</CardTitle>
+              <CardDescription>
+                {t("overview.windowEmptyDescription", { count: overview.days })}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-3">
+              <Link
+                href="/intake"
+                className={cn(buttonVariants(), "inline-flex items-center gap-2")}
+              >
+                <StethoscopeIcon className="size-4" aria-hidden />
+                {t("overview.startIntake")}
+              </Link>
+              <Link
+                href="/documents"
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "inline-flex items-center gap-2",
+                )}
+              >
+                <FileTextIcon className="size-4" aria-hidden />
+                {t("overview.uploadLabs")}
+              </Link>
+            </CardContent>
+          </Card>
+        ) : clinical ? (
+          <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,1fr)]">
+            <div className="flex min-w-0 flex-col gap-4">
+              <SummaryEnginePanel
+                clinical={clinical}
+                extractsEmpty={t("overview.extractsEmpty")}
+                extractsTitle={t("overview.extractsTitle")}
+                footerLabel={t("overview.engineFooter")}
+                generatedLabel={t("overview.generated", {
+                  date: formatDateTime(
+                    overview.generatedAt ?? new Date(),
+                    locale,
+                  ),
+                })}
+                highConfidenceLabel={
+                  overview.source === "ml3"
+                    ? t("overview.highConfidence")
+                    : t("overview.sourceLocal")
+                }
+                recordsLabel={t("overview.basedOnRecords", {
+                  count: recordCount,
+                })}
+                reportLabel={t("overview.reportInaccuracy")}
+                reviewLabel={t("overview.needsReview")}
+                sourceNote={sourceNote}
+                title={t("overview.summaryTitle")}
+              />
+              <ClinicalRecordSummary
+                description={t("overview.recordSummaryDescription")}
+                items={[
+                  {
+                    kind: "checks",
+                    label: t("overview.symptomChecks"),
+                    value: overview.weekIntakes.length,
+                  },
+                  {
+                    kind: "documents",
+                    label: t("overview.documentsReviewed"),
+                    value: overview.weekDocuments.length,
+                  },
+                  {
+                    kind: "urgent",
+                    label: t("overview.urgentChecks"),
+                    value: urgentCheckCount,
+                  },
+                  {
+                    kind: "labs",
+                    label: t("overview.flaggedLabs"),
+                    value: labFlagCount,
+                  },
+                ]}
+                latestCheck={latestIntake?.chiefComplaint ?? null}
+                latestCheckLabel={t("overview.latestCheck")}
+                title={t("overview.recordSummaryTitle")}
+              />
+            </div>
+            <div className="flex min-w-0 flex-col gap-4">
+              <MedicationsPanel
+                compliantLabel={t("overview.medCompliant")}
+                emptyLabel={t("overview.medsEmpty")}
+                footerLabel={t("overview.medsViewAll")}
+                itemsLabel={t("overview.medsItems", {
+                  count: overview.medications.length,
+                })}
+                medications={overview.medications}
+                reviewLabel={t("overview.medReview")}
+                title={t("overview.medsTitle")}
+              />
+              <HistoryTimeline
+                emptyLabel={t("overview.historyEmpty")}
+                items={history}
+                title={t("overview.historyTitle")}
+              />
+            </div>
+          </section>
+        ) : null}
+      </div>
+    </>
   );
 }
+

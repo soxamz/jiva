@@ -17,6 +17,8 @@ import {
   type DocumentListItem,
 } from "@/lib/ocr-highlights";
 
+import { MobileRecords } from "@/components/mobile/mobile-records";
+
 export default async function DocumentsPage() {
   const data = await getPatientWorkspace();
   const { locale, t } = await getI18n();
@@ -46,37 +48,42 @@ export default async function DocumentsPage() {
   );
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        description={t("documents.description")}
-        title={t("documents.title")}
-      />
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-[0.75fr_1.25fr]">
-        <Card className="rounded-2xl shadow-sm">
-          <CardHeader>
-            <CardTitle>{t("documents.upload")}</CardTitle>
-            <CardDescription>
-              {t("documents.uploadDescription")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-2xl border border-dashed bg-muted/30 p-4">
-              <DocumentUploadForm />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="rounded-2xl shadow-sm">
-          <CardHeader>
-            <CardTitle>{t("documents.saved")}</CardTitle>
-            <CardDescription>{t("documents.savedDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent className="px-0 pb-0">
-            <ScrollArea className="h-[34rem]">
-              <DocumentsTable items={items} />
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      </section>
-    </div>
+    <>
+      <MobileRecords data={data} />
+
+      <div className="hidden md:flex flex-col gap-6">
+        <PageHeader
+          description={t("documents.description")}
+          title={t("documents.title")}
+        />
+        <section className="grid grid-cols-1 gap-4 xl:grid-cols-[0.75fr_1.25fr]">
+          <Card className="rounded-2xl shadow-sm">
+            <CardHeader>
+              <CardTitle>{t("documents.upload")}</CardTitle>
+              <CardDescription>
+                {t("documents.uploadDescription")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-2xl border border-dashed bg-muted/30 p-4">
+                <DocumentUploadForm />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="rounded-2xl shadow-sm">
+            <CardHeader>
+              <CardTitle>{t("documents.saved")}</CardTitle>
+              <CardDescription>{t("documents.savedDescription")}</CardDescription>
+            </CardHeader>
+            <CardContent className="px-0 pb-0">
+              <ScrollArea className="h-[34rem]">
+                <DocumentsTable items={items} />
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </section>
+      </div>
+    </>
   );
 }
+
