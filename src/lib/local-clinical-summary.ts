@@ -79,29 +79,9 @@ function normalizeComplaintKey(text: string) {
   return text
     .toLowerCase()
     .replace(/[^\p{L}\p{N}\s]/gu, ' ')
-    .replace(/\b(acute|severe|ongoing|lasting|for|days?|day|the|a|an|with|and|watery)\b/g, ' ')
+    .replace(/\b(acute|severe|ongoing|lasting|for|days?|day|the|a|an|with|and)\b/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-}
-
-/** Collapse near-duplicate complaints (e.g. multiple diarrhea phrasings, fever/bukhar). */
-function complaintBucket(text: string) {
-  const key = normalizeComplaintKey(text);
-  if (/\bdiarr/.test(key) || /\bloose stool/.test(key)) return 'diarrhea';
-  if (/\b(fever|bukhar|bukhaar|temperature)\b/.test(key)) return 'fever';
-  if (/\b(cough|khaansi|zukhaam|cold)\b/.test(key)) return 'respiratory';
-  if (/\b(dizz|fatigue|weak)\b/.test(key)) return 'constitutional';
-  if (/\b(stomach|abdominal|belly)\b/.test(key) && /\b(pain|ache)\b/.test(key)) {
-    return 'abdominal-pain';
-  }
-  return key;
-}
-
-function formatPresentationDate(date: Date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
 }
 
 function isNoiseComplaint(text: string) {
@@ -202,105 +182,6 @@ function pickCanonicalComplaints(intakes: IntakeLike[]) {
   return picked;
 }
 
-function formatIntakePresentationLine(intake: IntakeLike) {
-  const date = formatPresentationDate(intake.createdAt);
-  const sev = typeof intake.severity === 'number' ? `**${intake.severity}/10**` : null;
-  const assoc = shortAssociations(intake.summary);
-  const bits = [
-    intake.chiefComplaint.replace(/\.$/, ''),
-    sev,
-    intake.symptomDuration ? `duration ${intake.symptomDuration}` : null,
-    assoc ? `assoc: ${assoc}` : null,
-  ].filter(Boolean);
-  return `${date} — ${bits.join(' · ')}`;
-}
-
-function intakePresentationScore(intake: IntakeLike) {
-  const severity = typeof intake.severity === 'number' ? intake.severity : 0;
-  return severity * 1e15 + intake.createdAt.getTime() + (intake.redFlag ? 1e16 : 0);
-}
-
-function buildIntakePresentationLines(intakes: IntakeLike[]) {
-  const filtered = intakes.filter(
-    (intake) => intake.chiefComplaint.trim() && !isNoiseComplaint(intake.chiefComplaint)
-  );
-
-  const bestPerComplaint = new Map<string, IntakeLike>();
-  for (const intake of filtered) {
-    const key = complaintBucket(intake.chiefComplaint);
-    const existing = bestPerComplaint.get(key);
-    if (!existing || intakePresentationScore(intake) > intakePresentationScore(existing)) {
-      bestPerComplaint.set(key, intake);
-    }
-  }
-
-  const representatives = [...bestPerComplaint.values()].sort(
-    (a, b) => intakePresentationScore(b) - intakePresentationScore(a)
-  );
-
-  const lines: string[] = [];
-  const represented = new Set<string>();
-  const coveredBuckets = new Set<string>();
-
-  const tryAdd = (intake: IntakeLike) => {
-    const bucket = complaintBucket(intake.chiefComplaint);
-    const token = `${formatPresentationDate(intake.createdAt)}|${bucket}`;
-    if (represented.has(token)) return false;
-    if (coveredBuckets.has(bucket)) return false;
-    represented.add(token);
-    coveredBuckets.add(bucket);
-    lines.push(formatIntakePresentationLine(intake));
-    return true;
-  };
-
-  for (const intake of representatives) {
-    tryAdd(intake);
-    if (lines.length >= 6) break;
-  }
-
-  const recentCutoff = Date.now() - 48 * 60 * 60 * 1000;
-  const recent = [...filtered]
-    .filter((intake) => intake.createdAt.getTime() >= recentCutoff)
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-
-  for (const intake of recent) {
-    if (lines.length >= 7) break;
-    tryAdd(intake);
-  }
-
-  return lines.slice(0, 7);
-}
-
-function normalizeDocTitleKey(title: string) {
-  return title
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function buildDocumentPresentationLines(documents: DocumentLike[]) {
-  const seen = new Set<string>();
-  const lines: string[] = [];
-  const sorted = [...documents].sort(
-    (a, b) => b.document.uploadedAt.getTime() - a.document.uploadedAt.getTime()
-  );
-
-  for (const { document } of sorted) {
-    const title = document.title.trim();
-    if (!title || title.length < 2) continue;
-    const titleKey = normalizeDocTitleKey(title);
-    if (!titleKey || seen.has(titleKey)) continue;
-    seen.add(titleKey);
-    const date = formatPresentationDate(document.uploadedAt);
-    const type = (document.docType || 'document').toLowerCase();
-    lines.push(`${date} — **${title}** (${type})`);
-    if (lines.length >= 6) break;
-  }
-
-  return lines;
-}
-
 function formatComplaintLine(item: { text: string; severity: number }) {
   const title = item.text.length > 72 ? `${item.text.slice(0, 69)}…` : item.text;
   return item.severity > 0 ? `${title} (**${item.severity}/10**)` : title;
@@ -394,10 +275,36 @@ export function buildLocalClinicalSummary(input: {
   const allergies = input.profile?.allergies ?? [];
   const conditions = input.profile?.criticalConditions ?? [];
 
-  const presentationLines = [
-    ...buildIntakePresentationLines(input.intakes),
-    ...buildDocumentPresentationLines(input.documents),
-  ];
+  const presentationCandidates = [...input.intakes]
+    .filter((intake) => intake.chiefComplaint.trim() && !isNoiseComplaint(intake.chiefComplaint))
+    .sort((a, b) => {
+      const sevA = typeof a.severity === 'number' ? a.severity : 0;
+      const sevB = typeof b.severity === 'number' ? b.severity : 0;
+      if (b.redFlag !== a.redFlag) return Number(b.redFlag) - Number(a.redFlag);
+      if (sevB !== sevA) return sevB - sevA;
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    });
+
+  const presentationLines: string[] = [];
+  const presentationSeen = new Set<string>();
+  for (const intake of presentationCandidates) {
+    const key = normalizeComplaintKey(intake.chiefComplaint);
+    if (presentationSeen.has(key)) continue;
+    presentationSeen.add(key);
+
+    const date = intake.createdAt.toISOString().slice(0, 10);
+    const sev =
+      typeof intake.severity === 'number' ? `**${intake.severity}/10**` : null;
+    const assoc = shortAssociations(intake.summary);
+    const bits = [
+      intake.chiefComplaint.replace(/\.$/, ''),
+      sev,
+      intake.symptomDuration ? `duration ${intake.symptomDuration}` : null,
+      assoc ? `assoc: ${assoc}` : null,
+    ].filter(Boolean);
+    presentationLines.push(`${date} — ${bits.join(' · ')}`);
+    if (presentationLines.length >= 5) break;
+  }
 
   if (input.documents.length > 0) {
     const typeSummary = [...docTypeCounts.entries()]

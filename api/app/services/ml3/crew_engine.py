@@ -10,33 +10,47 @@ from app.schemas.clinical_summary import PhysicianDraftSummary
 
 load_dotenv()
 
-_GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
-
 
 def _context_from_payload(payload: dict[str, Any]) -> str:
     return json.dumps(payload, indent=2, default=str, ensure_ascii=False)
 
 
-def _is_rate_limit_error(exc: BaseException) -> bool:
-    msg = str(exc)
-    return "429" in msg or "quota" in msg.lower() or "RateLimit" in type(exc).__name__
+def run_synthesis_crew(
+    clinical_context: str | dict[str, Any] | None = None,
+    *,
+    voice_transcript: str | None = None,
+    ocr_data: str | dict[str, Any] | None = None,
+    **payload: Any,
+) -> dict[str, Any]:
+    """Run ML3 auditor + synthesizer CrewAI pipeline.
 
+    Accepts either:
+    - a free-text / JSON string `clinical_context`
+    - a merged clinical dict (ML1 history + ML2 lab_reports)
+    - kwargs used by legacy scripts (`voice_transcript`, `ocr_data`)
+    """
+    if clinical_context is None and (voice_transcript is not None or ocr_data is not None or payload):
+        merged: dict[str, Any] = dict(payload)
+        if voice_transcript is not None:
+            merged["voice_transcript"] = voice_transcript
+        if ocr_data is not None:
+            merged["ocr_data"] = ocr_data
+        clinical_context = merged
 
-def _ml3_model_chain() -> list[str]:
-    primary = os.getenv("ML3_LLM_MODEL", "openai/gemini-3.6-flash")
-    fallback = os.getenv("ML3_LLM_MODEL_FALLBACK", "openai/gemini-3.5-flash-lite")
-    if fallback and fallback != primary:
-        return [primary, fallback]
-    return [primary]
+    if clinical_context is None:
+        raise ValueError("clinical_context is required")
 
+    if isinstance(clinical_context, dict):
+        context_text = _context_from_payload(clinical_context)
+    else:
+        context_text = str(clinical_context)
 
-def _run_synthesis_for_model(context_text: str, model: str) -> dict[str, Any]:
     # Lazy import so the API can boot without CrewAI installed.
     from crewai import Agent, Crew, LLM, Process, Task
 
     gemini_llm = LLM(
-        model=model,
-        base_url=_GEMINI_BASE_URL,
+        model=os.getenv("ML3_LLM_MODEL", "openai/gemini-3.6-flash"),
+        base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
         api_key=os.getenv("GEMINI_API_KEY"),
         temperature=0.0,
     )
@@ -127,48 +141,3 @@ def _run_synthesis_for_model(context_text: str, model: str) -> dict[str, Any]:
         except json.JSONDecodeError:
             return {"doctor_english_summary": raw, "raw": raw}
     return {"raw": str(raw)}
-
-
-def run_synthesis_crew(
-    clinical_context: str | dict[str, Any] | None = None,
-    *,
-    voice_transcript: str | None = None,
-    ocr_data: str | dict[str, Any] | None = None,
-    **payload: Any,
-) -> dict[str, Any]:
-    """Run ML3 auditor + synthesizer CrewAI pipeline.
-
-    Accepts either:
-    - a free-text / JSON string `clinical_context`
-    - a merged clinical dict (ML1 history + ML2 lab_reports)
-    - kwargs used by legacy scripts (`voice_transcript`, `ocr_data`)
-    """
-    if clinical_context is None and (voice_transcript is not None or ocr_data is not None or payload):
-        merged: dict[str, Any] = dict(payload)
-        if voice_transcript is not None:
-            merged["voice_transcript"] = voice_transcript
-        if ocr_data is not None:
-            merged["ocr_data"] = ocr_data
-        clinical_context = merged
-
-    if clinical_context is None:
-        raise ValueError("clinical_context is required")
-
-    if isinstance(clinical_context, dict):
-        context_text = _context_from_payload(clinical_context)
-    else:
-        context_text = str(clinical_context)
-
-    last_rate_limit: BaseException | None = None
-    for model in _ml3_model_chain():
-        try:
-            return _run_synthesis_for_model(context_text, model)
-        except Exception as exc:
-            if _is_rate_limit_error(exc):
-                last_rate_limit = exc
-                continue
-            raise
-
-    if last_rate_limit is not None:
-        raise last_rate_limit
-    raise RuntimeError("ML3 synthesis failed without a configured model")
