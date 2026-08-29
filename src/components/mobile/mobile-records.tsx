@@ -234,7 +234,7 @@ export function MobileRecords({ data }: MobileRecordsProps) {
                 value={docName}
                 onChange={(e) => setDocName(e.target.value)}
                 disabled={isPending}
-                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-[12px] px-3.5 py-3 text-xs text-[#111827] focus:outline-none focus:border-[#0D5F5A] font-medium"
+                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-[12px] px-3.5 py-3 text-base text-[#111827] focus:outline-none focus:border-[#0D5F5A] font-medium"
               />
             </div>
 
@@ -280,7 +280,7 @@ export function MobileRecords({ data }: MobileRecordsProps) {
                 onChange={(e) => setNotes(e.target.value)}
                 disabled={isPending}
                 rows={3}
-                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-[12px] p-3.5 text-xs text-[#111827] focus:outline-none focus:border-[#0D5F5A] font-medium"
+                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-[12px] p-3.5 text-base text-[#111827] focus:outline-none focus:border-[#0D5F5A] font-medium"
               />
             </div>
 

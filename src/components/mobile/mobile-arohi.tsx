@@ -221,7 +221,7 @@ export function MobileArohi({ data }: MobileArohiProps) {
   const inputDisabled = !sessionId || isPending || Boolean(finalResult) || bypassQueue;
 
   return (
-    <div className="flex flex-col h-screen bg-[#F8FAFC] pb-[calc(env(safe-area-inset-bottom,0px)+64px)] md:hidden">
+    <div className="flex flex-col h-[100dvh] bg-[#F8FAFC] pb-[calc(env(safe-area-inset-bottom,0px)+64px)] md:hidden">
       <MobileHeader
         title="Ask Arohi"
         rightElement={
@@ -363,7 +363,7 @@ export function MobileArohi({ data }: MobileArohiProps) {
                 handleSend();
               }
             }}
-            className="flex-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[12px] px-3.5 py-2.5 text-xs text-[#111827] placeholder-[#64748B] focus:outline-none focus:border-[#0D5F5A] resize-none max-h-24 min-h-[40px] leading-tight"
+            className="flex-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[12px] px-3.5 py-2.5 text-base text-[#111827] placeholder-[#64748B] focus:outline-none focus:border-[#0D5F5A] resize-none max-h-24 min-h-[40px] leading-tight"
           />
 
           <button

@@ -73,8 +73,8 @@ export default async function DoctorAccessPage({
   const { locale, t } = await getI18n();
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border bg-card p-5 shadow-sm">
+    <div className="flex flex-col gap-5 px-3 sm:px-0 pb-12">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border bg-card p-4 sm:p-5 shadow-sm">
         <PatientProfileStrip
           name={data.patient.name}
           subtitle={t("doctor.activeConsent")}
@@ -208,7 +208,8 @@ export default async function DoctorAccessPage({
             </CardDescription>
           </CardHeader>
           <CardContent className="px-0">
-            <Table>
+            <div className="overflow-x-auto">
+              <Table>
               <TableCaption className="sr-only">
                 Patient records accessible under the current consent.
               </TableCaption>
@@ -261,7 +262,8 @@ export default async function DoctorAccessPage({
                   ))
                 )}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
           </CardContent>
         </Card>
         <Card className="rounded-2xl shadow-sm xl:col-span-3">
