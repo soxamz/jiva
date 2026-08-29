@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -33,6 +34,7 @@ router = APIRouter(
 
 _repository = DocumentRepository()
 _storage = LocalStorageBackend()
+logger = logging.getLogger(__name__)
 
 
 # ============================================================
@@ -230,6 +232,42 @@ async def upload_document(
 # ============================================================
 # PROCESS — ML2
 # ============================================================
+
+
+# ============================================================
+# Upload and process
+# ============================================================
+
+
+@router.post(
+    "/upload-and-process",
+    status_code=status.HTTP_200_OK,
+)
+async def upload_and_process_document(
+    file: UploadFile = File(...),
+    patient_id: str | None = Form(
+        default=None
+    ),
+    consent: str = Depends(
+        require_consent
+    ),
+) -> dict[str, Any]:
+    """Upload and process a document in one serverless invocation.
+
+    The separate upload and process endpoints remain available for two-step
+    clients. The app uses this route because separate Vercel function
+    invocations do not share temporary files.
+    """
+
+    uploaded = await upload_document(
+        file=file,
+        patient_id=patient_id,
+    )
+
+    return await process_document(
+        document_id=uploaded["document_id"],
+        consent=consent,
+    )
 
 
 @router.post(
@@ -656,6 +694,11 @@ async def process_document(
         ) from exc
 
     except Exception as exc:
+
+        logger.exception(
+            "Document processing failed for %s",
+            document_id,
+        )
 
         document.update(
             {

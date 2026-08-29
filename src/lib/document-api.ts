@@ -60,30 +60,16 @@ export async function uploadAndProcessDocument(file: File, patientId?: string) {
     form.append("patient_id", patientId);
   }
 
-  const uploadRes = await fetch(await documentApiPath("/documents/upload"), {
-    method: "POST",
-    headers: {
-      "x-consent-token": "demo-consent",
-    },
-    body: form,
-  });
-
-  if (!uploadRes.ok) {
-    throw new Error(await parseError(uploadRes));
-  }
-
-  const uploaded = (await uploadRes.json()) as {
-    document_id: string;
-    status: string;
-  };
-
+  // Vercel may route separate requests to different Python instances. Uploading
+  // and processing in one request keeps the temporary source file available.
   const processRes = await fetch(
-    await documentApiPath(`/documents/${uploaded.document_id}/process`),
+    await documentApiPath("/documents/upload-and-process"),
     {
       method: "POST",
       headers: {
         "x-consent-token": "demo-consent",
       },
+      body: form,
     },
   );
 
