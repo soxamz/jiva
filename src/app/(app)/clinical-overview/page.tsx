@@ -4,7 +4,6 @@ import { FileTextIcon, StethoscopeIcon } from "lucide-react";
 import { HistoryTimeline } from "@/components/clinical-overview/history-timeline";
 import { ClinicalRecordSummary } from "@/components/clinical-overview/clinical-record-summary";
 import { MedicationsPanel } from "@/components/clinical-overview/medications-panel";
-import { OverviewActions } from "@/components/clinical-overview/overview-actions";
 import { OverviewRangeSelector } from "@/components/clinical-overview/range-selector";
 import { SummaryEnginePanel } from "@/components/clinical-overview/summary-engine-panel";
 import { PageHeader } from "@/components/page-header";
@@ -145,12 +144,6 @@ export default async function ClinicalOverviewPage({
 
       <div className="hidden md:flex flex-col gap-6">
         <PageHeader
-          actions={
-            <OverviewActions
-              noteLabel={t("overview.addNote")}
-              printLabel={t("overview.print")}
-            />
-          }
           description={t("overview.windowDescription", { count: overview.days })}
           title={t("overview.pageTitle")}
         />
