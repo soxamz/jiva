@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ShieldCheckIcon, LockIcon, AwardIcon } from "lucide-react";
 
 export default function AuthLayout({
   children,
@@ -7,43 +8,56 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex h-dvh min-h-0 flex-col overflow-hidden lg:grid lg:grid-cols-2">
-      <div className="relative hidden min-h-0 flex-col overflow-hidden border-r border-white/10 bg-[#0b2e28] p-10 text-white lg:flex">
+    <div className="relative flex h-dvh min-h-0 flex-col overflow-hidden lg:grid lg:grid-cols-2 bg-slate-50">
+      {/* Desktop Left Side Branding Banner */}
+      <div className="relative hidden min-h-0 flex-col justify-between overflow-hidden bg-gradient-to-b from-[#0D5F5A] via-[#094743] to-[#062e2c] p-12 text-white lg:flex">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.18),transparent_45%)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.2),transparent_50%)]"
         />
         <Link href="/" className="relative inline-flex items-center">
           <Image
             alt="JivaHQ"
-            className="h-auto w-32"
-            height={32}
+            className="h-auto w-36"
+            height={36}
             src="/logo-dark.svg"
-            width={128}
+            width={144}
           />
         </Link>
-        <div className="relative mt-auto max-w-md">
-          <p className="text-2xl font-semibold leading-tight tracking-tight">
+        <div className="relative z-10 my-auto max-w-md space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-teal-200 text-xs font-bold backdrop-blur-sm">
+            <ShieldCheckIcon className="size-4 text-teal-300" />
+            <span>Healthcare Unified Platform</span>
+          </div>
+
+          <h2 className="text-3xl font-black leading-tight tracking-tight text-white">
             Your Lifetime Digital Health Vault
+          </h2>
+          <p className="text-sm leading-relaxed text-teal-100/90 font-medium">
+            Seamlessly connect patients and doctors with time-limited consent, AI-powered intake summaries, and ABDM-compliant record management.
           </p>
-          <p className="mt-4 text-sm leading-7 text-teal-100/80">
-            Securely access, manage, and share your comprehensive medical
-            records across the healthcare ecosystem with military-grade
-            encryption.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-2">
-            <span className="rounded-full border border-teal-300/20 bg-teal-400/10 px-3 py-1 text-xs font-medium text-teal-50">
-              ABDM Compliant
+
+          <div className="flex flex-wrap gap-2 pt-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-300/30 bg-teal-400/10 px-3.5 py-1.5 text-xs font-extrabold text-teal-100">
+              <AwardIcon className="size-3.5" />
+              ABDM Certified
             </span>
-            <span className="rounded-full border border-teal-300/20 bg-teal-400/10 px-3 py-1 text-xs font-medium text-teal-50">
-              Blockchain Secured
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-300/30 bg-teal-400/10 px-3.5 py-1.5 text-xs font-extrabold text-teal-100">
+              <LockIcon className="size-3.5" />
+              Break-Glass Ready
             </span>
           </div>
         </div>
+
+        <div className="relative z-10 text-xs text-teal-200/70 font-medium">
+          © {new Date().getFullYear()} JivaHQ Health Vault Systems. All rights reserved.
+        </div>
       </div>
-      <div className="bg-page flex min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-contain">
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center-safe justify-center space-y-4 px-4 py-20 sm:px-6 lg:px-8">
-          <Link href="/" className="lg:hidden">
+
+      {/* Auth Form Container Right */}
+      <div className="flex min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-contain bg-slate-50">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center space-y-5 px-4 py-12 sm:px-6">
+          <Link href="/" className="lg:hidden mx-auto">
             <Image
               alt="Jiva"
               className="h-auto w-28 dark:hidden"
@@ -59,22 +73,23 @@ export default function AuthLayout({
               width={112}
             />
           </Link>
-          <div className="w-full rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
+
+          <div className="w-full rounded-[24px] border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl">
             {children}
           </div>
 
-          <p className="text-muted-foreground px-8 text-center text-sm">
-            By clicking continue, you agree to our{" "}
+          <p className="text-slate-400 px-6 text-center text-xs font-medium">
+            By logging in, you agree to the{" "}
             <Link
               href="/terms-of-service"
-              className="hover:text-primary underline underline-offset-4"
+              className="hover:text-slate-800 text-slate-600 underline underline-offset-4 font-semibold"
             >
               Terms of Service
             </Link>{" "}
             and{" "}
             <Link
               href="/privacy-policy"
-              className="hover:text-primary underline underline-offset-4"
+              className="hover:text-slate-800 text-slate-600 underline underline-offset-4 font-semibold"
             >
               Privacy Policy
             </Link>
