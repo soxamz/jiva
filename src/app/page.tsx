@@ -34,7 +34,7 @@ function PortalLink({
   const content = (
     <div
       className={cn(
-        "flex min-h-36 flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white px-5 py-6 text-center shadow-sm transition-colors",
+        "flex h-64 flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white px-5 py-6 text-center shadow-sm transition-colors",
         !disabled && "group-hover:border-teal-300 group-hover:bg-teal-50/40",
         disabled && "bg-slate-50 text-slate-400",
       )}
