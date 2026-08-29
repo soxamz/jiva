@@ -137,7 +137,7 @@ export function MobileHealthInfo({ data }: MobileHealthInfoProps) {
               placeholder="e.g. Penicillin, Peanuts"
               value={allergiesText}
               onChange={(e) => setAllergiesText(e.target.value)}
-              className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] px-3.5 py-2.5 text-xs text-[#111827] focus:outline-none focus:border-[#0D5F5A]"
+              className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] px-3.5 py-2.5 text-base text-[#111827] focus:outline-none focus:border-[#0D5F5A]"
             />
             <span className="text-[10px] text-[#64748B]">Separate each item with a comma.</span>
             {state?.errors?.allergies && (
@@ -157,7 +157,7 @@ export function MobileHealthInfo({ data }: MobileHealthInfoProps) {
               placeholder="e.g. Diabetes, Asthma"
               value={conditionsText}
               onChange={(e) => setConditionsText(e.target.value)}
-              className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] px-3.5 py-2.5 text-xs text-[#111827] focus:outline-none focus:border-[#0D5F5A]"
+              className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] px-3.5 py-2.5 text-base text-[#111827] focus:outline-none focus:border-[#0D5F5A]"
             />
             <span className="text-[10px] text-[#64748B]">Separate each item with a comma.</span>
             {state?.errors?.criticalConditions && (
@@ -177,7 +177,7 @@ export function MobileHealthInfo({ data }: MobileHealthInfoProps) {
               placeholder="e.g. Metformin 500mg, Vitamin D"
               value={medsText}
               onChange={(e) => setMedsText(e.target.value)}
-              className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] px-3.5 py-2.5 text-xs text-[#111827] focus:outline-none focus:border-[#0D5F5A]"
+              className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] px-3.5 py-2.5 text-base text-[#111827] focus:outline-none focus:border-[#0D5F5A]"
             />
             <span className="text-[10px] text-[#64748B]">Separate each item with a comma.</span>
             {state?.errors?.currentMedications && (
@@ -197,7 +197,7 @@ export function MobileHealthInfo({ data }: MobileHealthInfoProps) {
               placeholder="Asha Sharma | Mother | 9876543210&#10;Rohan Sharma | Brother | 9876543211"
               value={contactsText}
               onChange={(e) => setContactsText(e.target.value)}
-              className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] p-3.5 text-xs text-[#111827] focus:outline-none focus:border-[#0D5F5A]"
+              className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] p-3.5 text-base text-[#111827] focus:outline-none focus:border-[#0D5F5A]"
             />
             <span className="text-[10px] text-[#64748B] leading-normal">
               Use one contact per line: name | relation | phone number.

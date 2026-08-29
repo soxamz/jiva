@@ -8,6 +8,11 @@ import { cn } from "@/lib/utils";
 export function MobileNav() {
   const pathname = usePathname();
 
+  // Hide mobile nav totally for doctor portal pages
+  if (pathname?.startsWith("/doctor")) {
+    return null;
+  }
+
   const navItems = [
     {
       label: "Home",
