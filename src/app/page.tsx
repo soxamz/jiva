@@ -1,15 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  AwardIcon,
   FlaskConicalIcon,
-  HeartPulseIcon,
+  LockIcon,
   ShieldAlertIcon,
+  ShieldCheckIcon,
   StethoscopeIcon,
   UserRoundIcon,
+  type LucideIcon,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { getI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -17,8 +18,8 @@ type PortalLinkProps = {
   href: string;
   title: string;
   description: string;
-  icon: typeof UserRoundIcon;
-  tone?: "default" | "destructive";
+  icon: LucideIcon;
+  tone?: "default" | "emergency";
   disabled?: boolean;
 };
 
@@ -31,37 +32,93 @@ function PortalLink({
   tone = "default",
 }: Readonly<PortalLinkProps>) {
   const content = (
-    <Card className="h-full transition-colors group-hover:bg-accent group-focus-visible:ring-2 group-focus-visible:ring-ring">
-      <CardContent className="flex min-h-30 flex-col items-center justify-center gap-2 px-4 py-5 text-center">
-        <span
-          className={cn(
-            "bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full",
-            tone === "destructive" && "bg-destructive/10 text-destructive",
-          )}
-        >
-          <Icon className="size-4" aria-hidden />
-        </span>
-        <p className="text-sm font-medium">{title}</p>
-        <p className="text-muted-foreground text-xs leading-5">{description}</p>
-      </CardContent>
-    </Card>
+    <div
+      className={cn(
+        "flex min-h-36 flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white px-5 py-6 text-center shadow-sm transition-colors",
+        !disabled && "group-hover:border-teal-300 group-hover:bg-teal-50/40",
+        disabled && "bg-slate-50 text-slate-400",
+      )}
+    >
+      <span
+        className={cn(
+          "mb-4 flex size-12 items-center justify-center rounded-2xl bg-teal-50 text-[#0D5F5A]",
+          tone === "emergency" && "bg-rose-50 text-rose-600",
+          disabled && "bg-slate-100 text-slate-400",
+        )}
+      >
+        <Icon className="size-5" aria-hidden />
+      </span>
+      <h2 className="text-base font-bold text-slate-900">{title}</h2>
+      <p className="mt-2 max-w-52 text-sm leading-6 text-slate-500">
+        {description}
+      </p>
+    </div>
   );
 
   if (disabled) {
     return (
-      <div
-        aria-disabled="true"
-        className="h-full cursor-not-allowed opacity-60"
-      >
+      <div aria-disabled="true" className="cursor-not-allowed">
         {content}
       </div>
     );
   }
 
   return (
-    <Link className="group block h-full focus-visible:outline-none" href={href}>
+    <Link
+      className="group block rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5F5A] focus-visible:ring-offset-2"
+      href={href}
+    >
       {content}
     </Link>
+  );
+}
+
+function BrandPanel() {
+  return (
+    <section className="relative hidden min-h-0 flex-col justify-between overflow-hidden bg-gradient-to-b from-[#0D5F5A] via-[#094743] to-[#062e2c] p-12 text-white lg:flex">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.2),transparent_50%)]"
+      />
+      <Link href="/" className="relative inline-flex items-center">
+        <Image
+          alt="JivaHQ"
+          className="h-auto w-36"
+          height={36}
+          src="/logo-dark.svg"
+          width={144}
+        />
+      </Link>
+
+      <div className="relative z-10 my-auto max-w-md space-y-6">
+        <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold text-teal-200 backdrop-blur-sm">
+          <ShieldCheckIcon className="size-4 text-teal-300" aria-hidden />
+          <span>Healthcare Unified Platform</span>
+        </div>
+        <h1 className="text-3xl font-black leading-tight tracking-tight text-white">
+          Your Lifetime Digital Health Vault
+        </h1>
+        <p className="text-sm font-medium leading-relaxed text-teal-100/90">
+          Seamlessly connect patients and doctors with time-limited consent,
+          AI-powered intake summaries, and ABDM-compliant record management.
+        </p>
+        <div className="flex flex-wrap gap-2 pt-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-300/30 bg-teal-400/10 px-3.5 py-1.5 text-xs font-extrabold text-teal-100">
+            <AwardIcon className="size-3.5" aria-hidden />
+            ABDM Certified
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-300/30 bg-teal-400/10 px-3.5 py-1.5 text-xs font-extrabold text-teal-100">
+            <LockIcon className="size-3.5" aria-hidden />
+            Break-Glass Ready
+          </span>
+        </div>
+      </div>
+
+      <p className="relative z-10 text-xs font-medium text-teal-200/70">
+        (c) {new Date().getFullYear()} JivaHQ Health Vault Systems. All rights
+        reserved.
+      </p>
+    </section>
   );
 }
 
@@ -69,113 +126,73 @@ export default async function Page() {
   const { t } = await getI18n();
 
   return (
-    <main className="bg-background">
-      <div className="grid lg:grid-cols-2 h-screen">
-        <section className="relative flex min-h-80 flex-col overflow-hidden border-r border-white/10 bg-[#0b2e28] px-6 py-7 text-white sm:px-10 sm:py-9 lg:min-h-full lg:px-12 lg:py-10">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.18),transparent_45%)]"
-          />
-          <Link
-            aria-label="JivaHQ"
-            className="relative inline-flex w-fit items-center"
-            href="/"
-          >
+    <main className="min-h-dvh bg-slate-50 lg:grid lg:grid-cols-2">
+      <BrandPanel />
+
+      <section className="flex min-h-dvh items-center justify-center px-4 py-10 sm:px-6 lg:px-12">
+        <div className="w-full max-w-md">
+          <Link className="mx-auto mb-10 flex w-fit lg:hidden" href="/">
             <Image
               alt="JivaHQ"
               className="h-auto w-28"
               height={28}
-              src="/logo-dark.svg"
+              src="/logo.svg"
               width={112}
             />
           </Link>
 
-          <div className="relative my-auto max-w-md py-12 lg:py-0">
-            <Badge
-              className="rounded-full border-teal-300/20 bg-teal-400/10 text-teal-50"
-              variant="outline"
-            >
-              <HeartPulseIcon data-icon="inline-start" aria-hidden />
-              Health vault
-            </Badge>
-            <h1 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
-              Your lifetime digital health vault
-            </h1>
-            <p className="mt-4 max-w-sm text-sm leading-6 text-teal-100/80">
-              Securely access, manage, and share your health information when it
-              matters.
+          <div className="text-center">
+            <p className="text-xs font-bold uppercase text-[#0D5F5A]">
+              Welcome to JivaHQ
+            </p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-900">
+              Choose your portal
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              Select the workspace that matches your role.
             </p>
           </div>
 
-          <div className="relative flex flex-wrap gap-2">
-            <Badge
-              className="rounded-full border-teal-300/20 bg-teal-400/10 text-teal-50"
-              variant="outline"
-            >
-              Secure consent controls
-            </Badge>
-            <Badge
-              className="rounded-full border-teal-300/20 bg-teal-400/10 text-teal-50"
-              variant="outline"
-            >
-              Emergency-ready information
-            </Badge>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <PortalLink
+              description="Access your health records and manage sharing."
+              href="/sign-in/patient"
+              icon={UserRoundIcon}
+              title={t("auth.patient")}
+            />
+            <PortalLink
+              description="Open records shared with your care team."
+              href="/sign-in/doctor"
+              icon={StethoscopeIcon}
+              title={t("auth.doctor")}
+            />
+            <PortalLink
+              description="Use audited emergency access for urgent care."
+              href="/emergency"
+              icon={ShieldAlertIcon}
+              title={t("auth.emergencyResponder")}
+              tone="emergency"
+            />
+            <PortalLink
+              description={t("auth.labDescription")}
+              href="#"
+              icon={FlaskConicalIcon}
+              title={t("auth.lab")}
+              disabled
+            />
           </div>
-        </section>
 
-        <section className="flex items-center justify-center px-5 py-10 sm:px-8 lg:px-12">
-          <div className="w-full max-w-xl">
-            <div className="mb-7 text-center">
-              <p className="text-sm font-medium">Welcome to JivaHQ</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                Choose how you want to continue
-              </h2>
-              <p className="text-muted-foreground mt-2 text-sm">
-                Select a portal to access the right workspace.
-              </p>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <PortalLink
-                description="Access your health records and manage sharing."
-                href="/sign-in/patient"
-                icon={UserRoundIcon}
-                title={t("auth.patient")}
-              />
-              <PortalLink
-                description="Open patient records shared with your care team."
-                href="/sign-in/doctor"
-                icon={StethoscopeIcon}
-                title={t("auth.doctor")}
-              />
-              <PortalLink
-                description="Use audited emergency access for urgent care."
-                href="/emergency"
-                icon={ShieldAlertIcon}
-                title={t("auth.emergencyResponder")}
-                tone="destructive"
-              />
-              <PortalLink
-                description={t("auth.labDescription")}
-                href="#"
-                icon={FlaskConicalIcon}
-                title={t("auth.lab")}
-                disabled
-              />
-            </div>
-
-            <p className="text-muted-foreground mt-6 text-center text-sm">
-              Already registered?{" "}
-              <Link
-                className="text-primary font-medium hover:underline"
-                href="/sign-in"
-              >
-                {t("auth.signIn")}
-              </Link>
-            </p>
-          </div>
-        </section>
-      </div>
+          <p className="mt-7 text-center text-sm text-slate-500">
+            Already registered?{" "}
+            <Link
+              className="font-semibold text-[#0D5F5A] hover:underline"
+              href="/sign-in"
+            >
+              {t("auth.signIn")}
+            </Link>
+          </p>
+        </div>
+      </section>
     </main>
   );
 }

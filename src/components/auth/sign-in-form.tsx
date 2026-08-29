@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useI18n } from "@/components/i18n-provider";
+import { demoCredentials } from "@/lib/demo-credentials";
 
 type SignInFormProps = React.ComponentProps<"form"> & {
   returnTo?: string;
@@ -27,8 +28,8 @@ export function SignInForm({
   className,
   returnTo,
   expectedRole,
-  defaultIdentifier = "9876543210",
-  defaultOtp = "123456",
+  defaultIdentifier = demoCredentials.patient.identifier,
+  defaultOtp = demoCredentials.patient.otp,
   ...props
 }: SignInFormProps) {
   const { t } = useI18n();
