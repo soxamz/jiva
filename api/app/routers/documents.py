@@ -648,10 +648,12 @@ async def process_document(
             },
         )
 
+        missing = getattr(exc, "name", None) or str(exc)
         raise HTTPException(
             status_code=503,
             detail=(
                 "Document AI dependencies are unavailable. "
+                f"Missing module: {missing}. "
                 "Install the local API dependencies with: "
                 "pip install -r api/requirements.txt"
             ),
