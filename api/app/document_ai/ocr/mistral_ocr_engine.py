@@ -6,8 +6,10 @@ import time
 from pathlib import Path
 from typing import Any
 
+from types import SimpleNamespace
+
+import requests
 from dotenv import load_dotenv
-from mistralai import Mistral
 
 from .base import OCREngine, OCRResult
 
@@ -23,6 +25,9 @@ _PROJECT_DIR = _API_DIR.parent
 for _env_path in (_API_DIR / ".env", _PROJECT_DIR / ".env.local", Path.cwd() / ".env"):
     if _env_path.is_file():
         load_dotenv(_env_path, override=False)
+
+
+MISTRAL_API_BASE = "https://api.mistral.ai/v1"
 
 
 class MistralOCREngine(OCREngine):
@@ -59,10 +64,6 @@ class MistralOCREngine(OCREngine):
             )
         )
 
-        self.client = Mistral(
-            api_key=self.api_key
-        )
-
     # ========================================================
     # Public API
     # ========================================================
@@ -91,13 +92,8 @@ class MistralOCREngine(OCREngine):
         start_time = time.perf_counter()
 
         try:
-
-            response = self.client.ocr.process(
-                model=self.model,
-                document=document_payload,
-                include_image_base64=False,
-                include_blocks=True,
-                confidence_scores_granularity="block",
+            response = self._call_ocr_api(
+                document_payload
             )
 
         except Exception as exc:
@@ -123,6 +119,43 @@ class MistralOCREngine(OCREngine):
             image_path=image_path,
             elapsed_ms=elapsed_ms,
         )
+
+    def _call_ocr_api(
+        self,
+        document_payload: dict[str, str],
+    ) -> Any:
+        """Call Mistral OCR API via HTTP and return a namespace
+        object that preserves the same attribute-access interface
+        as the SDK response."""
+
+        url = f"{MISTRAL_API_BASE}/ocr"
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": self.model,
+            "document": document_payload,
+            "include_image_base64": False,
+            "include_blocks": True,
+            "confidence_scores_granularity": "block",
+        }
+
+        resp = requests.post(
+            url,
+            headers=headers,
+            json=payload,
+            timeout=120,
+        )
+
+        if resp.status_code != 200:
+            raise RuntimeError(
+                f"Mistral OCR API returned status "
+                f"{resp.status_code}: {resp.text}"
+            )
+
+        data = resp.json()
+        return _dict_to_namespace(data)
 
     def _build_document_payload(
         self,
@@ -497,3 +530,21 @@ class MistralOCREngine(OCREngine):
             return value
 
         return str(value)
+
+
+# ============================================================
+# Helper: recursively convert dicts to namespaces
+# ============================================================
+
+
+def _dict_to_namespace(data: Any) -> Any:
+    """Convert nested dicts/lists from JSON into
+    SimpleNamespace objects so attribute access works
+    the same way as the Mistral SDK response objects."""
+    if isinstance(data, dict):
+        return SimpleNamespace(
+            **{k: _dict_to_namespace(v) for k, v in data.items()}
+        )
+    if isinstance(data, list):
+        return [_dict_to_namespace(item) for item in data]
+    return data

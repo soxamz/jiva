@@ -6,7 +6,7 @@ import re
 import time
 from typing import Any
 
-from mistralai import Mistral
+import requests
 
 from app.document_ai.extraction.base import ExtractionEngine
 from app.document_ai.extraction.schema import ABDMExtractionResult
@@ -57,9 +57,48 @@ class MistralExtractionEngine(ExtractionEngine):
             )
         )
 
-        self.client = Mistral(
-            api_key=self.api_key
+        self.api_base = (
+            os.getenv(
+                "MISTRAL_API_BASE",
+                "https://api.mistral.ai/v1",
+            )
         )
+
+    # =========================================================
+    # HTTP HELPER
+    # =========================================================
+
+    def _call_chat_api(
+        self,
+        messages: list[dict[str, str]],
+    ) -> dict:
+        """Call Mistral chat completions API via HTTP."""
+
+        url = f"{self.api_base}/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": 0,
+        }
+
+        resp = requests.post(
+            url,
+            headers=headers,
+            json=payload,
+            timeout=120,
+        )
+
+        if resp.status_code != 200:
+            raise RuntimeError(
+                f"Mistral API returned status "
+                f"{resp.status_code}: {resp.text}"
+            )
+
+        return resp.json()
 
     # =========================================================
     # EXTRACTION
@@ -94,8 +133,7 @@ class MistralExtractionEngine(ExtractionEngine):
         start = time.perf_counter()
 
         try:
-            response = self.client.chat.complete(
-                model=self.model,
+            response = self._call_chat_api(
                 messages=[
                     {
                         "role": "system",
@@ -106,7 +144,6 @@ class MistralExtractionEngine(ExtractionEngine):
                         "content": prompt,
                     },
                 ],
-                temperature=0,
             )
 
         except Exception as exc:
@@ -122,13 +159,11 @@ class MistralExtractionEngine(ExtractionEngine):
 
         try:
             content = (
-                response
-                .choices[0]
-                .message
-                .content
+                response["choices"][0]
+                ["message"]["content"]
             )
 
-        except Exception as exc:
+        except (KeyError, IndexError, TypeError) as exc:
 
             raise RuntimeError(
                 "Unexpected Mistral response format."
