@@ -623,7 +623,7 @@ async def process_document(
     except HTTPException:
         raise
 
-    except ModuleNotFoundError as exc:
+    except (ModuleNotFoundError, ImportError) as exc:
 
         document.update(
             {

@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-from mistralai.client import Mistral
+from mistralai import Mistral
 
 from .base import OCREngine, OCRResult
 

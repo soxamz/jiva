@@ -6,7 +6,7 @@ import re
 import time
 from typing import Any
 
-from mistralai.client import Mistral
+from mistralai import Mistral
 
 from app.document_ai.extraction.base import ExtractionEngine
 from app.document_ai.extraction.schema import ABDMExtractionResult
