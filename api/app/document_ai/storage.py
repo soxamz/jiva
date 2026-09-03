@@ -158,12 +158,17 @@ class DocumentRepository:
             encoding="utf-8",
         )
         # Convenience debug artifact under document_ai/output when present.
-        debug_dir = Path(__file__).resolve().parent / "output"
-        debug_dir.mkdir(parents=True, exist_ok=True)
-        (debug_dir / f"{document_id}.json").write_text(
-            json.dumps(result, indent=2, default=str),
-            encoding="utf-8",
-        )
+        # Skip on Vercel where the package directory is read-only.
+        if not os.environ.get("VERCEL"):
+            try:
+                debug_dir = Path(__file__).resolve().parent / "output"
+                debug_dir.mkdir(parents=True, exist_ok=True)
+                (debug_dir / f"{document_id}.json").write_text(
+                    json.dumps(result, indent=2, default=str),
+                    encoding="utf-8",
+                )
+            except OSError:
+                pass  # Read-only filesystem; skip debug artifact.
 
     def get_result(self, document_id: str) -> dict[str, Any] | None:
         path = self._result_path(document_id)
