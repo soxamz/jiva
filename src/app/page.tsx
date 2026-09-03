@@ -114,10 +114,18 @@ function BrandPanel() {
         </div>
       </div>
 
-      <p className="relative z-10 text-xs font-medium text-teal-200/70">
-        (c) {new Date().getFullYear()} JivaHQ Health Vault Systems. All rights
-        reserved.
-      </p>
+      <div className="relative z-10 flex items-center justify-between">
+        <Image
+          alt="JivaHQ"
+          className="h-auto w-24"
+          height={27}
+          src="/brand-dark.svg"
+          width={96}
+        />
+        <p className="text-xs font-medium text-teal-200/70">
+          (c) {new Date().getFullYear()} All rights reserved.
+        </p>
+      </div>
     </section>
   );
 }

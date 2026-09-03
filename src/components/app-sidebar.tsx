@@ -104,9 +104,20 @@ export function AppSidebar({ user }: { user: AppShellUser }) {
           ))}
         </SidebarMenu>
         <div className="px-4 pt-4 pb-2 transition-opacity group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0">
-          <p className="text-muted-foreground text-[9px] text-nowrap">
-            JivaHQ SIH demo
-          </p>
+          <Image
+            alt="JivaHQ"
+            className="h-auto w-16 max-w-none dark:hidden"
+            height={21}
+            src="/brand.svg"
+            width={64}
+          />
+          <Image
+            alt="JivaHQ"
+            className="hidden h-auto w-16 max-w-none dark:block"
+            height={21}
+            src="/brand-dark.svg"
+            width={64}
+          />
         </div>
       </SidebarFooter>
     </Sidebar>
